@@ -111,14 +111,18 @@ class ProductToBuyResource extends Resource
                     ->icon('heroicon-o-shopping-cart')
                     ->action(function () {
                         $products = ProductToBuy::all();
+                        $output = '';
                         foreach ($products as $product) {
                             Artisan::call('app:process-buy', [
                                 'product' => $product->id,
                                 'quantity' => $product->quantity
                             ]);
+
+                            $output .= Artisan::output();
                         }
                         Notification::make()
                             ->title('All products purchased successfully')
+                            ->body($output)
                             ->success()
                             ->send();
                     }),

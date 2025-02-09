@@ -23,13 +23,13 @@ class ProcessBuyCommand extends Command
             }
 
             $product = ProductToBuy::findOrFail($productId);
-            
+
             if ($product->quantity < $quantity) {
                 $this->warn("Only {$product->quantity} items available. Will purchase maximum available quantity.");
             }
 
-            ProcessBuyJob::dispatch($productId, $quantity);
-            
+            ProcessBuyJob::dispatchSync($productId, $quantity);
+
             $this->info('Buy process has been queued successfully.');
             if ($product->quantity < $quantity) {
                 $this->info("Will attempt to purchase up to {$product->quantity} items.");
