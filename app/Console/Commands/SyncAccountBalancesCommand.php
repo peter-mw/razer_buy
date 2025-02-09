@@ -59,10 +59,16 @@ class SyncAccountBalancesCommand extends Command
             $account->update([
                 'ballance_gold' => $response['gold'],
                 'ballance_silver' => $response['silver'],
+                'last_ballance_update_at' => now(),
+                'last_ballance_update_status' => 'success',
             ]);
 
             $this->info(" Synced balances for account: {$account->email}");
         } catch (\Exception $e) {
+            $account->update([
+                'last_ballance_update_at' => now(),
+                'last_ballance_update_status' => 'error',
+            ]);
             $this->error(" Failed to sync account {$account->email}: {$e->getMessage()}");
         }
     }

@@ -48,20 +48,29 @@ class AccountResource extends Resource
                     ->maxLength(255),
                 Forms\Components\TextInput::make('otp_seed')
                     ->maxLength(255),
-                Forms\Components\TextInput::make('ballance_gold')
-                    ->numeric()
-                    ->default(0)
-                    ->step('0.01')
-                    ->required(),
-                Forms\Components\TextInput::make('ballance_silver')
-                    ->numeric()
-                    ->default(0)
-                    ->step('0.01')
-                    ->required(),
+
                 Forms\Components\TextInput::make('limit_orders_per_day')
                     ->numeric()
                     ->default(0)
                     ->required(),
+                Forms\Components\TextInput::make('vendor')
+                    ->maxLength(255),
+                Forms\Components\TextInput::make('email_password')
+                    ->password()
+                    ->maxLength(255),
+
+
+
+                Forms\Components\TextInput::make('ballance_gold')
+                    ->numeric()
+                    ->default(0)
+                    ->step('0.01')
+                    ->disabled(),
+                Forms\Components\TextInput::make('ballance_silver')
+                    ->numeric()
+                    ->default(0)
+                    ->step('0.01')
+                    ->disabled(),
             ]);
     }
 
@@ -114,6 +123,21 @@ class AccountResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('limit_orders_per_day')
                     ->numeric()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('vendor')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('last_ballance_update_at')
+                    ->dateTime()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('last_ballance_update_status')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'success' => 'success',
+                        'error' => 'danger',
+                        default => 'warning',
+                    })
+                    ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
