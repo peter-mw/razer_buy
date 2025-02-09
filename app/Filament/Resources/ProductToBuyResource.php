@@ -99,7 +99,6 @@ class ProductToBuyResource extends Resource
                         'failed' => 'Failed'
                     ])
                     ->default('pending')
-
                     ->required(),
             ]);
     }
@@ -198,7 +197,6 @@ class ProductToBuyResource extends Resource
                 Tables\Actions\EditAction::make(),
 
 
-
                 Tables\Actions\Action::make('processBuy')
                     ->label('Process Buy')
                     ->icon('heroicon-o-shopping-cart')
@@ -242,7 +240,7 @@ class ProductToBuyResource extends Resource
                                 ->send();
                         }
                     })
-                   ->hidden(fn(ProductToBuy $record): bool => $record->order_status === 'completed')
+                    ->hidden(fn(ProductToBuy $record): bool => $record->order_status === 'completed')
                 ,
             ])
             ->bulkActions([
