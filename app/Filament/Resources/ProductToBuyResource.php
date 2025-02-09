@@ -12,6 +12,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use App\Models\Account;
+use App\Models\Product;
 use Filament\Widgets\Widget;
 use App\Filament\Widgets\AccountBalancesWidget;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -22,23 +23,40 @@ class ProductToBuyResource extends Resource
     protected static ?string $model = ProductToBuy::class;
     protected static ?string $label = 'Purchase order';
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-shopping-cart';
     protected static ?int $navigationSort = 3;
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('product_id')
+                Forms\Components\Select::make('product_id')
+                    ->relationship('product', 'product_name')
+                    ->label('Product')
                     ->required()
-                    ->numeric(),
+                    ->preload()
+                    ->searchable()
+                    ->native(false)
+                    ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->product_name} - {$record->product_edition} - \${$record->product_buy_value}")
+                    ->afterStateUpdated(function ($state, Forms\Set $set) {
+                        if ($state) {
+                            $product = Product::find($state);
+                            if ($product) {
+                                $set('product_name', $product->product_slug);
+                                $set('product_edition', $product->product_edition);
+                                $set('buy_value', $product->product_buy_value);
+                            }
+                        }
+                    }),
                 Forms\Components\TextInput::make('product_name')
                     ->label('Product Name (slug)')
                     ->required()
-                    ->maxLength(255),
+                    ->maxLength(255)
+                    ->disabled(),
                 Forms\Components\TextInput::make('product_edition')
                     ->required()
-                    ->maxLength(255),
+                    ->maxLength(255)
+                    ->disabled(),
                 Forms\Components\Toggle::make('is_active')
                     ->required()
                     ->default(true),

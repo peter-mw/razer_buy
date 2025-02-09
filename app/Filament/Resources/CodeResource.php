@@ -19,7 +19,7 @@ class CodeResource extends Resource
 {
     protected static ?string $model = Code::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-ticket';
 
     protected static ?int $navigationSort = 4;
 

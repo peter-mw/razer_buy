@@ -22,7 +22,7 @@ class AccountResource extends Resource
 {
     protected static ?string $model = Account::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-user';
     protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
@@ -78,12 +78,12 @@ class AccountResource extends Resource
                     ->numeric()
                     ->default(0)
                     ->step('0.01')
-                 ,
+                ,
                 Forms\Components\TextInput::make('ballance_silver')
                     ->numeric()
                     ->default(0)
                     ->step('0.01')
-                   ,
+                ,
             ]);
     }
 
@@ -121,9 +121,11 @@ class AccountResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('service_code')
                     ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
                 Tables\Columns\TextColumn::make('client_id_login')
                     ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
                 Tables\Columns\TextColumn::make('account_type')
                     ->badge()
@@ -141,16 +143,20 @@ class AccountResource extends Resource
                     ->money()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('limit_amount_per_day')
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->money()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('purchases_last_24_hours')
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->label('Purchases Last 24 Hours')
                     ->getStateUsing(fn(Account $record) => $record->purchasesLast24Hours())
                     ->sortable(),
                 Tables\Columns\TextColumn::make('last_ballance_update_at')
+                    ->label('Last Ballance Update')
                     ->dateTime()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('last_ballance_update_status')
+                    ->label('Last Ballance Update Status')
                     ->badge()
                     ->color(fn(string $state): string => match ($state) {
                         'success' => 'success',
