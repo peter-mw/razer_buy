@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Exports\CodeExporter;
 use App\Filament\Resources\ProductToBuyResource\Pages;
 use App\Filament\Resources\ProductToBuyResource\RelationManagers;
 use App\Models\ProductToBuy;
@@ -98,7 +99,7 @@ class ProductToBuyResource extends Resource
                         'failed' => 'Failed'
                     ])
                     ->default('pending')
-                    ->disabled()
+
                     ->required(),
             ]);
     }
@@ -161,18 +162,33 @@ class ProductToBuyResource extends Resource
                     ->label('Buy All Products')
                     ->icon('heroicon-o-shopping-cart')
                     ->action(function () {
-                        $products = ProductToBuy::all();
+                        $products = ProductToBuy::where('order_status', '!=', 'completed')->get();
+                        if ($products->isEmpty()) {
+                            Notification::make()
+                                ->title('No pending orders to process')
+                                ->warning()
+                                ->send();
+                            return;
+                        }
+
                         $output = '';
                         foreach ($products as $product) {
-                            Artisan::call('app:process-buy', [
+                            $product->update(['order_status' => 'processing']);
+
+                            $exitCode = Artisan::call('app:process-buy', [
                                 'product' => $product->id,
                                 'quantity' => $product->quantity
                             ]);
 
                             $output .= Artisan::output();
+
+                            $product->update([
+                                'order_status' => $exitCode === 0 ? 'completed' : 'failed'
+                            ]);
                         }
+
                         Notification::make()
-                            ->title('All products purchased successfully')
+                            ->title('All products processed')
                             ->body($output)
                             ->success()
                             ->send();
@@ -180,6 +196,9 @@ class ProductToBuyResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+
+
+
                 Tables\Actions\Action::make('processBuy')
                     ->label('Process Buy')
                     ->icon('heroicon-o-shopping-cart')
@@ -223,7 +242,8 @@ class ProductToBuyResource extends Resource
                                 ->send();
                         }
                     })
-                    ->hidden(fn (ProductToBuy $record): bool => $record->order_status === 'completed'),
+                   ->hidden(fn(ProductToBuy $record): bool => $record->order_status === 'completed')
+                ,
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
