@@ -26,7 +26,6 @@ class Account extends Model
     ];
 
 
-
     protected $casts = [
         'ballance_gold' => 'decimal:2',
         'ballance_silver' => 'decimal:2',
@@ -37,6 +36,13 @@ class Account extends Model
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class);
+    }
+
+    public function purchasesLast24Hours()
+    {
+        return $this->transactions()
+            ->where('created_at', '>=', now()->subHours(24))
+            ->sum('amount'); // Assuming 'amount' is the field for purchase value
     }
 
     public function codes(): HasMany

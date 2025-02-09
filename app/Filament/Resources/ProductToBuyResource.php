@@ -18,9 +18,11 @@ use Illuminate\Support\Facades\Artisan;
 class ProductToBuyResource extends Resource
 {
     protected static ?string $model = ProductToBuy::class;
+    protected static ?string $label = 'Purchase order';
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static ?int $navigationSort = 3;
+
     public static function form(Form $form): Form
     {
         return $form
@@ -78,7 +80,7 @@ class ProductToBuyResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('account_type')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'global' => 'warning',
                         'usa' => 'success',
                         default => 'gray',
@@ -101,22 +103,22 @@ class ProductToBuyResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->headerActions([
-    Tables\Actions\Action::make('buy_all_products')
-        ->label('Buy All Products')
-        ->icon('heroicon-o-shopping-cart')
-        ->action(function () {
-            $products = ProductToBuy::all();
-            foreach ($products as $product) {
-                Artisan::call('app:process-buy', [
-                    'product' => $product->id,
-                    'quantity' => $product->quantity
-                ]);
-            }
-            Notification::make()
-                ->title('All products purchased successfully')
-                ->success()
-                ->send();
-        }),
+                Tables\Actions\Action::make('buy_all_products')
+                    ->label('Buy All Products')
+                    ->icon('heroicon-o-shopping-cart')
+                    ->action(function () {
+                        $products = ProductToBuy::all();
+                        foreach ($products as $product) {
+                            Artisan::call('app:process-buy', [
+                                'product' => $product->id,
+                                'quantity' => $product->quantity
+                            ]);
+                        }
+                        Notification::make()
+                            ->title('All products purchased successfully')
+                            ->success()
+                            ->send();
+                    }),
                 //
             ])
             ->actions([
@@ -130,7 +132,7 @@ class ProductToBuyResource extends Resource
                             ->numeric()
                             ->default(1)
                             ->minValue(1)
-                            ->maxValue(fn (ProductToBuy $record) => $record->quantity)
+                            ->maxValue(fn(ProductToBuy $record) => $record->quantity)
                     ])
                     ->action(function (ProductToBuy $record, array $data) {
                         $exitCode = Artisan::call('app:process-buy', [

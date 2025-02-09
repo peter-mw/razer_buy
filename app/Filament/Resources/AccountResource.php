@@ -73,12 +73,12 @@ class AccountResource extends Resource
                     ->numeric()
                     ->default(0)
                     ->step('0.01')
-                    ->disabled(),
+                 ,
                 Forms\Components\TextInput::make('ballance_silver')
                     ->numeric()
                     ->default(0)
                     ->step('0.01')
-                    ->disabled(),
+                   ,
             ]);
     }
 
@@ -132,8 +132,9 @@ class AccountResource extends Resource
                 Tables\Columns\TextColumn::make('limit_amount_per_day')
                     ->money()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('vendor')
-                    ->searchable()
+                Tables\Columns\TextColumn::make('purchases_last_24_hours')
+                    ->label('Purchases Last 24 Hours')
+                    ->getStateUsing(fn(Account $record) => $record->purchasesLast24Hours())
                     ->sortable(),
                 Tables\Columns\TextColumn::make('last_ballance_update_at')
                     ->dateTime()
@@ -237,7 +238,6 @@ class AccountResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
 
 
-
                     Tables\Actions\BulkAction::make('bulk_redeem_silver_to_gold')
                         ->label('Bulk Redeem Silver to Gold')
                         ->form([
@@ -250,7 +250,7 @@ class AccountResource extends Resource
                         ])
                         ->action(function ($records, array $data): void {
 
-                            $errors  = [];
+                            $errors = [];
 
                             foreach ($records as $record) {
                                 try {
@@ -263,7 +263,7 @@ class AccountResource extends Resource
                                 }
                             }
 
-                            if(count($errors) > 0) {
+                            if (count($errors) > 0) {
                                 Notification::make()
                                     ->danger()
                                     ->title('Failed to redeem silver to gold for some accounts')
