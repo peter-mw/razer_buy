@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Jobs\RedeemSilverToGoldJob;
 use Illuminate\Console\Command;
-use App\Models\Account;
 
 class RedeemSilverToGoldCommand extends Command
 {
@@ -12,31 +12,18 @@ class RedeemSilverToGoldCommand extends Command
 
     public function handle()
     {
-        $accountId = $this->argument('account-id');
-        $productId = $this->argument('product-id');
-        $account = Account::find($accountId);
+        try {
+            $accountId = $this->argument('account-id');
+            $productId = $this->argument('product-id');
 
-        // Handle product-id if provided
-        if ($productId) {
-            // Logic to handle product-id, e.g., validate or use it in the process
-            $this->info("Product ID provided: {$productId}");
+            RedeemSilverToGoldJob::dispatchSync($accountId, $productId);
+
+            $this->info('Silver to gold redemption has been queued successfully.');
+            return Command::SUCCESS;
+
+        } catch (\Exception $e) {
+            $this->error("Error queueing redemption: {$e->getMessage()}");
+            return Command::FAILURE;
         }
-
-        if (!$account) {
-            $this->error('Account not found.');
-            return;
-        }
-
-        if ($account->ballance_silver < 1000) {
-            $this->error('Not enough silver to redeem.');
-            return;
-        }
-
-        $goldToAdd = floor($account->ballance_silver / 1000);
-        $account->ballance_silver -= $goldToAdd * 1000;
-        $account->ballance_gold += $goldToAdd;
-        $account->save();
-
-        $this->info("Successfully redeemed {$goldToAdd} gold from silver.");
     }
 }
