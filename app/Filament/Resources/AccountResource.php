@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\AccountResource\Pages;
 use App\Filament\Resources\AccountResource\RelationManagers;
 use App\Models\Account;
+use App\Models\ProductToBuy;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -156,7 +157,22 @@ class AccountResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+
+                Tables\Filters\SelectFilter::make('account_type')
+                    ->options([
+                        'global' => 'Global',
+                        'usa' => 'USA',
+                    ])
+                    ->label('Account Type'),
+                Tables\Filters\SelectFilter::make('last_ballance_update_status')
+                    ->options([
+                        'success' => 'Success',
+                        'error' => 'Error',
+                        'pending' => 'Pending',
+                    ])
+                    ->label('Last Ballance Update Status'),
+
+
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -186,10 +202,18 @@ class AccountResource extends Resource
                 Action::make('redeem_silver_to_gold')
                     ->label('Redeem Silver to Gold')
                     ->icon('heroicon-o-cash')
-                    ->action(function (Account $record): void {
+                    ->form([
+                        Forms\Components\Select::make('product_id')
+                            ->label('Product ID')
+                            ->options(ProductToBuy::all()->mapWithKeys(function ($product) {
+                                return [$product->id => "{$product->product_name} - \${$product->buy_value}"];
+                            }))
+                    ])
+                    ->action(function (Account $record, array $data): void {
                         try {
                             Artisan::call('redeem:silver-to-gold', [
-                                'account-id' => $record->id
+                                'account-id' => $record->id,
+                                'product-id' => $data['product_id']
                             ]);
 
                             Notification::make()
@@ -205,11 +229,54 @@ class AccountResource extends Resource
                                 ->send();
                         }
                     })
-                    ->icon('heroicon-o-arrow-path')                    ,
+                    ->hidden()
+                    ->icon('heroicon-o-arrow-path'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+
+
+
+                    Tables\Actions\BulkAction::make('bulk_redeem_silver_to_gold')
+                        ->label('Bulk Redeem Silver to Gold')
+                        ->form([
+                            Forms\Components\Select::make('product_id')
+                                ->label('Product ID')
+                                ->options(ProductToBuy::all()->mapWithKeys(function ($product) {
+                                    return [$product->id => "{$product->product_name} - \${$product->buy_value}"];
+                                }))
+                                ->required(),
+                        ])
+                        ->action(function ($records, array $data): void {
+
+                            $errors  = [];
+
+                            foreach ($records as $record) {
+                                try {
+                                    Artisan::call('redeem:silver-to-gold', [
+                                        'account-id' => $record->id,
+                                        'product-id' => $data['product_id']
+                                    ]);
+                                } catch (\Exception $e) {
+                                    $errors[] = $e->getMessage();
+                                }
+                            }
+
+                            if(count($errors) > 0) {
+                                Notification::make()
+                                    ->danger()
+                                    ->title('Failed to redeem silver to gold for some accounts')
+                                    ->body(implode('<br>', $errors))
+                                    ->send();
+                                return;
+                            }
+
+                            Notification::make()
+                                ->success()
+                                ->title('Silver redeemed to Gold for selected accounts successfully')
+                                ->send();
+                        }),
                 ]),
             ]);
     }
