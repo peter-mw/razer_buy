@@ -161,7 +161,6 @@ class AccountResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Action::make('sync')
-                    ->icon('heroicon-o-arrow-path')
                     ->action(function (Account $record): void {
                         try {
                             $output = Artisan::call('accounts:sync-balances', [
@@ -182,7 +181,31 @@ class AccountResource extends Resource
                         }
                     })
                     ->tooltip('Sync account balances')
-                    ->color('success'),
+                    ->color('success')
+                ,
+                Action::make('redeem_silver_to_gold')
+                    ->label('Redeem Silver to Gold')
+                    ->icon('heroicon-o-cash')
+                    ->action(function (Account $record): void {
+                        try {
+                            Artisan::call('redeem:silver-to-gold', [
+                                'account-id' => $record->id
+                            ]);
+
+                            Notification::make()
+                                ->success()
+                                ->title('Silver redeemed to Gold successfully')
+                                ->body(Artisan::output())
+                                ->send();
+                        } catch (\Exception $e) {
+                            Notification::make()
+                                ->danger()
+                                ->title('Failed to redeem silver to gold')
+                                ->body($e->getMessage())
+                                ->send();
+                        }
+                    })
+                    ->icon('heroicon-o-arrow-path')                    ,
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

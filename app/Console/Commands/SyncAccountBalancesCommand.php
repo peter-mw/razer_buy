@@ -13,15 +13,15 @@ class SyncAccountBalancesCommand extends Command
     public function handle()
     {
         $accountId = $this->argument('account-id');
-        
+
         if ($accountId) {
             $account = Account::find($accountId);
-            
+
             if (!$account) {
                 $this->error("Account with ID {$accountId} not found.");
                 return 1;
             }
-            
+
             $this->syncAccount($account);
             $this->info("Account {$account->email} sync completed!");
             return 0;
@@ -53,7 +53,7 @@ class SyncAccountBalancesCommand extends Command
             // This is a placeholder that you should replace with actual API integration
             $response = [
                 'gold' => rand(100, 1000), // Replace with actual API data
-                'silver' => rand(100, 1000), // Replace with actual API data
+                'silver' => rand(1000, 10000), // Replace with actual API data
             ];
 
             $account->update([
