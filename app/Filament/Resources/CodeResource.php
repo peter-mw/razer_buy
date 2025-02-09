@@ -21,6 +21,8 @@ class CodeResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
+    protected static ?int $navigationSort = 4;
+
     public static function form(Form $form): Form
     {
         return $form
@@ -59,7 +61,7 @@ class CodeResource extends Resource
     {
         return $table
             ->defaultSort('created_at', 'desc')
-
+            ->paginated([10, 25, 50, 100, 500, 1000, 'all'])
             ->columns([
                 Tables\Columns\TextColumn::make('account.name')
                     ->sortable()
@@ -68,9 +70,7 @@ class CodeResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('serial_number')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('product.product_name')
-                    ->sortable()
-                    ->searchable(),
+
                 Tables\Columns\TextColumn::make('product_name')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('product_edition')
@@ -91,7 +91,40 @@ class CodeResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+
+
+                Tables\Filters\SelectFilter::make('account_id')
+                    ->label('Account')
+                    ->searchable()
+                    ->options(fn(): array => \App\Models\Account::pluck('name', 'id')->toArray()),
+
+                Tables\Filters\SelectFilter::make('product_name')
+                    ->label('Product Name')
+                    ->searchable()
+                    ->options(fn(): array => Code::distinct()->pluck('product_name', 'product_name')->toArray()),
+                Tables\Filters\SelectFilter::make('product_edition')
+                    ->label('Product Edition')
+                    ->searchable()
+                    ->options(fn(): array => Code::distinct()->pluck('product_edition', 'product_edition')->toArray()),
+
+
+                Tables\Filters\Filter::make('buy_date')
+                    ->form([
+                        Forms\Components\DatePicker::make('created_from'),
+                        Forms\Components\DatePicker::make('created_until'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['created_from'],
+                                fn(Builder $query, $date): Builder => $query->whereDate('buy_date', '>=', $date),
+                            )
+                            ->when(
+                                $data['created_until'],
+                                fn(Builder $query, $date): Builder => $query->whereDate('buy_date', '<=', $date),
+                            );
+                    })
+
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
