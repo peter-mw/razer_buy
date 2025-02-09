@@ -43,8 +43,6 @@ class ProductToBuyResource extends Resource
                     ->afterStateUpdated(function ($state, Forms\Set $set) {
                         if ($state) {
                             $product = Product::find($state);
-
-
                             if ($product) {
                                 $set('product_name', $product->product_slug);
                                 $set('product_edition', $product->product_edition);
@@ -194,7 +192,7 @@ class ProductToBuyResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\TransactionsRelationManager::class,
         ];
     }
 
