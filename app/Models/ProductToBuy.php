@@ -20,12 +20,14 @@ class ProductToBuy extends Model
         'account_type',
         'quantity',
         'buy_value',
+        'product_face_value',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'quantity' => 'integer',
         'buy_value' => 'decimal:2',
+        'product_face_value' => 'decimal:2',
     ];
 
     public function product(): BelongsTo

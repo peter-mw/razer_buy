@@ -47,6 +47,7 @@ class ProductToBuyResource extends Resource
                                 $set('product_name', $product->product_slug);
                                 $set('product_edition', $product->product_edition);
                                 $set('buy_value', $product->product_buy_value);
+                                $set('product_face_value', $product->product_face_value);
                                 $set('account_type', $product->account_type);
                             }
                         }
@@ -76,6 +77,13 @@ class ProductToBuyResource extends Resource
                     ->default(0)
                     ->minValue(0),
                 Forms\Components\TextInput::make('buy_value')
+                    ->required()
+                    ->numeric()
+                    ->prefix('$')
+                    ->default(0)
+                    ->step('0.01')
+                    ->minValue(0),
+                Forms\Components\TextInput::make('product_face_value')
                     ->required()
                     ->numeric()
                     ->prefix('$')
@@ -115,6 +123,9 @@ class ProductToBuyResource extends Resource
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('buy_value')
+                    ->money()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('product_face_value')
                     ->money()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')

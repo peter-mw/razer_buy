@@ -48,6 +48,11 @@ class ProductResource extends Resource
                     ->numeric()
                     ->prefix('$')
                     ->step('0.01'),
+                Forms\Components\TextInput::make('product_face_value')
+                    ->required()
+                    ->numeric()
+                    ->prefix('$')
+                    ->step('0.01'),
                 Forms\Components\TextInput::make('remote_crm_product_name')
                     ->maxLength(255),
             ]);
@@ -78,6 +83,9 @@ class ProductResource extends Resource
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('product_buy_value')
+                    ->money()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('product_face_value')
                     ->money()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('remote_crm_product_name')
