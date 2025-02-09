@@ -26,39 +26,51 @@ class ProcessBuyJob implements ShouldQueue
     {
         $product = ProductToBuy::findOrFail($this->productId);
 
-        // Adjust quantity if requested amount is more than available
-        $actualQuantity = min($this->quantity, $product->quantity);
-        if ($actualQuantity <= 0) {
-            throw new \Exception("Product is out of stock");
-        }
-
-        // Calculate total cost
-        $totalCost = $product->buy_value * $actualQuantity;
-
-        // Find eligible accounts with sufficient balance and matching account type
-        $accounts = Account::where('ballance_gold', '>=', $totalCost)
-            ->where('limit_amount_per_day', '>', 0)
+        // Get accounts with matching account type and positive daily limit
+        $accounts = Account::where('limit_amount_per_day', '>', 0)
             ->where('account_type', $product->account_type)
             ->get();
 
         $eligibleAccount = null;
+        $actualQuantity = 0;
 
         foreach ($accounts as $acc) {
+            // Calculate today's spent amount
             $todaySpent = Transaction::where('account_id', $acc->id)
                 ->whereDate('transaction_date', now())
                 ->sum('amount');
 
-            if (($todaySpent + $totalCost) <= $acc->limit_amount_per_day) {
+            // Calculate remaining daily limit
+            $remainingDailyLimit = $acc->limit_amount_per_day - $todaySpent;
+            if ($remainingDailyLimit <= 0) {
+                continue;
+            }
+
+            // Calculate maximum quantity possible based on balance and daily limit
+            $maxQuantityByBalance = floor($acc->ballance_gold / $product->buy_value);
+            $maxQuantityByDailyLimit = floor($remainingDailyLimit / $product->buy_value);
+            
+            // Calculate the actual quantity considering all constraints
+            $possibleQuantity = min(
+                $this->quantity,
+                $product->quantity,
+                $maxQuantityByBalance,
+                $maxQuantityByDailyLimit
+            );
+
+            if ($possibleQuantity > 0) {
                 $eligibleAccount = $acc;
+                $actualQuantity = $possibleQuantity;
                 break;
             }
         }
 
-        if (!$eligibleAccount) {
-            throw new \Exception("No eligible account found with sufficient balance and daily limit");
+        if (!$eligibleAccount || $actualQuantity <= 0) {
+            throw new \Exception("No eligible account found with sufficient balance and daily limit, or product is out of stock");
         }
 
         $account = $eligibleAccount;
+        $totalCost = $product->buy_value * $actualQuantity;
 
         // Create transaction
         $transaction = Transaction::create([

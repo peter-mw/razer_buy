@@ -14,7 +14,7 @@ class Product extends Model
         'id',
         'product_name',
         'product_slug',
-        'product_type',
+        'account_type',
         'product_edition',
         'product_buy_value',
         'remote_crm_product_name',

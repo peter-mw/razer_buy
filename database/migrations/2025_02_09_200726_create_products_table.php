@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->string('product_name');
             $table->string('product_slug');
-            $table->string('product_type');
+            $table->string('account_type');
             $table->string('product_edition');
             $table->decimal('product_buy_value', 10, 2);
             $table->string('duplicate_product_name')->nullable();

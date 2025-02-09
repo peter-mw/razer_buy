@@ -34,17 +34,22 @@ class ProductToBuyResource extends Resource
                     ->relationship('product', 'product_name')
                     ->label('Product')
                     ->required()
+                    ->live()
+                    ->reactive()
                     ->preload()
                     ->searchable()
                     ->native(false)
-                    ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->product_name} - {$record->product_edition} - \${$record->product_buy_value}")
+                    ->getOptionLabelFromRecordUsing(fn($record) => "{$record->product_name} - {$record->product_edition} - \${$record->product_buy_value}")
                     ->afterStateUpdated(function ($state, Forms\Set $set) {
                         if ($state) {
                             $product = Product::find($state);
+
+
                             if ($product) {
                                 $set('product_name', $product->product_slug);
                                 $set('product_edition', $product->product_edition);
                                 $set('buy_value', $product->product_buy_value);
+                                $set('account_type', $product->account_type);
                             }
                         }
                     }),
@@ -52,11 +57,11 @@ class ProductToBuyResource extends Resource
                     ->label('Product Name (slug)')
                     ->required()
                     ->maxLength(255)
-                    ->disabled(),
+                ,
                 Forms\Components\TextInput::make('product_edition')
                     ->required()
                     ->maxLength(255)
-                    ->disabled(),
+                ,
                 Forms\Components\Toggle::make('is_active')
                     ->required()
                     ->default(true),

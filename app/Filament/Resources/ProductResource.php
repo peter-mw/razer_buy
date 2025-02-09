@@ -32,9 +32,8 @@ class ProductResource extends Resource
                 Forms\Components\TextInput::make('product_slug')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\Select::make('product_type')
+                Forms\Components\Select::make('account_type')
                     ->required()
-
                     ->searchable()
                     ->options([
                         'global' => 'Global',
@@ -70,8 +69,8 @@ class ProductResource extends Resource
                     ->sortable()
                     ->searchable(),
 
-          
-                Tables\Columns\TextColumn::make('product_type')
+
+                Tables\Columns\TextColumn::make('account_type')
                     ->sortable()
                     ->searchable(),
 
