@@ -100,7 +100,23 @@ class ProductToBuyResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->filters([
+            ->headerActions([
+    Tables\Actions\Action::make('buy_all_products')
+        ->label('Buy All Products')
+        ->icon('heroicon-o-shopping-cart')
+        ->action(function () {
+            $products = ProductToBuy::all();
+            foreach ($products as $product) {
+                Artisan::call('app:process-buy', [
+                    'product' => $product->id,
+                    'quantity' => $product->quantity
+                ]);
+            }
+            Notification::make()
+                ->title('All products purchased successfully')
+                ->success()
+                ->send();
+        }),
                 //
             ])
             ->actions([
