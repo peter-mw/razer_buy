@@ -16,6 +16,7 @@ class ProductToBuy extends Model
         'product_id',
         'product_name',
         'product_edition',
+        'buy_value',
         'is_active',
         'quantity'
     ];

@@ -42,6 +42,13 @@ class ProductToBuyResource extends Resource
                     ->numeric()
                     ->default(0)
                     ->minValue(0),
+                Forms\Components\TextInput::make('buy_value')
+                    ->required()
+                    ->numeric()
+                    ->prefix('$')
+                    ->default(0)
+                    ->step('0.01')
+                    ->minValue(0),
             ]);
     }
 
@@ -64,6 +71,9 @@ class ProductToBuyResource extends Resource
                 Tables\Columns\TextColumn::make('quantity')
                     ->numeric()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('buy_value')
+                    ->money()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -81,20 +91,31 @@ class ProductToBuyResource extends Resource
                 Tables\Actions\Action::make('processBuy')
                     ->label('Process Buy')
                     ->icon('heroicon-o-shopping-cart')
-                    ->action(function (ProductToBuy $record) {
+                    ->form([
+                        Forms\Components\TextInput::make('quantity')
+                            ->required()
+                            ->numeric()
+                            ->default(1)
+                            ->minValue(1)
+                            ->maxValue(fn (ProductToBuy $record) => $record->quantity)
+                    ])
+                    ->action(function (ProductToBuy $record, array $data) {
                         $exitCode = Artisan::call('app:process-buy', [
-                            'product' => $record->id
+                            'product' => $record->id,
+                            'quantity' => $data['quantity']
                         ]);
 
                         if ($exitCode === 0) {
                             Notification::make()
-                                ->title('Buy process started')
+                                ->title('Buy process completed')
                                 ->success()
+                                ->body(Artisan::output())
                                 ->send();
                         } else {
                             Notification::make()
                                 ->title('Failed to process buy')
                                 ->danger()
+                                ->body(Artisan::output())
                                 ->send();
                         }
                     }),
