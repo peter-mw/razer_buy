@@ -37,18 +37,18 @@ class ProcessBuyCommand extends Command
 
             // Find eligible accounts with sufficient balance and matching account type
             $accounts = Account::where('ballance_gold', '>=', $totalCost)
-                ->where('limit_orders_per_day', '>', 0)
+                ->where('limit_amount_per_day', '>', 0)
                 ->where('account_type', $product->account_type)
                 ->get();
 
             $eligibleAccount = null;
 
             foreach ($accounts as $acc) {
-                $todayOrders = Transaction::where('account_id', $acc->id)
+                $todaySpent = Transaction::where('account_id', $acc->id)
                     ->whereDate('transaction_date', now())
-                    ->count();
+                    ->sum('amount');
 
-                if ($todayOrders < $acc->limit_orders_per_day) {
+                if (($todaySpent + $totalCost) <= $acc->limit_amount_per_day) {
                     $eligibleAccount = $acc;
                     break;
                 }
@@ -58,7 +58,7 @@ class ProcessBuyCommand extends Command
                 $this->error("No eligible account found. Requirements:");
                 $this->error("- Account type: {$product->account_type}");
                 $this->error("- Available balance >= {$totalCost}");
-                $this->error("- Daily order limit not reached");
+                $this->error("- Daily spending limit not reached");
                 return Command::FAILURE;
             }
 

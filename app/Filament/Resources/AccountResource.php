@@ -15,6 +15,7 @@ use Filament\Tables\Actions\Action;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Phpsa\FilamentPasswordReveal\Password;
 
 class AccountResource extends Resource
 {
@@ -22,6 +23,7 @@ class AccountResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static ?int $navigationSort = 1;
+
     public static function form(Form $form): Form
     {
         return $form
@@ -41,24 +43,29 @@ class AccountResource extends Resource
                         'usa' => 'USA',
                     ])
                 ,
-                Forms\Components\TextInput::make('password')
-                    ->password()
-                    ->required()
-                    ->hiddenOn('edit')
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('otp_seed')
-                    ->maxLength(255),
 
-                Forms\Components\TextInput::make('limit_orders_per_day')
+
+                Forms\Components\TextInput::make('limit_amount_per_day')
                     ->numeric()
                     ->default(0)
+                    ->step('0.01')
                     ->required(),
-                Forms\Components\TextInput::make('vendor')
+
+
+                Password::make('password')
+                    ->revealable()
+                    ->required()
                     ->maxLength(255),
-                Forms\Components\TextInput::make('email_password')
-                    ->password()
+                Password::make('otp_seed')
+                    ->revealable()
                     ->maxLength(255),
 
+
+                Forms\Components\TextInput::make('vendor')
+                    ->maxLength(255),
+                Password::make('email_password')
+                    ->revealable()
+                    ->maxLength(255),
 
 
                 Forms\Components\TextInput::make('ballance_gold')
@@ -121,8 +128,8 @@ class AccountResource extends Resource
                 Tables\Columns\TextColumn::make('ballance_silver')
                     ->money()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('limit_orders_per_day')
-                    ->numeric()
+                Tables\Columns\TextColumn::make('limit_amount_per_day')
+                    ->money()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('vendor')
                     ->searchable()
@@ -132,7 +139,7 @@ class AccountResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('last_ballance_update_status')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'success' => 'success',
                         'error' => 'danger',
                         default => 'warning',

@@ -11,6 +11,7 @@
         "filament/filament": "^3.2",
         "laravel/framework": "^11.31",
         "laravel/tinker": "^2.9",
+        "phpsa/filament-password-reveal": "^2.1",
         "pxlrbt/filament-excel": "^2.4"
     },
     "require-dev": {
