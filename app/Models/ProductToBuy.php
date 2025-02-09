@@ -21,6 +21,7 @@ class ProductToBuy extends Model
         'quantity',
         'buy_value',
         'product_face_value',
+        'order_status',
     ];
 
     protected $casts = [
@@ -28,6 +29,7 @@ class ProductToBuy extends Model
         'quantity' => 'integer',
         'buy_value' => 'decimal:2',
         'product_face_value' => 'decimal:2',
+        'order_status' => 'string',
     ];
 
     public function product(): BelongsTo

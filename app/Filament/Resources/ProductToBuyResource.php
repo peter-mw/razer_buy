@@ -90,6 +90,16 @@ class ProductToBuyResource extends Resource
                     ->default(0)
                     ->step('0.01')
                     ->minValue(0),
+                Forms\Components\Select::make('order_status')
+                    ->options([
+                        'pending' => 'Pending',
+                        'processing' => 'Processing',
+                        'completed' => 'Completed',
+                        'failed' => 'Failed'
+                    ])
+                    ->default('pending')
+                    ->disabled()
+                    ->required(),
             ]);
     }
 
@@ -127,6 +137,15 @@ class ProductToBuyResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('product_face_value')
                     ->money()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('order_status')
+                    ->badge()
+                    ->color(fn(string $state): string => match ($state) {
+                        'completed' => 'success',
+                        'processing' => 'warning',
+                        'failed' => 'danger',
+                        default => 'gray',
+                    })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -173,25 +192,38 @@ class ProductToBuyResource extends Resource
                             ->maxValue(fn(ProductToBuy $record) => $record->quantity)
                     ])
                     ->action(function (ProductToBuy $record, array $data) {
+                        if ($record->order_status === 'completed') {
+                            Notification::make()
+                                ->title('Order already completed')
+                                ->warning()
+                                ->send();
+                            return;
+                        }
+
+                        $record->update(['order_status' => 'processing']);
+
                         $exitCode = Artisan::call('app:process-buy', [
                             'product' => $record->id,
                             'quantity' => $data['quantity']
                         ]);
 
                         if ($exitCode === 0) {
+                            $record->update(['order_status' => 'completed']);
                             Notification::make()
                                 ->title('Buy process completed')
                                 ->success()
                                 ->body(Artisan::output())
                                 ->send();
                         } else {
+                            $record->update(['order_status' => 'failed']);
                             Notification::make()
                                 ->title('Failed to process buy')
                                 ->danger()
                                 ->body(Artisan::output())
                                 ->send();
                         }
-                    }),
+                    })
+                    ->hidden(fn (ProductToBuy $record): bool => $record->order_status === 'completed'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
