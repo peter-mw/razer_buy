@@ -33,6 +33,7 @@ class ProductToBuyResource extends Resource
                     ->required()
                     ->numeric(),
                 Forms\Components\TextInput::make('product_name')
+                    ->label('Product Name (slug)')
                     ->required()
                     ->maxLength(255),
                 Forms\Components\TextInput::make('product_edition')

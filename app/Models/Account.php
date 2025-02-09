@@ -15,14 +15,16 @@ class Account extends Model
         'email',
         'password',
         'otp_seed',
-        'ballance_gold',
-        'ballance_silver',
         'account_type',
-        'limit_amount_per_day',
         'vendor',
         'email_password',
+        'ballance_gold',
+        'ballance_silver',
+        'limit_amount_per_day',
         'last_ballance_update_at',
-        'last_ballance_update_status'
+        'last_ballance_update_status',
+        'service_code',
+        'client_id_login',
     ];
 
 

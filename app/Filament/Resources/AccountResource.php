@@ -68,6 +68,11 @@ class AccountResource extends Resource
                     ->revealable()
                     ->maxLength(255),
 
+                Forms\Components\TextInput::make('service_code')
+                    ->maxLength(255),
+
+                Forms\Components\TextInput::make('client_id_login')
+                    ->maxLength(255),
 
                 Forms\Components\TextInput::make('ballance_gold')
                     ->numeric()
@@ -112,6 +117,12 @@ class AccountResource extends Resource
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('email')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('service_code')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('client_id_login')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('account_type')

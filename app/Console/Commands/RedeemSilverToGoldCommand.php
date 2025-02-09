@@ -7,20 +7,20 @@ use App\Models\Account;
 
 class RedeemSilverToGoldCommand extends Command
 {
-protected $signature = 'redeem:silver-to-gold {account-id} {product-id?}';
+    protected $signature = 'redeem:silver-to-gold {account-id} {product-id?}';
     protected $description = 'Convert 1000 silver to 1 gold for the specified account';
 
     public function handle()
     {
         $accountId = $this->argument('account-id');
-$productId = $this->argument('product-id');
-$account = Account::find($accountId);
+        $productId = $this->argument('product-id');
+        $account = Account::find($accountId);
 
-// Handle product-id if provided
-if ($productId) {
-    // Logic to handle product-id, e.g., validate or use it in the process
-    $this->info("Product ID provided: {$productId}");
-}
+        // Handle product-id if provided
+        if ($productId) {
+            // Logic to handle product-id, e.g., validate or use it in the process
+            $this->info("Product ID provided: {$productId}");
+        }
 
         if (!$account) {
             $this->error('Account not found.');
