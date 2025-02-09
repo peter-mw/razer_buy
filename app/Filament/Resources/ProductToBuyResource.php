@@ -37,6 +37,13 @@ class ProductToBuyResource extends Resource
                 Forms\Components\Toggle::make('is_active')
                     ->required()
                     ->default(true),
+                Forms\Components\Select::make('account_type')
+                    ->required()
+                    ->options([
+                        'global' => 'Global',
+                        'usa' => 'USA',
+                    ])
+                    ->default('standard'),
                 Forms\Components\TextInput::make('quantity')
                     ->required()
                     ->numeric()
@@ -67,6 +74,15 @@ class ProductToBuyResource extends Resource
                     ->searchable(),
                 Tables\Columns\IconColumn::make('is_active')
                     ->boolean()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('account_type')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'global' => 'warning',
+                        'usa' => 'success',
+                        default => 'gray',
+                    })
+                    ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('quantity')
                     ->numeric()

@@ -32,26 +32,37 @@ class ProcessBuyCommand extends Command
                 return Command::FAILURE;
             }
 
-            // Create or get test account
-            $account = Account::firstOrCreate(
-                ['email' => 'test@example.com'],
-                [
-                    'name' => 'Test Account',
-                    'password' => bcrypt('password'),
-                    'ballance_gold' => 1000,
-                    'ballance_silver' => 1000,
-                    'limit_orders_per_day' => 10
-                ]
-            );
-
             // Calculate total cost
             $totalCost = $product->buy_value * $quantity;
 
-            // Check if account has enough balance
-            if ($account->ballance_gold < $totalCost) {
-                $this->error("Insufficient balance. Required: {$totalCost}, Available: {$account->ballance_gold}");
+            // Find eligible accounts with sufficient balance and matching account type
+            $accounts = Account::where('ballance_gold', '>=', $totalCost)
+                ->where('limit_orders_per_day', '>', 0)
+                ->where('account_type', $product->account_type)
+                ->get();
+
+            $eligibleAccount = null;
+
+            foreach ($accounts as $acc) {
+                $todayOrders = Transaction::where('account_id', $acc->id)
+                    ->whereDate('transaction_date', now())
+                    ->count();
+
+                if ($todayOrders < $acc->limit_orders_per_day) {
+                    $eligibleAccount = $acc;
+                    break;
+                }
+            }
+
+            if (!$eligibleAccount) {
+                $this->error("No eligible account found. Requirements:");
+                $this->error("- Account type: {$product->account_type}");
+                $this->error("- Available balance >= {$totalCost}");
+                $this->error("- Daily order limit not reached");
                 return Command::FAILURE;
             }
+
+            $account = $eligibleAccount;
 
             // Create transaction
             $transaction = Transaction::create([

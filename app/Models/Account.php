@@ -17,6 +17,7 @@ class Account extends Model
         'otp_seed',
         'ballance_gold',
         'ballance_silver',
+        'account_type',
         'limit_orders_per_day'
     ];
 

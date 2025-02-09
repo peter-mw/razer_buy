@@ -34,6 +34,13 @@ class AccountResource extends Resource
                     ->required()
                     ->maxLength(255)
                     ->unique(ignoreRecord: true),
+                Forms\Components\Select::make('account_type')
+                    ->required()
+                    ->options([
+                        'global' => 'Global',
+                        'usa' => 'USA',
+                    ])
+                ,
                 Forms\Components\TextInput::make('password')
                     ->password()
                     ->required()
@@ -88,6 +95,15 @@ class AccountResource extends Resource
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('email')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('account_type')
+                    ->badge()
+                    ->color(fn(string $state): string => match ($state) {
+                        'global' => 'Global',
+                        'usa' => 'USA',
+                        default => 'gray',
+                    })
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('ballance_gold')
