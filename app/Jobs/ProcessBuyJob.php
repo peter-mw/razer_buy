@@ -49,7 +49,7 @@ class ProcessBuyJob implements ShouldQueue
             // Calculate maximum quantity possible based on balance and daily limit
             $maxQuantityByBalance = floor($acc->ballance_gold / $product->buy_value);
             $maxQuantityByDailyLimit = floor($remainingDailyLimit / $product->buy_value);
-            
+
             // Calculate the actual quantity considering all constraints
             $possibleQuantity = min(
                 $this->quantity,
@@ -68,6 +68,14 @@ class ProcessBuyJob implements ShouldQueue
         if (!$eligibleAccount || $actualQuantity <= 0) {
             throw new \Exception("No eligible account found with sufficient balance and daily limit, or product is out of stock");
         }
+
+
+
+        // get pricr of pruct from the
+        // sync the price
+
+
+
 
         $account = $eligibleAccount;
         $totalCost = $product->buy_value * $actualQuantity;

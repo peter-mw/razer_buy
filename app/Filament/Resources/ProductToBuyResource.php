@@ -192,6 +192,7 @@ class ProductToBuyResource extends Resource
     public static function getRelations(): array
     {
         return [
+            RelationManagers\CodesRelationManager::class,
             RelationManagers\TransactionsRelationManager::class,
         ];
     }

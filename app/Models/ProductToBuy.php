@@ -37,4 +37,9 @@ class ProductToBuy extends Model
     {
         return $this->hasMany(Transaction::class, 'product_id');
     }
+
+    public function codes(): HasMany
+    {
+        return $this->hasMany(Code::class, 'product_id');
+    }
 }
