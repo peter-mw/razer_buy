@@ -11,7 +11,9 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
+use App\Models\Account;
+use Filament\Widgets\Widget;
+use App\Filament\Widgets\AccountBalancesWidget;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Artisan;
 
@@ -119,7 +121,6 @@ class ProductToBuyResource extends Resource
                             ->success()
                             ->send();
                     }),
-                //
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

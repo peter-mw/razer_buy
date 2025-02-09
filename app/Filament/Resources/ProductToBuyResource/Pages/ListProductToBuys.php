@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\ProductToBuyResource\Pages;
 
 use App\Filament\Resources\ProductToBuyResource;
+use App\Filament\Widgets\AccountBalancesWidget;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 
@@ -14,6 +15,13 @@ class ListProductToBuys extends ListRecords
     {
         return [
             Actions\CreateAction::make(),
+        ];
+    }
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            AccountBalancesWidget::class,
         ];
     }
 }
