@@ -7,9 +7,12 @@ use App\Filament\Resources\AccountResource\RelationManagers;
 use App\Models\Account;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Tables\Actions\Action;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
@@ -58,6 +61,28 @@ class AccountResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->headerActions([
+                Tables\Actions\Action::make('sync_all')
+                    ->label('Sync All Accounts')
+                    ->icon('heroicon-o-arrow-path')
+                    ->color('success')
+                    ->action(function () {
+                        try {
+                            Artisan::call('accounts:sync-balances');
+                            Notification::make()
+                                ->success()
+                                ->title('All accounts synced successfully')
+                                ->body(Artisan::output())
+                                ->send();
+                        } catch (\Exception $e) {
+                            Notification::make()
+                                ->danger()
+                                ->title('Failed to sync accounts')
+                                ->body($e->getMessage())
+                                ->send();
+                        }
+                    })
+            ])
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
@@ -88,6 +113,29 @@ class AccountResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Action::make('sync')
+                    ->icon('heroicon-o-arrow-path')
+                    ->action(function (Account $record): void {
+                        try {
+                            $output = Artisan::call('accounts:sync-balances', [
+                                'account-id' => $record->id
+                            ]);
+
+                            Notification::make()
+                                ->success()
+                                ->title('Account synced successfully')
+                                ->body(Artisan::output())
+                                ->send();
+                        } catch (\Exception $e) {
+                            Notification::make()
+                                ->danger()
+                                ->title('Failed to sync account')
+                                ->body($e->getMessage())
+                                ->send();
+                        }
+                    })
+                    ->tooltip('Sync account balances')
+                    ->color('success'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
