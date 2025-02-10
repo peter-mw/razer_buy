@@ -3,8 +3,8 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Exports\CodeExporter;
-use App\Filament\Resources\ProductToBuyResource\Pages;
-use App\Filament\Resources\ProductToBuyResource\RelationManagers;
+use App\Filament\Resources\PurchaseOrderResource\Pages;
+use App\Filament\Resources\PurchaseOrderResource\RelationManagers;
 use App\Models\ProductToBuy;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -19,7 +19,7 @@ use App\Filament\Widgets\AccountBalancesWidget;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Artisan;
 
-class ProductToBuyResource extends Resource
+class PurchaseOrderResource extends Resource
 {
     protected static ?string $model = ProductToBuy::class;
     protected static ?string $label = 'Purchase order';

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\ProductToBuyResource\RelationManagers;
+namespace App\Filament\Resources\PurchaseOrderResource\RelationManagers;
 
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
