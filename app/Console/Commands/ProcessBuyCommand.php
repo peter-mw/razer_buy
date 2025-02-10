@@ -28,9 +28,12 @@ class ProcessBuyCommand extends Command
                 $this->warn("Only {$product->quantity} items available. Will purchase maximum available quantity.");
             }
 
+            // Update product status to processing
+            $product->update(['order_status' => 'processing']);
+
             ProcessBuyJob::dispatch($productId, $quantity);
 
-            $this->info('Buy process has been queued successfully.');
+            $this->info('Buy process has been queued and is now processing.');
             if ($product->quantity < $quantity) {
                 $this->info("Will attempt to purchase up to {$product->quantity} items.");
             }

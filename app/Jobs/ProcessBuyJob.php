@@ -68,6 +68,8 @@ class ProcessBuyJob implements ShouldQueue
         }
 
         if (!$eligibleAccount || $actualQuantity <= 0) {
+            // Update status to failed if no eligible account found
+            $product->update(['order_status' => 'failed']);
             throw new \Exception("No eligible account found with sufficient balance and daily limit, or product is out of stock");
         }
 
@@ -136,9 +138,10 @@ class ProcessBuyJob implements ShouldQueue
             'ballance_gold' => $account->ballance_gold - $totalAmount
         ]);
 
-        // Update product quantity
+        // Update product quantity and status
         $product->update([
-            'quantity' => $product->quantity - count($ready)
+            'quantity' => $product->quantity - count($ready),
+            'order_status' => 'completed'
         ]);
     }
 

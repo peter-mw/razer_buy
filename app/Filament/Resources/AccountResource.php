@@ -29,9 +29,14 @@ class AccountResource extends Resource
     {
         return $form
             ->schema([
+              /*  Forms\Components\TextInput::make('id')
+                    ->numeric()
+                    ->maxLength(255),*/
                 Forms\Components\TextInput::make('name')
                     ->required()
                     ->maxLength(255),
+
+
                 Forms\Components\TextInput::make('email')
                     ->email()
                     ->required()
@@ -48,7 +53,7 @@ class AccountResource extends Resource
 
                 Forms\Components\TextInput::make('limit_amount_per_day')
                     ->numeric()
-                    ->default(0)
+                    ->default(1000000)
                     ->step('0.01')
                     ->required(),
 
@@ -69,6 +74,7 @@ class AccountResource extends Resource
                     ->maxLength(255),
 
                 Forms\Components\TextInput::make('service_code')
+                    ->numeric()
                     ->maxLength(255),
 
                 Forms\Components\TextInput::make('client_id_login')
@@ -148,6 +154,7 @@ class AccountResource extends Resource
                 Tables\Columns\TextColumn::make('limit_amount_per_day')
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->money()
+                    ->default(100000)
                     ->sortable(),
                 Tables\Columns\TextColumn::make('purchases_last_24_hours')
                     ->toggleable(isToggledHiddenByDefault: true)
