@@ -108,6 +108,8 @@ class ProductToBuyResource extends Resource
         return $table
             ->defaultSort('created_at', 'desc')
             ->columns([
+                Tables\Columns\TextColumn::make('id')->toggleable(),
+
                 Tables\Columns\TextColumn::make('product_id')
                     ->sortable()
                     ->searchable(),
