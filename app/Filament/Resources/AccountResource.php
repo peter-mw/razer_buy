@@ -96,6 +96,7 @@ class AccountResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->paginated(false)
             ->headerActions([
                 Tables\Actions\Action::make('sync_all')
                     ->label('Sync All Accounts')

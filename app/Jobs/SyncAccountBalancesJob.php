@@ -48,14 +48,21 @@ class SyncAccountBalancesJob implements ShouldQueue
 
             // Determine if this is a top-up by comparing with new balances
             $isTopUp = floatval($response['gold']) > floatval($account->ballance_gold);
+            
+            // Check if balance has changed
+            $balanceChanged = 
+                floatval($response['gold']) !== floatval($account->ballance_gold) ||
+                floatval($response['silver']) !== floatval($account->ballance_silver);
 
-            // Record the current balance in history before updating
-            $account->balanceHistories()->create([
-                'balance_gold' => $account->ballance_gold,
-                'balance_silver' => $account->ballance_silver,
-                'balance_update_time' => $account->last_ballance_update_at ?? now(),
-                'balance_event' => $isTopUp ? 'topup' : null,
-            ]);
+            // Only create history record if balance changed or it's a top-up
+            if ($balanceChanged || $isTopUp) {
+                $account->balanceHistories()->create([
+                    'balance_gold' => $account->ballance_gold,
+                    'balance_silver' => $account->ballance_silver,
+                    'balance_update_time' => $account->last_ballance_update_at ?? now(),
+                    'balance_event' => $isTopUp ? 'topup' : null,
+                ]);
+            }
 
             $account->update([
                 'ballance_gold' => $response['gold'],
