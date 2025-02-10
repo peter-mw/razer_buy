@@ -72,50 +72,42 @@ class ProcessBuyJob implements ShouldQueue
         }
 
 
-        // get pricr of pruct from the
-        // sync the price
         $service = new \App\Services\RazerService($eligibleAccount);
-        $buyProductsResults = $service->buyProduct($product);
-
-
-        if (empty($buyProductsResults)) {
-            throw new \Exception("Could not buy product from the service");
-        }
-
-
         $account = $eligibleAccount;
-        $totalCost = $product->buy_value * $actualQuantity;
-
         $ready = [];
-        foreach ($buyProductsResults as $buyProducts) {
-            if (!isset($buyProducts['Code'], $buyProducts['SN'], $buyProducts['Amount'], $buyProducts['TransactionDate'])) {
+        $remainingQuantity = $actualQuantity;
+
+        // Process in chunks of 5
+        while ($remainingQuantity > 0) {
+            $chunkSize = min(5, $remainingQuantity);
+
+            $buyProductsResults = $service->buyProduct($product, $chunkSize);
+
+            if (empty($buyProductsResults)) {
                 continue;
             }
-            $ready[] = [
-                'code' => $buyProducts['Code'],
-                'serial_number' => $buyProducts['SN'],
-                'amount' => $buyProducts['Amount'],
-                'buy_date' => date('Y-m-d H:i:s', strtotime($buyProducts['TransactionDate'])),
-                'transaction_id' => $buyProducts['SN'] // Using SN as transaction ID since it's unique
-            ];
+
+            foreach ($buyProductsResults as $buyProducts) {
+                if (!isset($buyProducts['Code'], $buyProducts['SN'], $buyProducts['Amount'], $buyProducts['TransactionDate'])) {
+                    continue;
+                }
+                $ready[] = [
+                    'code' => $buyProducts['Code'],
+                    'serial_number' => $buyProducts['SN'],
+                    'amount' => $buyProducts['Amount'],
+                    'buy_date' => date('Y-m-d H:i:s', strtotime($buyProducts['TransactionDate'])),
+                    'transaction_id' => $buyProducts['SN'] // Using SN as transaction ID since it's unique
+                ];
+            }
+
+            $remainingQuantity -= $chunkSize;
         }
 
         $totalAmount = 0;
 
         // Create transaction and code for each item
         foreach ($ready as $item) {
-
-            /*
-             *
-            "code" => "6NRPKPJLR1MP"
-            "serial_number" => "M01000002173914380153114021613"
-            "amount" => "5.190000"
-            "buy_date" => "2025-02-10 16:51:59"
-            "transaction_id" => "M01000002173914380153114021613"
-            */
             // Create transaction
-
-
             Transaction::create([
                 'account_id' => $account->id,
                 'amount' => $item['amount'],

@@ -68,7 +68,7 @@ class RazerService
     }
 
 
-    public function buyProduct(ProductToBuy $productToBuy)
+    public function buyProduct(ProductToBuy $productToBuy,$quantity=1)
     {
         $workdir = $this->getWorkdir();
         $account = $this->account;
@@ -82,7 +82,7 @@ class RazerService
             '-serviceCode=' . escapeshellarg($account->service_code),
             '-productId=' . escapeshellarg($productToBuy->product_id),
             '-permalink=' . escapeshellarg($productToBuy->product_name),
-            '-count=' . escapeshellarg($productToBuy->quantity),
+            '-count=' . escapeshellarg($quantity),
         ];
 
         $cmd = implode(' ', $command);

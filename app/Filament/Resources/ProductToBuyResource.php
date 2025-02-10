@@ -53,18 +53,15 @@ class ProductToBuyResource extends Resource
                             }
                         }
                     }),
-                Forms\Components\TextInput::make('product_name')
+                Forms\Components\Hidden::make('product_name')
                     ->label('Product Name (slug)')
-                    ->required()
-                    ->maxLength(255)
+
+
                 ,
-                Forms\Components\TextInput::make('product_edition')
-                    ->required()
-                    ->maxLength(255)
+                Forms\Components\Hidden::make('product_edition')
+
                 ,
-                Forms\Components\Toggle::make('is_active')
-                    ->required()
-                    ->default(true),
+
                 Forms\Components\Select::make('account_type')
                     ->required()
                     ->options([
@@ -77,22 +74,15 @@ class ProductToBuyResource extends Resource
                     ->numeric()
                     ->default(0)
                     ->minValue(0),
-                Forms\Components\TextInput::make('buy_value')
-                    ->required()
-                    ->numeric()
-                    ->prefix('$')
-                    ->default(0)
-                    ->step('0.01')
-                    ->minValue(0),
-                Forms\Components\TextInput::make('product_face_value')
-                    ->required()
-                    ->numeric()
-                    ->prefix('$')
-                    ->default(0)
-                    ->step('0.01')
-                    ->minValue(0),
+                Forms\Components\Hidden::make('buy_value')
+                    ,
+                Forms\Components\Hidden::make('product_face_value')
+                    ,
+              /*  Forms\Components\Toggle::make('is_active')
+                ,*/
                 Forms\Components\Select::make('order_status')
                     ->options([
+                        'draft' => 'Draft',
                         'pending' => 'Pending',
                         'processing' => 'Processing',
                         'completed' => 'Completed',
@@ -119,9 +109,7 @@ class ProductToBuyResource extends Resource
                 Tables\Columns\TextColumn::make('product_edition')
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\IconColumn::make('is_active')
-                    ->boolean()
-                    ->sortable(),
+           
                 Tables\Columns\TextColumn::make('account_type')
                     ->badge()
                     ->color(fn(string $state): string => match ($state) {
