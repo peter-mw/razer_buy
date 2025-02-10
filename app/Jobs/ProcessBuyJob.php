@@ -84,13 +84,26 @@ class ProcessBuyJob implements ShouldQueue
             $chunkSize = min(2, $remainingQuantity);
 
             $buyProductsResults = $service->buyProduct($product, $chunkSize);
+            $foundProduct = false;
+            if ($buyProductsResults and count($buyProductsResults) == 2) {
+                foreach ($buyProductsResults as $buyProducts) {
+                    if (isset($buyProducts['Code'])) {
+                        $foundProduct = true;
+                    }
+                }
+            }
+
+            if (!$foundProduct) {
+                // retry
+                $buyProductsResults = $service->buyProduct($product, $chunkSize);
+            }
 
             if (empty($buyProductsResults)) {
                 continue;
             }
 
             foreach ($buyProductsResults as $buyProducts) {
-                if (!isset($buyProducts['Code'], $buyProducts['SN'], $buyProducts['Amount'], $buyProducts['TransactionDate'])) {
+                if (!isset($buyProducts['Code'])) {
                     continue;
                 }
                 $ready[] = [

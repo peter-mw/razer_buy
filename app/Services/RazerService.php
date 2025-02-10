@@ -68,7 +68,7 @@ class RazerService
     }
 
 
-    public function buyProduct(ProductToBuy $productToBuy,$quantity=1)
+    public function buyProduct(ProductToBuy $productToBuy, $quantity = 1)
     {
         $workdir = $this->getWorkdir();
         $account = $this->account;
@@ -114,12 +114,12 @@ class RazerService
             if ($return_value !== 0) {
                 throw new \RuntimeException("Command failed with error: " . $errorOutput);
             }
-
+            $format = $this->formatOutput($output);
 
             file_put_contents($workdir . '/buy_log.txt', $output);
 
 
-            return $this->formatOutput($output);
+            return $format;
         } else {
             throw new \RuntimeException("Unable to start the process.");
         }
