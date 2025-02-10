@@ -104,7 +104,7 @@ class RazerService
             1 => ["pipe", "w"],  // stdout is a pipe that the child will write to
             2 => ["pipe", "w"]   // stderr is a pipe that the child will write to
         ];
-
+        file_put_contents($workdir . '/buy_cmd.txt', $cmd);
 
         $process = proc_open($cmd, $descriptorspec, $pipes, $workdir, null);
 
@@ -122,6 +122,7 @@ class RazerService
 
             // Close the process and get the exit code
             $return_value = proc_close($process);
+            file_put_contents($workdir . '/buy_log.txt', $output);
 
             if ($return_value !== 0) {
                 SystemLog::create([
@@ -132,9 +133,19 @@ class RazerService
                 ]);
                 throw new \RuntimeException("Command failed with error: " . $errorOutput);
             }
+
+            if (strpos($output, 'Error unmarshalling response: invalid character') !== false) {
+                SystemLog::create([
+                    'source' => 'RazerService::buyProduct',
+                    'params' => $params,
+                    'response' => ['error' => 'Error unmarshalling response: invalid character'],
+                    'status' => 'error'
+                ]);
+                throw new \RuntimeException("Error unmarshalling response: invalid character");
+            }
+
             $format = $this->formatOutput($output);
 
-            file_put_contents($workdir . '/buy_log.txt', $output);
 
             SystemLog::create([
                 'source' => 'RazerService::buyProduct',
@@ -145,6 +156,15 @@ class RazerService
 
             return $format;
         } else {
+
+            SystemLog::create([
+                'source' => 'RazerService::buyProduct',
+                'params' => $params,
+                'response' => ['error' => 'Unable to start the process.'],
+                'status' => 'error'
+            ]);
+
+
             throw new \RuntimeException("Unable to start the process.");
         }
     }
@@ -176,6 +196,7 @@ class RazerService
             1 => ["pipe", "w"],  // stdout is a pipe that the child will write to
             2 => ["pipe", "w"]   // stderr is a pipe that the child will write to
         ];
+        file_put_contents($workdir . '/buy_ballance.txt', $cmd);
 
         $process = proc_open($cmd, $descriptorspec, $pipes, $workdir, null);
 
@@ -232,6 +253,15 @@ class RazerService
 
             return $return;
         } else {
+
+            SystemLog::create([
+                'source' => 'RazerService::getAccountBallance',
+                'params' => $params,
+                'response' => ['error' => 'Unable to start the process.'],
+                'status' => 'error'
+            ]);
+
+
             throw new \RuntimeException("Unable to start the process.");
         }
     }

@@ -103,7 +103,7 @@ class ProcessBuyJob implements ShouldQueue
 
             if (!$foundProduct) {
                 // retry
-                sleep(2);
+                sleep(1);
                 $buyProductsResults = $service->buyProduct($product, $chunkSize);
             }
 

@@ -18,6 +18,7 @@ use Filament\Widgets\Widget;
 use App\Filament\Widgets\AccountBalancesWidget;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Validation\ValidationException;
 
 class PurchaseOrderResource extends Resource
 {
@@ -73,7 +74,8 @@ class PurchaseOrderResource extends Resource
                     ->required()
                     ->numeric()
                     ->default(0)
-                    ->minValue(0),
+                    ->minValue(0)
+                    ->live(),
                 Forms\Components\Hidden::make('buy_value')
                 ,
                 Forms\Components\Hidden::make('product_face_value')
@@ -88,7 +90,22 @@ class PurchaseOrderResource extends Resource
                     ->searchable()
                     ->preload()
                     ->nullable()
-                    ->getOptionLabelFromRecordUsing(fn($record) => "{$record->name} - Balance: \${$record->ballance_gold}"),
+                    ->live()
+                    ->getOptionLabelFromRecordUsing(fn($record) => "{$record->name} - Balance: \${$record->ballance_gold}")
+                    ->afterStateUpdated(function ($state, Forms\Get $get) {
+                        if ($state && $get('quantity')) {
+                            $account = Account::find($state);
+                            $quantity = $get('quantity');
+                            $buyValue = $get('buy_value');
+                            $totalCost = $quantity * $buyValue;
+
+                            if ($account && $account->ballance_gold < $totalCost) {
+                                throw ValidationException::withMessages([
+                                    'account_id' => 'Account does not have enough balance to buy this product'
+                                ]);
+                            }
+                        }
+                    }),
                 /*  Forms\Components\Toggle::make('is_active')
                   ,*/
                 Forms\Components\Select::make('order_status')
