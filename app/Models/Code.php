@@ -33,6 +33,6 @@ class Code extends Model
 
     public function product(): BelongsTo
     {
-        return $this->belongsTo(ProductToBuy::class, 'product_id');
+        return $this->belongsTo(PurchaseOrders::class, 'product_id');
     }
 }

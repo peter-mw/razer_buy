@@ -5,7 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\AccountResource\Pages;
 use App\Filament\Resources\AccountResource\RelationManagers;
 use App\Models\Account;
-use App\Models\ProductToBuy;
+use App\Models\PurchaseOrders;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -234,7 +234,7 @@ class AccountResource extends Resource
                     ->form([
                         Forms\Components\Select::make('product_id')
                             ->label('Product ID')
-                            ->options(ProductToBuy::all()->mapWithKeys(function ($product) {
+                            ->options(PurchaseOrders::all()->mapWithKeys(function ($product) {
                                 return [$product->id => "{$product->product_name} - \${$product->buy_value}"];
                             }))
                     ])
@@ -271,7 +271,7 @@ class AccountResource extends Resource
                         ->form([
                             Forms\Components\Select::make('product_id')
                                 ->label('Product ID')
-                                ->options(ProductToBuy::all()->mapWithKeys(function ($product) {
+                                ->options(PurchaseOrders::all()->mapWithKeys(function ($product) {
                                     return [$product->id => "{$product->product_name} - \${$product->buy_value}"];
                                 }))
                                 ->required(),

@@ -28,6 +28,6 @@ class Product extends Model
 
     public function productsToBuy(): HasMany
     {
-        return $this->hasMany(ProductToBuy::class, 'product_id');
+        return $this->hasMany(PurchaseOrders::class, 'product_id');
     }
 }

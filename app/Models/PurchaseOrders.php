@@ -7,11 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class ProductToBuy extends Model
+class PurchaseOrders extends Model
 {
     use HasFactory;
 
-    protected $table = 'products_to_buy';
+    protected $table = 'purchase_orders';
     protected $fillable = [
         'product_id',
         'product_name',

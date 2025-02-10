@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\Account;
-use App\Models\ProductToBuy;
+use App\Models\PurchaseOrders;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 
@@ -68,7 +68,7 @@ class RazerService
     }
 
 
-    public function buyProduct(ProductToBuy $productToBuy, $quantity = 1)
+    public function buyProduct(PurchaseOrders $productToBuy, $quantity = 1)
     {
         $workdir = $this->getWorkdir();
         $account = $this->account;

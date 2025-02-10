@@ -4,7 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Account;
 use App\Models\Code;
-use App\Models\ProductToBuy;
+use App\Models\PurchaseOrders;
 use App\Models\Transaction;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -26,7 +26,7 @@ class ProcessBuyJob implements ShouldQueue
 
     public function handle(): void
     {
-        $product = ProductToBuy::findOrFail($this->productId);
+        $product = PurchaseOrders::findOrFail($this->productId);
 
         // Get accounts with matching account type and positive daily limit
         $accounts = Account::where('limit_amount_per_day', '>', 0)
@@ -95,6 +95,7 @@ class ProcessBuyJob implements ShouldQueue
 
             if (!$foundProduct) {
                 // retry
+                sleep(2);
                 $buyProductsResults = $service->buyProduct($product, $chunkSize);
             }
 

@@ -5,7 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Exports\CodeExporter;
 use App\Filament\Resources\PurchaseOrderResource\Pages;
 use App\Filament\Resources\PurchaseOrderResource\RelationManagers;
-use App\Models\ProductToBuy;
+use App\Models\PurchaseOrders;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\Artisan;
 
 class PurchaseOrderResource extends Resource
 {
-    protected static ?string $model = ProductToBuy::class;
+    protected static ?string $model = PurchaseOrders::class;
     protected static ?string $label = 'Purchase order';
 
     protected static ?string $navigationIcon = 'heroicon-o-shopping-cart';
@@ -151,7 +151,7 @@ class PurchaseOrderResource extends Resource
                     ->label('Buy All Products')
                     ->icon('heroicon-o-shopping-cart')
                     ->action(function () {
-                        $products = ProductToBuy::where('order_status', '!=', 'completed')->get();
+                        $products = PurchaseOrders::where('order_status', '!=', 'completed')->get();
                         if ($products->isEmpty()) {
                             Notification::make()
                                 ->title('No pending orders to process')
@@ -194,11 +194,11 @@ class PurchaseOrderResource extends Resource
                         Forms\Components\TextInput::make('quantity')
                             ->required()
                             ->numeric()
-                            ->default(fn(ProductToBuy $record) => $record->quantity)
+                            ->default(fn(PurchaseOrders $record) => $record->quantity)
                             ->minValue(1)
-                            ->maxValue(fn(ProductToBuy $record) => $record->quantity)
+                            ->maxValue(fn(PurchaseOrders $record) => $record->quantity)
                     ])
-                    ->action(function (ProductToBuy $record, array $data) {
+                    ->action(function (PurchaseOrders $record, array $data) {
                         if ($record->order_status === 'completed') {
                             Notification::make()
                                 ->title('Order already completed')
@@ -230,7 +230,7 @@ class PurchaseOrderResource extends Resource
                                 ->send();
                         }
                     })
-                    ->hidden(fn(ProductToBuy $record): bool => $record->order_status === 'completed')
+                    ->hidden(fn(PurchaseOrders $record): bool => $record->order_status === 'completed')
                 ,
             ])
             ->bulkActions([

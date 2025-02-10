@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Jobs\ProcessBuyJob;
-use App\Models\ProductToBuy;
+use App\Models\PurchaseOrders;
 use Illuminate\Console\Command;
 
 class ProcessBuyCommand extends Command
@@ -22,7 +22,7 @@ class ProcessBuyCommand extends Command
                 return Command::FAILURE;
             }
 
-            $product = ProductToBuy::findOrFail($productId);
+            $product = PurchaseOrders::findOrFail($productId);
 
             if ($product->quantity < $quantity) {
                 $this->warn("Only {$product->quantity} items available. Will purchase maximum available quantity.");
