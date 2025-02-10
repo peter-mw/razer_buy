@@ -109,7 +109,7 @@ class ProductToBuyResource extends Resource
                 Tables\Columns\TextColumn::make('product_edition')
                     ->sortable()
                     ->searchable(),
-           
+
                 Tables\Columns\TextColumn::make('account_type')
                     ->badge()
                     ->color(fn(string $state): string => match ($state) {
@@ -194,7 +194,7 @@ class ProductToBuyResource extends Resource
                         Forms\Components\TextInput::make('quantity')
                             ->required()
                             ->numeric()
-                            ->default(1)
+                            ->default(fn(ProductToBuy $record) => $record->quantity)
                             ->minValue(1)
                             ->maxValue(fn(ProductToBuy $record) => $record->quantity)
                     ])

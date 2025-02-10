@@ -23,7 +23,7 @@ class SyncAccountBalancesCommand extends Command
                 }
             }
 
-            SyncAccountBalancesJob::dispatchSync($accountId);
+            SyncAccountBalancesJob::dispatch($accountId);
 
             $this->info($accountId
                 ? "Account sync has been queued successfully."

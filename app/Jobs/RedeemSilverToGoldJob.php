@@ -14,12 +14,17 @@ class RedeemSilverToGoldJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public function __construct(
-        protected int $accountId,
+        protected int  $accountId,
         protected ?int $productId = null
-    ) {}
+    )
+    {
+    }
 
     public function handle(): void
     {
+
+        abort(500, 'Not implemented yet');
+
         $account = Account::findOrFail($this->accountId);
 
         if ($account->ballance_silver < 1000) {

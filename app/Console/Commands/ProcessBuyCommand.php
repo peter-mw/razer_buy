@@ -28,7 +28,7 @@ class ProcessBuyCommand extends Command
                 $this->warn("Only {$product->quantity} items available. Will purchase maximum available quantity.");
             }
 
-            ProcessBuyJob::dispatchSync($productId, $quantity);
+            ProcessBuyJob::dispatch($productId, $quantity);
 
             $this->info('Buy process has been queued successfully.');
             if ($product->quantity < $quantity) {

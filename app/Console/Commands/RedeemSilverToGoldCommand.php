@@ -16,7 +16,7 @@ class RedeemSilverToGoldCommand extends Command
             $accountId = $this->argument('account-id');
             $productId = $this->argument('product-id');
 
-            RedeemSilverToGoldJob::dispatchSync($accountId, $productId);
+            RedeemSilverToGoldJob::dispatch($accountId, $productId);
 
             $this->info('Silver to gold redemption has been queued successfully.');
             return Command::SUCCESS;

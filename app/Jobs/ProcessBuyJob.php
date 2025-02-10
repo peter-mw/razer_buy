@@ -79,7 +79,7 @@ class ProcessBuyJob implements ShouldQueue
 
         // Process in chunks of 5
         while ($remainingQuantity > 0) {
-            $chunkSize = min(5, $remainingQuantity);
+            $chunkSize = min(2, $remainingQuantity);
 
             $buyProductsResults = $service->buyProduct($product, $chunkSize);
 
