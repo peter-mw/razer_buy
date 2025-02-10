@@ -18,7 +18,7 @@ Product: Yalla Ludo - USD 5 Diamonds , Code: 55RPMMHJ6Q3R, SN: M1118111617391366
 
 
     $account = \App\Models\Account::find(3);
-    $productTobuy = \App\Models\ProductToBuy::find(1);
+    $productTobuy = \App\Models\PurchaseOrders::find(1);
     //dd($account);
 
     $service = new \App\Services\RazerService($account);

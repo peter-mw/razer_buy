@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Account;
 use App\Models\PurchaseOrders;
+use App\Models\SystemLog;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 
@@ -73,6 +74,17 @@ class RazerService
         $workdir = $this->getWorkdir();
         $account = $this->account;
 
+        $params = [
+            'setupKey' => $account->otp_seed,
+            'email' => $account->email,
+            'password' => $account->password,
+            'clientIDlogin' => $account->client_id_login,
+            'serviceCode' => $account->service_code,
+            'productId' => $productToBuy->product_id,
+            'permalink' => $productToBuy->product_name,
+            'count' => $quantity,
+        ];
+
         $command = [
             normalize_path($workdir . '/razerG.exe', false),
             '-setupKey=' . escapeshellarg($account->otp_seed),
@@ -112,12 +124,24 @@ class RazerService
             $return_value = proc_close($process);
 
             if ($return_value !== 0) {
+                SystemLog::create([
+                    'source' => 'RazerService::buyProduct',
+                    'params' => $params,
+                    'response' => ['error' => $errorOutput],
+                    'status' => 'error'
+                ]);
                 throw new \RuntimeException("Command failed with error: " . $errorOutput);
             }
             $format = $this->formatOutput($output);
 
             file_put_contents($workdir . '/buy_log.txt', $output);
 
+            SystemLog::create([
+                'source' => 'RazerService::buyProduct',
+                'params' => $params,
+                'response' => $format,
+                'status' => 'success'
+            ]);
 
             return $format;
         } else {
@@ -129,6 +153,13 @@ class RazerService
     {
         $workdir = $this->getWorkdir();
         $account = $this->account;
+
+        $params = [
+            'email' => $account->email,
+            'password' => $account->password,
+            'clientIDlogin' => $account->client_id_login,
+            'serviceCode' => $account->service_code,
+        ];
 
         $command = [
             normalize_path($workdir . '/razer-check-balance.exe', false),
@@ -164,6 +195,12 @@ class RazerService
             $return_value = proc_close($process);
 
             if ($return_value !== 0) {
+                SystemLog::create([
+                    'source' => 'RazerService::getAccountBallance',
+                    'params' => $params,
+                    'response' => ['error' => $errorOutput],
+                    'status' => 'error'
+                ]);
                 throw new \RuntimeException("Command failed with error: " . $errorOutput);
             }
             $data_items = $this->formatOutput($output);
@@ -185,6 +222,14 @@ class RazerService
                 'silver' => $silver,
             ];
             file_put_contents($workdir . '/balance_log.txt', $output);
+
+            SystemLog::create([
+                'source' => 'RazerService::getAccountBallance',
+                'params' => $params,
+                'response' => $return,
+                'status' => 'success'
+            ]);
+
             return $return;
         } else {
             throw new \RuntimeException("Unable to start the process.");

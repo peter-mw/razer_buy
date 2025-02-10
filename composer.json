@@ -9,6 +9,7 @@
         "php": "^8.2",
         "filament/actions": "^3.2",
         "filament/filament": "^3.2",
+        "invaders-xx/filament-jsoneditor": "^5.0",
         "laravel/framework": "^11.31",
         "laravel/tinker": "^2.9",
         "microweber-packages/laravel-helper-functions": "^1.0",
