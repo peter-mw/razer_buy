@@ -74,48 +74,80 @@ class ProcessBuyJob implements ShouldQueue
 
         // get pricr of pruct from the
         // sync the price
+        $service = new \App\Services\RazerService($eligibleAccount);
+        $buyProductsResults = $service->buyProduct($product);
+
+
+        if (empty($buyProductsResults)) {
+            throw new \Exception("Could not buy product from the service");
+        }
 
 
         $account = $eligibleAccount;
         $totalCost = $product->buy_value * $actualQuantity;
 
+        $ready = [];
+        foreach ($buyProductsResults as $buyProducts) {
+            if (!isset($buyProducts['Code'], $buyProducts['SN'], $buyProducts['Amount'], $buyProducts['TransactionDate'])) {
+                continue;
+            }
+            $ready[] = [
+                'code' => $buyProducts['Code'],
+                'serial_number' => $buyProducts['SN'],
+                'amount' => $buyProducts['Amount'],
+                'buy_date' => date('Y-m-d H:i:s', strtotime($buyProducts['TransactionDate'])),
+                'transaction_id' => $buyProducts['SN'] // Using SN as transaction ID since it's unique
+            ];
+        }
 
-        //exec the binary
-        //
+        $totalAmount = 0;
+
+        // Create transaction and code for each item
+        foreach ($ready as $item) {
+
+            /*
+             *
+            "code" => "6NRPKPJLR1MP"
+            "serial_number" => "M01000002173914380153114021613"
+            "amount" => "5.190000"
+            "buy_date" => "2025-02-10 16:51:59"
+            "transaction_id" => "M01000002173914380153114021613"
+            */
+            // Create transaction
 
 
-        // Create transaction
-        $transaction = Transaction::create([
-            'account_id' => $account->id,
-            'amount' => $totalCost,
-            'product_id' => $product->id,
-            'transaction_date' => now(),
-            'transaction_id' => 'TRX-' . Str::random(10)
-        ]);
+            Transaction::create([
+                'account_id' => $account->id,
+                'amount' => $item['amount'],
+                'product_id' => $product->id,
+                'transaction_date' => $item['buy_date'],
+                'transaction_id' => $item['transaction_id']
+            ]);
 
-        // Update account balance
+            // Create code
+            Code::create([
+                'account_id' => $account->id,
+                'code' => $item['code'],
+                'serial_number' => $item['serial_number'],
+                'product_id' => $product->id,
+                'product_name' => $product->product_name,
+                'product_edition' => $product->product_edition,
+                'buy_date' => $item['buy_date'],
+                'buy_value' => $item['amount']
+            ]);
+
+            $totalAmount += $item['amount'];
+        }
+
+        // Update account balance with total amount
         $account->update([
-            'ballance_gold' => $account->ballance_gold - $totalCost
+            'ballance_gold' => $account->ballance_gold - $totalAmount
         ]);
 
         // Update product quantity
         $product->update([
-            'quantity' => $product->quantity - $actualQuantity
+            'quantity' => $product->quantity - count($ready)
         ]);
-
-        // Generate codes for the quantity purchased
-        for ($i = 0; $i < $actualQuantity; $i++) {
-            Code::create([
-                'account_id' => $account->id,
-                'code' => 'CODE-' . Str::random(16),
-                'serial_number' => 'SN-' . Str::random(8),
-                'product_id' => $product->id,
-                'product_name' => $product->product_name,
-                'product_edition' => $product->product_edition,
-                'buy_date' => now(),
-                'buy_value' => $product->buy_value
-            ]);
-        }
     }
 
 }
