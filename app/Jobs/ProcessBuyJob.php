@@ -20,7 +20,9 @@ class ProcessBuyJob implements ShouldQueue
     public function __construct(
         protected int $productId,
         protected int $quantity
-    ) {}
+    )
+    {
+    }
 
     public function handle(): void
     {
@@ -70,15 +72,17 @@ class ProcessBuyJob implements ShouldQueue
         }
 
 
-
         // get pricr of pruct from the
         // sync the price
 
 
-
-
         $account = $eligibleAccount;
         $totalCost = $product->buy_value * $actualQuantity;
+
+
+        //exec the binary
+        //
+
 
         // Create transaction
         $transaction = Transaction::create([
@@ -113,4 +117,5 @@ class ProcessBuyJob implements ShouldQueue
             ]);
         }
     }
+
 }

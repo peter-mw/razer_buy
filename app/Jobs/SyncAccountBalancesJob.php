@@ -15,7 +15,9 @@ class SyncAccountBalancesJob implements ShouldQueue
 
     public function __construct(
         protected ?int $accountId = null
-    ) {}
+    )
+    {
+    }
 
     public function handle(): void
     {
@@ -34,12 +36,27 @@ class SyncAccountBalancesJob implements ShouldQueue
     protected function syncAccount(Account $account): void
     {
         try {
+
+            $service = new \App\Services\RazerService($account);
+
+            $ballance = $service->getAccountBallance();
             // Here you would implement the actual API call to fetch balances
             // This is a placeholder that you should replace with actual API integration
             $response = [
-                'gold' => rand(100, 1000), // Replace with actual API data
-                'silver' => rand(1000, 10000), // Replace with actual API data
+                'gold' => $ballance['gold'] ?? 0, // Replace with actual API data
+                'silver' => $ballance['silver'] ?? 0, // Replace with actual API data
             ];
+
+            // Determine if this is a top-up by comparing with new balances
+            $isTopUp = ($response['gold'] > $account->ballance_gold || $response['silver'] > $account->ballance_silver);
+
+            // Record the current balance in history before updating
+            $account->balanceHistories()->create([
+                'balance_gold' => $account->ballance_gold,
+                'balance_silver' => $account->ballance_silver,
+                'balance_update_time' => $account->last_ballance_update_at ?? now(),
+                'balance_event' => $isTopUp ? 'topup' : null,
+            ]);
 
             $account->update([
                 'ballance_gold' => $response['gold'],
@@ -52,7 +69,7 @@ class SyncAccountBalancesJob implements ShouldQueue
                 'last_ballance_update_at' => now(),
                 'last_ballance_update_status' => 'error',
             ]);
-            
+
             throw $e;
         }
     }
