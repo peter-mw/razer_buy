@@ -75,11 +75,22 @@ class PurchaseOrderResource extends Resource
                     ->default(0)
                     ->minValue(0),
                 Forms\Components\Hidden::make('buy_value')
-                    ,
+                ,
                 Forms\Components\Hidden::make('product_face_value')
-                    ,
-              /*  Forms\Components\Toggle::make('is_active')
-                ,*/
+                ,
+                Forms\Components\Select::make('account_id')
+                    ->relationship(
+                        'account',
+                        'name',
+                        fn($query) => $query->orderByDesc('ballance_gold')
+                    )
+                    ->label('Account')
+                    ->searchable()
+                    ->preload()
+                    ->nullable()
+                    ->getOptionLabelFromRecordUsing(fn($record) => "{$record->name} - Balance: \${$record->ballance_gold}"),
+                /*  Forms\Components\Toggle::make('is_active')
+                  ,*/
                 Forms\Components\Select::make('order_status')
                     ->options([
                         'draft' => 'Draft',
@@ -128,6 +139,7 @@ class PurchaseOrderResource extends Resource
                 Tables\Columns\TextColumn::make('product_face_value')
                     ->money()
                     ->sortable(),
+
                 Tables\Columns\TextColumn::make('order_status')
                     ->badge()
                     ->color(fn(string $state): string => match ($state) {

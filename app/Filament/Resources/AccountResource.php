@@ -90,6 +90,9 @@ class AccountResource extends Resource
                     ->default(0)
                     ->step('0.01')
                 ,
+                Forms\Components\Toggle::make('is_active')
+                    ->default(true)
+                    ->required(),
             ]);
     }
 
@@ -175,6 +178,9 @@ class AccountResource extends Resource
                         default => 'warning',
                     })
                     ->searchable()
+                    ->sortable(),
+                Tables\Columns\IconColumn::make('is_active')
+                    ->boolean()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()

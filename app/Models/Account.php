@@ -26,6 +26,7 @@ class Account extends Model
         'last_ballance_update_status',
         'service_code',
         'client_id_login',
+        'is_active',
     ];
 
 

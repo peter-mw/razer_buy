@@ -28,10 +28,18 @@ class ProcessBuyJob implements ShouldQueue
     {
         $product = PurchaseOrders::findOrFail($this->productId);
 
-        // Get accounts with matching account type and positive daily limit
-        $accounts = Account::where('limit_amount_per_day', '>', 0)
-            ->where('account_type', $product->account_type)
-            ->get();
+        // If account_id is set, use that specific account
+        if ($product->account_id) {
+            $accounts = Account::where('id', $product->account_id)
+                ->where('is_active', true)
+                ->get();
+        } else {
+            // Otherwise get active accounts with matching account type and positive daily limit
+            $accounts = Account::where('limit_amount_per_day', '>', 0)
+                ->where('account_type', $product->account_type)
+                ->where('is_active', true)
+                ->get();
+        }
 
         $eligibleAccount = null;
         $actualQuantity = 0;

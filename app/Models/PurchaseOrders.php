@@ -22,6 +22,7 @@ class PurchaseOrders extends Model
         'buy_value',
         'product_face_value',
         'order_status',
+        'account_id',
     ];
 
     protected $casts = [
@@ -40,6 +41,11 @@ class PurchaseOrders extends Model
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class, 'product_id');
+    }
+
+    public function account(): BelongsTo
+    {
+        return $this->belongsTo(Account::class);
     }
 
     public function codes(): HasMany
