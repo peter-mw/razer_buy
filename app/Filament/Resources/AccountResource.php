@@ -113,6 +113,9 @@ class AccountResource extends Resource
                     })
             ])
             ->columns([
+                Tables\Columns\TextColumn::make('id')->toggleable(),
+
+
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
                     ->sortable(),

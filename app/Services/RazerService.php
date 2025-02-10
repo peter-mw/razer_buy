@@ -62,7 +62,7 @@ class RazerService
     }
 
 
-    public function buyProducts($productId, $quantity)
+    public function buyProduct($productId, $quantity)
     {
         // Buy products using the account and product ID
 
@@ -75,10 +75,10 @@ class RazerService
 
         $command = [
             $workdir . '/razer-check-balance.exe',
-            '-email=' . $account->email,
-            '-password=' . $account->password,
-            '-clientIDlogin=' . $account->client_id_login,
-            '-serviceCode=' . $account->service_code
+            '-email=' . escapeshellarg($account->email),
+            '-password=' . escapeshellarg($account->password),
+            '-clientIDlogin=' . escapeshellarg($account->client_id),
+            '-serviceCode=' . escapeshellarg($account->service_code),
         ];
 
         $cmd = implode(' ', $command);

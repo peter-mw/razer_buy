@@ -14,9 +14,11 @@ return new class extends Migration
         Schema::create('account_balance_histories', function (Blueprint $table) {
             $table->id();
             $table->foreignId('account_id')->constrained('accounts')->cascadeOnDelete();
-            $table->decimal('balance_gold', 10, 2)->default(0);
-            $table->decimal('balance_silver', 10, 2)->default(0);
-            $table->timestamp('balance_update_time');
+            $table->decimal('balance_gold', 10, 2)->default(0)->nullable();
+            $table->decimal('balance_silver', 10, 2)->default(0)->nullable();
+            $table->string('balance_event')->nullable();
+            $table->timestamp('balance_update_time')->nullable();
+
             $table->timestamps();
         });
     }

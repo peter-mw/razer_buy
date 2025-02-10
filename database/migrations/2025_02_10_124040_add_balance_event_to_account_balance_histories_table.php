@@ -12,7 +12,6 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('account_balance_histories', function (Blueprint $table) {
-            $table->string('balance_event')->nullable()->after('balance_update_time');
         });
     }
 
