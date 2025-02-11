@@ -32,6 +32,10 @@ class ProcessBuyJob implements ShouldQueue
     {
         $purchaseOrder = PurchaseOrders::findOrFail($this->productId);
 
+
+
+        $purchaseOrder->update(['order_status' => 'processing']);
+
         // If account_id is set, use that specific account
         if ($purchaseOrder->account_id) {
             $accounts = Account::where('id', $purchaseOrder->account_id)
@@ -149,12 +153,12 @@ class ProcessBuyJob implements ShouldQueue
 
         foreach ($ordersCompleted as $orderTransactionId) {
 
-            sleep(5);
+            sleep(1);
             try {
                 $orderDetails = $service->getTransactionDetails($orderTransactionId);
 
             } catch (\Exception $e) {
-                sleep(15);
+                sleep(3);
                 try {
                     $orderDetails = $service->getTransactionDetails($orderTransactionId);
                 } catch (\Exception $e) {
