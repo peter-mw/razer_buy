@@ -47,7 +47,11 @@ class AccountBalanceHistoryResource extends Resource
     {
         return $table
             ->defaultSort('balance_update_time', 'desc')
+            ->paginated([100, 200, 500, 'all'])
             ->columns([
+                Tables\Columns\TextColumn::make('account.id')
+                    ->label('Id')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('account.name')
                     ->label('Account')
                     ->sortable(),
@@ -173,6 +177,7 @@ class AccountBalanceHistoryResource extends Resource
             'index' => Pages\ListAccountBalanceHistories::route('/'),
             'create' => Pages\CreateAccountBalanceHistory::route('/create'),
             'edit' => Pages\EditAccountBalanceHistory::route('/{record}/edit'),
+            'top-ups' => Pages\ListRecentTopUps::route('/top-ups'),
         ];
     }
 }

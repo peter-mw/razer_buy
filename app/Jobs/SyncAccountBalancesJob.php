@@ -39,12 +39,16 @@ class SyncAccountBalancesJob implements ShouldQueue
 
             $service = new \App\Services\RazerService($account);
             $ballance = $service->getAccountBallance();
+
+
+
             // Here you would implement the actual API call to fetch balances
             // This is a placeholder that you should replace with actual API integration
             $response = [
                 'gold' => $ballance['gold'] ?? 0, // Replace with actual API data
                 'silver' => $ballance['silver'] ?? 0, // Replace with actual API data
             ];
+
 
             // Determine if this is a top-up by comparing with new balances
             $isTopUp = floatval($response['gold']) > floatval($account->ballance_gold);
@@ -54,9 +58,10 @@ class SyncAccountBalancesJob implements ShouldQueue
 
             // Only create history record if balance changed or it's a top-up
             if ($balanceChanged || $isTopUp) {
+
                 $account->balanceHistories()->create([
-                    'balance_gold' => $account->ballance_gold,
-                    'balance_silver' => $account->ballance_silver,
+                    'balance_gold' => $response['gold'],
+                    'balance_silver' => $response['silver'],
                     'balance_update_time' => $account->last_ballance_update_at ?? now(),
                     'balance_event' => $isTopUp ? 'topup' : null,
                 ]);
