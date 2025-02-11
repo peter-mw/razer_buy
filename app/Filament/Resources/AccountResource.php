@@ -29,9 +29,9 @@ class AccountResource extends Resource
     {
         return $form
             ->schema([
-              /*  Forms\Components\TextInput::make('id')
-                    ->numeric()
-                    ->maxLength(255),*/
+                /*  Forms\Components\TextInput::make('id')
+                      ->numeric()
+                      ->maxLength(255),*/
                 Forms\Components\TextInput::make('name')
                     ->required()
                     ->maxLength(255),
@@ -63,7 +63,9 @@ class AccountResource extends Resource
                     ->required()
                     ->maxLength(255),
                 Password::make('otp_seed')
+                    ->label('OTP Seed (Setup Key)')
                     ->revealable()
+                    ->required()
                     ->maxLength(255),
 
 
@@ -71,13 +73,16 @@ class AccountResource extends Resource
                     ->maxLength(255),
                 Password::make('email_password')
                     ->revealable()
+
                     ->maxLength(255),
 
                 Forms\Components\TextInput::make('service_code')
+                    ->required()
                     ->numeric()
                     ->maxLength(255),
 
                 Forms\Components\TextInput::make('client_id_login')
+                    ->required()
                     ->maxLength(255),
 
                 Forms\Components\TextInput::make('ballance_gold')
