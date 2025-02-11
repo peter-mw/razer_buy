@@ -18,7 +18,8 @@ class Code extends Model
         'product_name',
         'product_edition',
         'buy_date',
-        'buy_value'
+        'buy_value',
+        'order_id'
     ];
 
     protected $casts = [
@@ -34,5 +35,10 @@ class Code extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(PurchaseOrders::class, 'product_id');
+    }
+
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseOrders::class, 'order_id');
     }
 }

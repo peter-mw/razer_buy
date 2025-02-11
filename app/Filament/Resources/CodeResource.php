@@ -32,6 +32,9 @@ class CodeResource extends Resource
                     ->relationship('account', 'name')
                     ->required()
                     ->searchable(),
+                Forms\Components\Select::make('order_id')
+                    ->relationship('order', 'id')
+                    ->searchable(),
                 Forms\Components\TextInput::make('code')
                     ->required()
                     ->maxLength(255),
@@ -71,6 +74,10 @@ class CodeResource extends Resource
 
 
                 Tables\Columns\TextColumn::make('account.name')
+                    ->sortable()
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('order.id')
+                    ->label('Order ID')
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('code')

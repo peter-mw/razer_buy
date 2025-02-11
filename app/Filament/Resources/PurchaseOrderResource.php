@@ -66,7 +66,6 @@ class PurchaseOrderResource extends Resource
 
             ->schema([
                 Forms\Components\Select::make('product_id')
-                    ->default(fn () => request()->get('product_id'))
                     ->relationship(
                         'product',
                         'product_name',

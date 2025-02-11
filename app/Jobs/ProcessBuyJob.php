@@ -149,11 +149,12 @@ class ProcessBuyJob implements ShouldQueue
 
         foreach ($ordersCompleted as $orderTransactionId) {
 
-
+            sleep(2);
             try {
                 $orderDetails = $service->getTransactionDetails($orderTransactionId);
 
             } catch (\Exception $e) {
+                sleep(5);
                 try {
                     $orderDetails = $service->getTransactionDetails($orderTransactionId);
                 } catch (\Exception $e) {
@@ -247,7 +248,8 @@ class ProcessBuyJob implements ShouldQueue
                 'amount' => $item['amount'],
                 'product_id' => $product->id,
                 'transaction_date' => $item['buy_date'],
-                'transaction_id' => $item['transaction_id']
+                'transaction_id' => $item['transaction_id'],
+                'order_id' => $product->id
             ]);
 
             // Create code
@@ -259,7 +261,8 @@ class ProcessBuyJob implements ShouldQueue
                 'product_name' => $product->product_name,
                 'product_edition' => $product->product_edition,
                 'buy_date' => $item['buy_date'],
-                'buy_value' => $item['amount']
+                'buy_value' => $item['amount'],
+                'order_id' => $product->id
             ]);
 
             $totalAmount += $item['amount'];

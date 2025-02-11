@@ -15,12 +15,13 @@ class Transaction extends Model
         'amount',
         'product_id',
         'transaction_date',
-        'transaction_id'
+        'transaction_id',
+        'order_id'
     ];
 
     protected $casts = [
-        'amount' => 'decimal:2',
-        'transaction_date' => 'datetime'
+        'transaction_date' => 'datetime',
+        'amount' => 'decimal:2'
     ];
 
     public function account(): BelongsTo
@@ -31,5 +32,10 @@ class Transaction extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(PurchaseOrders::class, 'product_id');
+    }
+
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseOrders::class, 'order_id');
     }
 }

@@ -29,6 +29,11 @@ class TransactionResource extends Resource
                     ->native(false)
                     ->required()
                     ->searchable(),
+                Forms\Components\Select::make('order_id')
+                    ->relationship('order', 'id')
+                    ->preload()
+                    ->native(false)
+                    ->searchable(),
                 Forms\Components\TextInput::make('amount')
                     ->required()
                     ->numeric()
@@ -56,6 +61,10 @@ class TransactionResource extends Resource
 
             ->columns([
                 Tables\Columns\TextColumn::make('account.name')
+                    ->sortable()
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('order.id')
+                    ->label('Order ID')
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('amount')
