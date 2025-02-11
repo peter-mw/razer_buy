@@ -178,13 +178,16 @@ class PurchaseOrderResource extends Resource
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('quantity')
+                    ->label('Remaining Quantity')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('buy_value')
                     ->money()
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
                 Tables\Columns\TextColumn::make('product_face_value')
                     ->money()
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
                 Tables\Columns\TextColumn::make('order_status')
                     ->badge()

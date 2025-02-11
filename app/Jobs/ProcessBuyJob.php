@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Account;
 use App\Models\Code;
+use App\Models\PendingTransaction;
 use App\Models\PurchaseOrders;
 use App\Models\Transaction;
 use App\Notifications\PurchaseOrderCompleted;
@@ -131,22 +132,42 @@ class ProcessBuyJob implements ShouldQueue
         }
 
 
-        foreach ($ordersCompleted as $orderId) {
+        foreach ($ordersCompleted as $orderTransactionId) {
 
 
             try {
-                $orderDetails = $service->getTransactionDetails($orderId);
+                $orderDetails = $service->getTransactionDetails($orderTransactionId);
 
             } catch (\Exception $e) {
                 try {
-                    $orderDetails = $service->getTransactionDetails($orderId);
-
+                    $orderDetails = $service->getTransactionDetails($orderTransactionId);
                 } catch (\Exception $e) {
+                    Log::error('Error while getTransactionDetails 2 time: ' . $orderTransactionId);
 
-                    Log::error('Error while getTransactionDetails 2 time: ' . $orderId);
+                    // Save to pending transactions
+                    PendingTransaction::create([
+                        'account_id' => $account->id,
+                        'product_id' => $product->id,
+                        'transaction_id' => $orderTransactionId,
+                        'status' => 'pending',
+                        'error_message' => 'Failed to retrieve transaction details after 2 attempts: ' . $e->getMessage(),
+                        'transaction_date' => now(),
+                    ]);
+
                     continue;
                 }
-                Log::error('Error while getTransactionDetails: ' . $orderId);
+                Log::error('Error while getTransactionDetails: ' . $orderTransactionId);
+
+                // Save to pending transactions on first failure
+                PendingTransaction::create([
+                    'account_id' => $account->id,
+                    'product_id' => $product->id,
+                    'order_id' => $orderTransactionId,
+                    'status' => 'pending',
+                    'error_message' => 'Failed to retrieve transaction details: ' . $e->getMessage(),
+                    'transaction_date' => now(),
+                ]);
+
                 continue;
             }
 
@@ -155,7 +176,7 @@ class ProcessBuyJob implements ShouldQueue
                 $product->update([
                     'order_status' => 'failed'
                 ]);
-                Log::error('Error while getTransactionDetails: ' . $orderId);
+                Log::error('Error while getTransactionDetails: ' . $orderTransactionId);
                 continue;
             }
 
