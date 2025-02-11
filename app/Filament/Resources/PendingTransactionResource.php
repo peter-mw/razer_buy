@@ -3,8 +3,10 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\PendingTransactionResource\Pages;
+use App\Jobs\RescueTransactionJob;
 use App\Models\PendingTransaction;
 use Filament\Forms;
+use Filament\Notifications\Notification;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -94,6 +96,19 @@ class PendingTransactionResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('rescue')
+                    ->icon('heroicon-o-arrow-path')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->action(function ($record) {
+
+                        RescueTransactionJob::dispatch($record->transaction_id);
+
+                        Notification::make()
+                            ->title('Rescue job dispatched')
+                            ->success()
+                            ->send();
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

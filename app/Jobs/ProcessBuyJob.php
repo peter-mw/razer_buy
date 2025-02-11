@@ -21,6 +21,7 @@ class ProcessBuyJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public function __construct(
+
         protected int $productId,
         protected int $quantity
     )
@@ -29,17 +30,17 @@ class ProcessBuyJob implements ShouldQueue
 
     public function handle(): void
     {
-        $product = PurchaseOrders::findOrFail($this->productId);
+        $purchaseOrder = PurchaseOrders::findOrFail($this->productId);
 
         // If account_id is set, use that specific account
-        if ($product->account_id) {
-            $accounts = Account::where('id', $product->account_id)
+        if ($purchaseOrder->account_id) {
+            $accounts = Account::where('id', $purchaseOrder->account_id)
                 ->where('is_active', true)
                 ->get();
         } else {
             // Otherwise get active accounts with matching account type and positive daily limit
             $accounts = Account::where('limit_amount_per_day', '>', 0)
-                ->where('account_type', $product->account_type)
+                ->where('account_type', $purchaseOrder->account_type)
                 ->where('is_active', true)
                 ->get();
         }
@@ -67,13 +68,12 @@ class ProcessBuyJob implements ShouldQueue
             }
 
 
-
             // Calculate maximum quantity possible based on balance and daily limit
             // $maxQuantityByBalance = floor($acc->ballance_gold / $product->buy_value);
             //  $maxQuantityByDailyLimit = floor($remainingDailyLimit / $product->buy_value);
 
             // Calculate the actual quantity considering all constraints
-            $possibleQuantity = $product->quantity;
+            $possibleQuantity = $purchaseOrder->quantity;
 
             if ($possibleQuantity > 0) {
                 $eligibleAccount = $acc;
@@ -84,7 +84,7 @@ class ProcessBuyJob implements ShouldQueue
 
         if (!$eligibleAccount || $actualQuantity <= 0) {
             // Update status to failed if no eligible account found
-            $product->update(['order_status' => 'failed']);
+            $purchaseOrder->update(['order_status' => 'failed']);
             throw new \Exception("No eligible account found with sufficient balance and daily limit, or product is out of stock");
         }
 
@@ -116,8 +116,8 @@ class ProcessBuyJob implements ShouldQueue
         }
 
 
-        if ($ballanceResponse['gold'] < $product->buy_value) {
-            $product->update(['order_status' => 'failed']);
+        if ($ballanceResponse['gold'] < $purchaseOrder->buy_value) {
+            $purchaseOrder->update(['order_status' => 'failed']);
             throw new \Exception("Not enough gold to buy the product");
         }
 
@@ -129,7 +129,7 @@ class ProcessBuyJob implements ShouldQueue
         while ($remainingQuantity > 0) {
             $chunkSize = min(200, $remainingQuantity);
 
-            $buyProductsResults = $service->buyProduct($product, $chunkSize);
+            $buyProductsResults = $service->buyProduct($purchaseOrder, $chunkSize);
 
 
             if (empty($buyProductsResults)) {
@@ -165,8 +165,8 @@ class ProcessBuyJob implements ShouldQueue
                 Log::error('Error while getTransactionDetails: ' . $orderTransactionId);
                 // Save to pending transactions
                 PendingTransaction::create([
-                    'account_id' => $account->id,
-                    'product_id' => $product->id,
+                    'account_id' => $account->account_id,
+                    'product_id' => $purchaseOrder->product_id,
                     'transaction_id' => $orderTransactionId,
                     'status' => 'pending',
                     'error_message' => 'Failed to retrieve transaction details after attempts: ' . $e->getMessage(),
@@ -179,7 +179,7 @@ class ProcessBuyJob implements ShouldQueue
 
             if (empty($orderDetails)) {
 
-                $product->update([
+                $purchaseOrder->update([
                     'order_status' => 'failed'
                 ]);
                 Log::error('Error while getTransactionDetails: ' . $orderTransactionId);
@@ -244,25 +244,25 @@ class ProcessBuyJob implements ShouldQueue
         foreach ($ready as $item) {
             // Create transaction
             Transaction::create([
-                'account_id' => $account->id,
+                'account_id' => $account->account_id,
                 'amount' => $item['amount'],
-                'product_id' => $product->id,
+                'product_id' => $purchaseOrder->product_id,
                 'transaction_date' => $item['buy_date'],
                 'transaction_id' => $item['transaction_id'],
-                'order_id' => $product->id
+                'order_id' => $purchaseOrder->id
             ]);
 
             // Create code
             Code::create([
-                'account_id' => $account->id,
+                'account_id' => $account->account_id,
                 'code' => $item['code'],
                 'serial_number' => $item['serial_number'],
-                'product_id' => $product->id,
-                'product_name' => $product->product_name,
-                'product_edition' => $product->product_edition,
+                'product_id' => $purchaseOrder->product_id,
+                'product_name' => $purchaseOrder->product_name,
+                'product_edition' => $purchaseOrder->product_edition,
                 'buy_date' => $item['buy_date'],
                 'buy_value' => $item['amount'],
-                'order_id' => $product->id
+                'order_id' => $purchaseOrder->id
             ]);
 
             $totalAmount += $item['amount'];
@@ -274,13 +274,13 @@ class ProcessBuyJob implements ShouldQueue
         ]);
 
         // Update product quantity and status
-        $product->update([
-            'quantity' => $product->quantity - count($ready),
+        $purchaseOrder->update([
+            'quantity' => $purchaseOrder->quantity - count($ready),
             'order_status' => 'completed'
         ]);
 
         // Send notification
-        $product->notify(new PurchaseOrderCompleted($product));
+        $purchaseOrder->notify(new PurchaseOrderCompleted($purchaseOrder));
     }
 
 }
