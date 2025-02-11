@@ -18,7 +18,7 @@ class AccountBalanceHistoryResource extends Resource
     protected static ?string $model = AccountBalanceHistory::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-clock';
-    
+
     protected static ?string $navigationLabel = 'Balance History';
 
     public static function form(Form $form): Form
@@ -26,7 +26,7 @@ class AccountBalanceHistoryResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Select::make('account_id')
-                    ->relationship('account', 'id')
+                    ->relationship('account', 'name')
                     ->required(),
                 Forms\Components\TextInput::make('balance_gold')
                     ->required()
@@ -46,9 +46,10 @@ class AccountBalanceHistoryResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->defaultSort('balance_update_time', 'desc')
             ->columns([
-                Tables\Columns\TextColumn::make('account_id')
-                    ->numeric()
+                Tables\Columns\TextColumn::make('account.name')
+                    ->label('Account')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('balance_gold')
                     ->numeric()
@@ -73,7 +74,7 @@ class AccountBalanceHistoryResource extends Resource
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('account_id')
-                    ->relationship('account', 'id')
+                    ->relationship('account', 'name')
                     ->label('Account')
                     ->searchable()
                     ->preload(),
@@ -102,11 +103,11 @@ class AccountBalanceHistoryResource extends Resource
                         return $query
                             ->when(
                                 $data['balance_gold_min'],
-                                fn (Builder $query, $min): Builder => $query->where('balance_gold', '>=', $min)
+                                fn(Builder $query, $min): Builder => $query->where('balance_gold', '>=', $min)
                             )
                             ->when(
                                 $data['balance_gold_max'],
-                                fn (Builder $query, $max): Builder => $query->where('balance_gold', '<=', $max)
+                                fn(Builder $query, $max): Builder => $query->where('balance_gold', '<=', $max)
                             );
                     }),
                 Tables\Filters\Filter::make('balance_silver_range')
@@ -122,11 +123,11 @@ class AccountBalanceHistoryResource extends Resource
                         return $query
                             ->when(
                                 $data['balance_silver_min'],
-                                fn (Builder $query, $min): Builder => $query->where('balance_silver', '>=', $min)
+                                fn(Builder $query, $min): Builder => $query->where('balance_silver', '>=', $min)
                             )
                             ->when(
                                 $data['balance_silver_max'],
-                                fn (Builder $query, $max): Builder => $query->where('balance_silver', '<=', $max)
+                                fn(Builder $query, $max): Builder => $query->where('balance_silver', '<=', $max)
                             );
                     }),
                 Tables\Filters\Filter::make('balance_update_time')
@@ -140,11 +141,11 @@ class AccountBalanceHistoryResource extends Resource
                         return $query
                             ->when(
                                 $data['from'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('balance_update_time', '>=', $date)
+                                fn(Builder $query, $date): Builder => $query->whereDate('balance_update_time', '>=', $date)
                             )
                             ->when(
                                 $data['until'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('balance_update_time', '<=', $date)
+                                fn(Builder $query, $date): Builder => $query->whereDate('balance_update_time', '<=', $date)
                             );
                     }),
             ])

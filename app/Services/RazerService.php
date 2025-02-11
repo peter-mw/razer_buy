@@ -27,7 +27,7 @@ class RazerService
         //   $this->cleaunUp();
     }
 
-    public function getWorkdir()
+    public function getWorkdir(): string
     {
 
         $dir = storage_path('app/razer/' . $this->account->id);
@@ -85,6 +85,10 @@ class RazerService
             'count' => $quantity,
         ];
 
+        $region_id = 2;
+        if ($productToBuy->account_type == 'usa') {
+            $region_id = 12;
+        }
         $command = [
             normalize_path($workdir . '/razerG.exe', false),
             '-setupKey=' . escapeshellarg($account->otp_seed),
@@ -94,6 +98,8 @@ class RazerService
             '-serviceCode=' . escapeshellarg($account->service_code),
             '-productId=' . escapeshellarg($productToBuy->product_id),
             '-permalink=' . escapeshellarg($productToBuy->product_name),
+            '-regionId=' . escapeshellarg($region_id),
+
             '-count=' . escapeshellarg($quantity),
         ];
 

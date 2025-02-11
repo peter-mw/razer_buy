@@ -49,24 +49,22 @@ class ProcessBuyJob implements ShouldQueue
             $todaySpent = Transaction::where('account_id', $acc->id)
                 ->whereDate('transaction_date', now())
                 ->sum('amount');
+            $remainingDailyLimit = $acc->limit_amount_per_day - $todaySpent;
 
             // Calculate remaining daily limit
-            $remainingDailyLimit = $acc->limit_amount_per_day - $todaySpent;
-            if ($remainingDailyLimit <= 0) {
-                continue;
+            if ($acc->limit_amount_per_day > 0 and $todaySpent > 0) {
+                if ($remainingDailyLimit <= 0) {
+                    continue;
+                }
             }
+
 
             // Calculate maximum quantity possible based on balance and daily limit
             $maxQuantityByBalance = floor($acc->ballance_gold / $product->buy_value);
             $maxQuantityByDailyLimit = floor($remainingDailyLimit / $product->buy_value);
 
             // Calculate the actual quantity considering all constraints
-            $possibleQuantity = min(
-                $this->quantity,
-                $product->quantity,
-                $maxQuantityByBalance,
-                $maxQuantityByDailyLimit
-            );
+            $possibleQuantity = $product->quantity;
 
             if ($possibleQuantity > 0) {
                 $eligibleAccount = $acc;
@@ -88,10 +86,14 @@ class ProcessBuyJob implements ShouldQueue
         $remainingQuantity = $actualQuantity;
 
         // Process in chunks of 5
+
         while ($remainingQuantity > 0) {
             $chunkSize = min(2, $remainingQuantity);
 
             $buyProductsResults = $service->buyProduct($product, $chunkSize);
+
+
+
             $foundProduct = false;
             if ($buyProductsResults and count($buyProductsResults) == 2) {
                 foreach ($buyProductsResults as $buyProducts) {
