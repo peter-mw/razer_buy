@@ -6,6 +6,7 @@ use App\Models\Account;
 use App\Models\Code;
 use App\Models\PurchaseOrders;
 use App\Models\Transaction;
+use App\Notifications\PurchaseOrderCompleted;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -83,6 +84,27 @@ class ProcessBuyJob implements ShouldQueue
 
         $service = new \App\Services\RazerService($eligibleAccount);
         $account = $eligibleAccount;
+
+        $ballance = $service->getAccountBallance();
+
+        $ballanceResponse = [
+            'gold' => $ballance['gold'] ?? 0, // Replace with actual API data
+            'silver' => $ballance['silver'] ?? 0, // Replace with actual API data
+        ];
+
+        $account->update([
+            'ballance_gold' => $ballanceResponse['gold'],
+            'ballance_silver' => $ballanceResponse['silver'],
+            'last_ballance_update_at' => now(),
+            'last_ballance_update_status' => 'success',
+        ]);
+
+
+        if ($ballanceResponse['gold'] < $product->buy_value) {
+            $product->update(['order_status' => 'failed']);
+            throw new \Exception("Not enough gold to buy the product");
+        }
+
 
         $remainingQuantity = $actualQuantity;
 
@@ -216,6 +238,9 @@ class ProcessBuyJob implements ShouldQueue
             'quantity' => $product->quantity - count($ready),
             'order_status' => 'completed'
         ]);
+
+        // Send notification
+        $product->notify(new PurchaseOrderCompleted($product));
     }
 
 }
