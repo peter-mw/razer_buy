@@ -41,7 +41,7 @@ class PurchaseOrders extends Model
 
     public function transactions(): HasMany
     {
-        return $this->hasMany(Transaction::class, 'product_id');
+        return $this->hasMany(Transaction::class, 'order_id');
     }
 
     public function account(): BelongsTo
@@ -51,6 +51,6 @@ class PurchaseOrders extends Model
 
     public function codes(): HasMany
     {
-        return $this->hasMany(Code::class, 'product_id');
+        return $this->hasMany(Code::class, 'order_id');
     }
 }

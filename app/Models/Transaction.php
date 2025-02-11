@@ -31,7 +31,7 @@ class Transaction extends Model
 
     public function product(): BelongsTo
     {
-        return $this->belongsTo(PurchaseOrders::class, 'product_id');
+        return $this->belongsTo(Product::class, 'product_id');
     }
 
     public function order(): BelongsTo

@@ -242,11 +242,6 @@ class ProcessBuyJob implements ShouldQueue
         Log::info('Purchase Order: ' . json_encode($purchaseOrder));
 
 
-
-
-
-
-
         /*$ready = array:1 [▼ // app\Jobs\ProcessBuyJob.php:248
   0 => array:5 [▼
     "code" => "RIYXDMMPDK3XWJCNY3"
@@ -259,7 +254,7 @@ class ProcessBuyJob implements ShouldQueue
         // Create transaction and code for each item
         foreach ($ready as $item) {
             // Create transaction
-            Transaction::create([
+            $transaction = Transaction::create([
                 'account_id' => $account->id,
                 'amount' => $item['amount'],
                 'product_id' => $purchaseOrder->product_id,
@@ -267,9 +262,9 @@ class ProcessBuyJob implements ShouldQueue
                 'transaction_id' => $item['transaction_id'],
                 'order_id' => $purchaseOrder->id
             ]);
-
+            $transaction->save();
             // Create code
-            Code::create([
+            $code = Code::create([
                 'account_id' => $account->id,
                 'code' => $item['code'],
                 'serial_number' => $item['serial_number'],
@@ -280,7 +275,7 @@ class ProcessBuyJob implements ShouldQueue
                 'buy_value' => $item['amount'],
                 'order_id' => $purchaseOrder->id
             ]);
-
+            $code->save();
             $totalAmount += $item['amount'];
         }
 
