@@ -105,6 +105,7 @@ class AccountResource extends Resource
     {
         return $table
             ->paginated(false)
+            ->actionsPosition(Tables\Enums\ActionsPosition::BeforeColumns)
             ->headerActions([
                 Tables\Actions\Action::make('sync_all')
                     ->label('Sync All Accounts')
@@ -216,6 +217,16 @@ class AccountResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Action::make('create_order')
+                    ->label('Create Order')
+                    ->icon('heroicon-o-shopping-cart')
+                    ->url(fn (Account $record): string =>
+                        PurchaseOrderResource::getUrl('create', [
+                            'account_id' => $record->id,
+                            'account_type' => $record->account_type
+                        ])
+                    )
+                    ->openUrlInNewTab(),
                 Action::make('sync')
                     ->action(function (Account $record): void {
                         try {

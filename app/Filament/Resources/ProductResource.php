@@ -62,6 +62,7 @@ class ProductResource extends Resource
     {
         return $table
             ->defaultSort('id', 'desc')
+            ->actionsPosition(Tables\Enums\ActionsPosition::BeforeColumns)
             ->columns([
                 Tables\Columns\TextColumn::make('id')
                     ->label('Product ID')
@@ -103,6 +104,16 @@ class ProductResource extends Resource
                 //
             ])
             ->actions([
+                Tables\Actions\Action::make('create_order')
+                    ->label('Create Order')
+                    ->icon('heroicon-o-shopping-cart')
+                    ->url(fn (Product $record): string =>
+                        PurchaseOrderResource::getUrl('create', [
+                            'product_id' => $record->id,
+                            'account_type' => $record->account_type
+                        ])
+                    )
+                    ->openUrlInNewTab(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])

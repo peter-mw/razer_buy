@@ -61,9 +61,14 @@ class PurchaseOrderResource extends Resource
 
     public static function form(Form $form): Form
     {
+        $accountId = request()->get('account_id');
+        $accountType = request()->get('account_type');
+        $productId = request()->get('product_id');
+        
         return $form
             ->schema([
                 Forms\Components\Select::make('product_id')
+                    ->default($productId)
                     ->relationship(
                         'product', 
                         'product_name',
@@ -102,7 +107,7 @@ class PurchaseOrderResource extends Resource
                         'global' => 'Global',
                         'usa' => 'USA',
                     ])
-                    ->default('global')
+                    ->default($accountType ?? 'global')
                     ->live()
                     ->afterStateUpdated(function ($state, Forms\Set $set) {
                         // Clear product selection when account type changes
@@ -122,6 +127,7 @@ class PurchaseOrderResource extends Resource
                 Forms\Components\Hidden::make('buy_value'),
                 Forms\Components\Hidden::make('product_face_value'),
                 Forms\Components\Select::make('account_id')
+                    ->default($accountId)
                     ->relationship(
                         'account',
                         'name',
