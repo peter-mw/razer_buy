@@ -100,6 +100,15 @@ class ProcessBuyJob implements ShouldQueue
             'last_ballance_update_status' => 'success',
         ]);
 
+        $balanceChanged = floatval($ballanceResponse['gold']) !== floatval($account->ballance_gold);
+        if ($balanceChanged) {
+            $account->balanceHistories()->create([
+                'balance_gold' => $ballanceResponse['gold'],
+                'balance_silver' => $ballanceResponse['silver'],
+                'balance_update_time' => $account->last_ballance_update_at ?? now(),
+            ]);
+        }
+
 
         if ($ballanceResponse['gold'] < $product->buy_value) {
             $product->update(['order_status' => 'failed']);

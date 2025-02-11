@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\AccountBalanceHistoryResource\Pages;
 use App\Filament\Resources\AccountBalanceHistoryResource\RelationManagers;
+use App\Filament\Resources\AccountBalanceHistoryResource\Widgets;
 use App\Models\AccountBalanceHistory;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -178,6 +179,13 @@ class AccountBalanceHistoryResource extends Resource
             'create' => Pages\CreateAccountBalanceHistory::route('/create'),
             'edit' => Pages\EditAccountBalanceHistory::route('/{record}/edit'),
             'top-ups' => Pages\ListRecentTopUps::route('/top-ups'),
+        ];
+    }
+
+    public static function getWidgets(): array
+    {
+        return [
+            Widgets\AccountBalanceChart::class,
         ];
     }
 }

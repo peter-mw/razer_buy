@@ -178,8 +178,12 @@ class PurchaseOrderResource extends Resource
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('quantity')
-                    ->label('Remaining Quantity')
+                    ->label('To buy')
                     ->numeric()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('codes_count')
+                    ->label('Codes')
+                    ->counts('codes')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('buy_value')
                     ->money()

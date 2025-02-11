@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\AccountBalanceHistoryResource\Pages;
 
 use App\Filament\Resources\AccountBalanceHistoryResource;
+use App\Filament\Resources\AccountBalanceHistoryResource\Widgets;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Actions\Action;
@@ -10,6 +11,13 @@ use Filament\Actions\Action;
 class ListAccountBalanceHistories extends ListRecords
 {
     protected static string $resource = AccountBalanceHistoryResource::class;
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            Widgets\AccountBalanceChart::class,
+        ];
+    }
 
     protected function getHeaderActions(): array
     {
