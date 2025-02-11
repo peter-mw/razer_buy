@@ -149,6 +149,17 @@ class ProcessBuyJob implements ShouldQueue
                 Log::error('Error while getTransactionDetails: ' . $orderId);
                 continue;
             }
+
+            if (empty($orderDetails)) {
+
+                $product->update([
+                    'order_status' => 'failed'
+                ]);
+                Log::error('Error while getTransactionDetails: ' . $orderId);
+                continue;
+            }
+
+
             $orderDetail = array_pop($orderDetails);
 
 

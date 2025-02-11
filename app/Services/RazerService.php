@@ -89,7 +89,7 @@ class RazerService
 
 
         $output = shell_exec($cmd);
- 
+
 
         if ($output === null) {
             SystemLog::create([
