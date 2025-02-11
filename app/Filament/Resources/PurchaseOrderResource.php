@@ -64,7 +64,11 @@ class PurchaseOrderResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Select::make('product_id')
-                    ->relationship('product', 'product_name')
+                    ->relationship(
+                        'product', 
+                        'product_name',
+                        fn($query, Forms\Get $get) => $query->where('account_type', $get('account_type'))
+                    )
                     ->label('Product')
                     ->required()
                     ->live()
@@ -98,7 +102,12 @@ class PurchaseOrderResource extends Resource
                         'global' => 'Global',
                         'usa' => 'USA',
                     ])
-                    ->default('standard'),
+                    ->default('global')
+                    ->live()
+                    ->afterStateUpdated(function ($state, Forms\Set $set) {
+                        // Clear product selection when account type changes
+                        $set('product_id', null);
+                    }),
                 Forms\Components\TextInput::make('quantity')
                     ->required()
                     ->reactive()
