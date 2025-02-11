@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Exports\CodeExporter;
+use Filament\Tables\Actions\ExportAction;
 use App\Filament\Resources\PurchaseOrderResource\Pages;
 use App\Filament\Resources\PurchaseOrderResource\RelationManagers;
 use App\Models\PurchaseOrders;
@@ -61,14 +62,11 @@ class PurchaseOrderResource extends Resource
 
     public static function form(Form $form): Form
     {
-        $accountId = request()->get('account_id');
-        $accountType = request()->get('account_type');
-        $productId = request()->get('product_id');
-        
         return $form
+            ->statePath('data')
             ->schema([
                 Forms\Components\Select::make('product_id')
-                    ->default($productId)
+                    ->default(fn () => request()->get('product_id'))
                     ->relationship(
                         'product', 
                         'product_name',
@@ -107,7 +105,7 @@ class PurchaseOrderResource extends Resource
                         'global' => 'Global',
                         'usa' => 'USA',
                     ])
-                    ->default($accountType ?? 'global')
+                    ->default(fn () => request()->get('account_type') ?? 'global')
                     ->live()
                     ->afterStateUpdated(function ($state, Forms\Set $set) {
                         // Clear product selection when account type changes
@@ -127,7 +125,7 @@ class PurchaseOrderResource extends Resource
                 Forms\Components\Hidden::make('buy_value'),
                 Forms\Components\Hidden::make('product_face_value'),
                 Forms\Components\Select::make('account_id')
-                    ->default($accountId)
+                    ->default(fn () => request()->get('account_id'))
                     ->relationship(
                         'account',
                         'name',
@@ -265,6 +263,13 @@ class PurchaseOrderResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                ExportAction::make()
+                    ->label('Export Codes')
+                    ->exporter(CodeExporter::class)
+                    ->visible(fn (PurchaseOrders $record): bool => 
+                        $record->order_status === 'completed' && 
+                        $record->codes()->count() > 0
+                    ),
                 Tables\Actions\Action::make('processBuy')
                     ->label('Process Buy')
                     ->icon('heroicon-o-shopping-cart')
