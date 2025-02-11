@@ -27,6 +27,7 @@ class CodeResource extends Resource
     {
         return $form
             ->schema([
+
                 Forms\Components\Select::make('account_id')
                     ->relationship('account', 'name')
                     ->required()
@@ -63,6 +64,12 @@ class CodeResource extends Resource
             ->defaultSort('created_at', 'desc')
             ->paginated([10, 25, 50, 100, 500, 1000, 'all'])
             ->columns([
+                Tables\Columns\TextColumn::make('id')
+                    ->sortable()
+                    ->numeric()
+                    ->searchable(),
+
+
                 Tables\Columns\TextColumn::make('account.name')
                     ->sortable()
                     ->searchable(),

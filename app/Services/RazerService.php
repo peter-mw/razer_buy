@@ -5,21 +5,15 @@ namespace App\Services;
 use App\Models\Account;
 use App\Models\PurchaseOrders;
 use App\Models\SystemLog;
-use Symfony\Component\Process\Process;
-use Symfony\Component\Process\Exception\ProcessFailedException;
 
 class RazerService
 {
-
     public ?Account $account;
-
 
     public function __construct(Account $account)
     {
         $this->account = $account;
-
         $this->setUp();
-
     }
 
     public function __destruct()
@@ -29,13 +23,11 @@ class RazerService
 
     public function getWorkdir(): string
     {
-
         $dir = storage_path('app/razer/' . $this->account->id);
         if (!file_exists($dir)) {
             mkdir_recursive($dir);
         }
         return normalize_path($dir, true);
-
     }
 
     public function setUp()
@@ -47,6 +39,7 @@ class RazerService
         $files = [
             'razer-check-balance.exe',
             'razerG.exe',
+            'razer-check-transaction.exe',
             'razer-fetchcodes.exe',
         ];
 
@@ -57,7 +50,6 @@ class RazerService
                 copy($source, $dest);
             }
         }
-
     }
 
     public function cleaunUp()
@@ -68,6 +60,70 @@ class RazerService
         }
     }
 
+    public function getTransactionDetails($transactionID)
+    {
+        $workdir = $this->getWorkdir();
+        $account = $this->account;
+
+        $params = [
+            'email' => $account->email,
+            'password' => $account->password,
+            'clientIDlogin' => $account->client_id_login,
+            'serviceCode' => $account->service_code,
+            'transactionID' => $transactionID,
+        ];
+
+        $cmd = sprintf(
+            '"%s" -email=%s -password=%s -clientIDlogin=%s -serviceCode=%s -transactionID=%s 2>&1',
+            normalize_path($workdir . '/razer-check-transaction.exe', false),
+            escapeshellarg($account->email),
+            escapeshellarg($account->password),
+            escapeshellarg($account->client_id_login),
+            trim($account->service_code),
+            escapeshellarg($transactionID)
+        );
+
+        file_put_contents($workdir . '/transaction_cmd.txt', $cmd);
+        chdir($workdir);
+
+
+
+        $output = shell_exec($cmd);
+
+
+        if ($output === null) {
+            SystemLog::create([
+                'source' => 'RazerService::getTransactionDetails',
+                'params' => $params,
+                'response' => ['error' => 'Command execution failed'],
+                'status' => 'error'
+            ]);
+            throw new \RuntimeException("Command execution failed");
+        }
+
+        file_put_contents($workdir . '/transaction_log.txt', $output);
+
+        if (str_contains($output, 'Error unmarshalling response: invalid character')) {
+            SystemLog::create([
+                'source' => 'RazerService::getTransactionDetails',
+                'params' => $params,
+                'response' => ['error' => 'Error unmarshalling response: invalid character'],
+                'status' => 'error'
+            ]);
+            throw new \RuntimeException("Error unmarshalling response: invalid character");
+        }
+
+        $format = $this->formatOutput($output);
+
+        SystemLog::create([
+            'source' => 'RazerService::getTransactionDetails',
+            'params' => $params,
+            'response' => $format,
+            'status' => 'success'
+        ]);
+
+        return $format;
+    }
 
     public function buyProduct(PurchaseOrders $productToBuy, $quantity = 1)
     {
@@ -89,70 +145,55 @@ class RazerService
         if ($productToBuy->account_type == 'usa') {
             $region_id = 12;
         }
-        $command = [
+
+        $cmd = sprintf(
+            '"%s" -setupKey=%s -email=%s -password=%s -clientIDlogin=%s -serviceCode=%s -productId=%d -permalink=%s -regionId=%s -count=%s 2>&1',
             normalize_path($workdir . '/razerG.exe', false),
-            '-setupKey=' . escapeshellarg($account->otp_seed),
-            '-email=' . escapeshellarg($account->email),
-            '-password=' . escapeshellarg($account->password),
-            '-clientIDlogin=' . escapeshellarg($account->client_id_login),
-            '-serviceCode=' . escapeshellarg($account->service_code),
-            '-productId=' . escapeshellarg($productToBuy->product_id),
-            '-permalink=' . escapeshellarg($productToBuy->product_name),
-            '-regionId=' . escapeshellarg($region_id),
+            escapeshellarg($account->otp_seed),
+            escapeshellarg($account->email),
+            escapeshellarg($account->password),
+            escapeshellarg($account->client_id_login),
+            escapeshellarg($account->service_code),
+            $productToBuy->product_id,
+            escapeshellarg($productToBuy->product_name),
+            escapeshellarg($region_id),
+            escapeshellarg($quantity)
+        );
+//dd($cmd);
 
-            '-count=' . escapeshellarg($quantity),
-        ];
+       // $executalbe = normalize_path($workdir . '/razerG.exe', false);
 
-        $cmd = implode(' ', $command);
 
-        $descriptorspec = [
-            0 => ["pipe", "r"],  // stdin is a pipe that the child will read from
-            1 => ["pipe", "w"],  // stdout is a pipe that the child will write to
-            2 => ["pipe", "w"]   // stderr is a pipe that the child will write to
-        ];
         file_put_contents($workdir . '/buy_cmd.txt', $cmd);
+        chdir($workdir);
+        $output = shell_exec($cmd);
 
-        $process = proc_open($cmd, $descriptorspec, $pipes, $workdir, null);
+        if ($output === null) {
+            SystemLog::create([
+                'source' => 'RazerService::buyProduct',
+                'params' => $params,
+                'response' => ['error' => 'Command execution failed'],
+                'status' => 'error'
+            ]);
+            throw new \RuntimeException("Command execution failed");
+        }
 
-        if (is_resource($process)) {
-            // Close the stdin pipe since we don't need to send any input
-            fclose($pipes[0]);
+        file_put_contents($workdir . '/buy_log.txt', $output);
 
-            // Read the output from stdout
-            $output = stream_get_contents($pipes[1]);
-            fclose($pipes[1]);
+        if (str_contains($output, 'Error unmarshalling response: invalid character')) {
+            SystemLog::create([
+                'source' => 'RazerService::buyProduct',
+                'params' => $params,
+                'response' => ['error' => 'Error unmarshalling response: invalid character'],
+                'status' => 'error'
+            ]);
+            throw new \RuntimeException("Error unmarshalling response: invalid character");
+        }
 
-            // Read the error output from stderr
-            $errorOutput = stream_get_contents($pipes[2]);
-            fclose($pipes[2]);
-
-            // Close the process and get the exit code
-            $return_value = proc_close($process);
-            file_put_contents($workdir . '/buy_log.txt', $output);
-
-            if ($return_value !== 0) {
-                SystemLog::create([
-                    'source' => 'RazerService::buyProduct',
-                    'params' => $params,
-                    'response' => ['error' => $errorOutput],
-                    'status' => 'error'
-                ]);
-                throw new \RuntimeException("Command failed with error: " . $errorOutput);
-            }
-
-            if (strpos($output, 'Error unmarshalling response: invalid character') !== false) {
-                SystemLog::create([
-                    'source' => 'RazerService::buyProduct',
-                    'params' => $params,
-                    'response' => ['error' => 'Error unmarshalling response: invalid character'],
-                    'status' => 'error'
-                ]);
-                throw new \RuntimeException("Error unmarshalling response: invalid character");
-            }
-
-            $format = $this->formatOutput($output);
+        $format = $this->formatOutputOrder($output);
 
 
+        if (isset($format['orders'])) {
             SystemLog::create([
                 'source' => 'RazerService::buyProduct',
                 'params' => $params,
@@ -160,19 +201,18 @@ class RazerService
                 'status' => 'success'
             ]);
 
-            return $format;
-        } else {
 
+        } else {
             SystemLog::create([
                 'source' => 'RazerService::buyProduct',
                 'params' => $params,
-                'response' => ['error' => 'Unable to start the process.'],
+                'response' => $output,
                 'status' => 'error'
             ]);
-
-
-            throw new \RuntimeException("Unable to start the process.");
         }
+
+
+        return $format;
     }
 
     public function getAccountBallance(): array
@@ -187,93 +227,81 @@ class RazerService
             'serviceCode' => $account->service_code,
         ];
 
-        $command = [
+        $cmd = sprintf(
+            '"%s" -email=%s -password=%s -clientIDlogin=%s -serviceCode=%s 2>&1',
             normalize_path($workdir . '/razer-check-balance.exe', false),
-            '-email=' . escapeshellarg($account->email),
-            '-password=' . escapeshellarg($account->password),
-            '-clientIDlogin=' . escapeshellarg($account->client_id_login),
-            '-serviceCode=' . escapeshellarg($account->service_code),
-        ];
+            escapeshellarg($account->email),
+            escapeshellarg($account->password),
+            escapeshellarg($account->client_id_login),
+            escapeshellarg($account->service_code)
+        );
+        chdir($workdir);
 
-        $cmd = implode(' ', $command);
-
-        $descriptorspec = [
-            0 => ["pipe", "r"],  // stdin is a pipe that the child will read from
-            1 => ["pipe", "w"],  // stdout is a pipe that the child will write to
-            2 => ["pipe", "w"]   // stderr is a pipe that the child will write to
-        ];
         file_put_contents($workdir . '/buy_ballance.txt', $cmd);
 
-        $process = proc_open($cmd, $descriptorspec, $pipes, $workdir, null);
-
-        if (is_resource($process)) {
-            // Close the stdin pipe since we don't need to send any input
-            fclose($pipes[0]);
-
-            // Read the output from stdout
-            $output = stream_get_contents($pipes[1]);
-            fclose($pipes[1]);
-
-            // Read the error output from stderr
-            $errorOutput = stream_get_contents($pipes[2]);
-            fclose($pipes[2]);
-
-            // Close the process and get the exit code
-            $return_value = proc_close($process);
-
-            if ($return_value !== 0) {
-                SystemLog::create([
-                    'source' => 'RazerService::getAccountBallance',
-                    'params' => $params,
-                    'response' => ['error' => $errorOutput],
-                    'status' => 'error'
-                ]);
-                throw new \RuntimeException("Command failed with error: " . $errorOutput);
-            }
-            $data_items = $this->formatOutput($output);
-            $gold = 0;
-            $silver = 0;
-            if ($data_items) {
-                foreach ($data_items as $data_item) {
-                    if (isset($data_item['Total Gold'])) {
-                        $gold = $data_item['Total Gold'];
-                    }
-                    if (isset($data_item['Silver Balance'])) {
-                        $silver = $data_item['Silver Balance'];
-                    }
-                }
-            }
-
-            $return = [
-                'gold' => $gold,
-                'silver' => $silver,
-            ];
-            file_put_contents($workdir . '/balance_log.txt', $output);
-
+        $output = shell_exec($cmd);
+        if ($output === null) {
             SystemLog::create([
                 'source' => 'RazerService::getAccountBallance',
                 'params' => $params,
-                'response' => $return,
-                'status' => 'success'
-            ]);
-
-            return $return;
-        } else {
-
-            SystemLog::create([
-                'source' => 'RazerService::getAccountBallance',
-                'params' => $params,
-                'response' => ['error' => 'Unable to start the process.'],
+                'response' => ['error' => 'Command execution failed'],
                 'status' => 'error'
             ]);
-
-
-            throw new \RuntimeException("Unable to start the process.");
+            throw new \RuntimeException("Command execution failed");
         }
+
+        file_put_contents($workdir . '/balance_log.txt', $output);
+
+        $data_items = $this->formatOutput($output);
+        $gold = 0;
+        $silver = 0;
+        if ($data_items) {
+            foreach ($data_items as $data_item) {
+                if (isset($data_item['Total Gold'])) {
+                    $gold = $data_item['Total Gold'];
+                }
+                if (isset($data_item['Silver Balance'])) {
+                    $silver = $data_item['Silver Balance'];
+                }
+            }
+        }
+
+        $return = [
+            'gold' => $gold,
+            'silver' => $silver,
+        ];
+
+        SystemLog::create([
+            'source' => 'RazerService::getAccountBallance',
+            'params' => $params,
+            'response' => $return,
+            'status' => 'success'
+        ]);
+
+        return $return;
+    }
+
+    public function formatOutputOrder($output)
+    {
+        $alllines = explode("\n", $output);
+        $return_lines = [];
+        foreach ($alllines as $line) {
+            $lines = explode("Order confirmed: ", $line);
+            if (!isset($return_lines['orders'])) {
+                $return_lines['orders'] = [];
+            }
+
+            if (isset($lines[1])) {
+                $return_lines['orders'][] = $lines[1];
+            }
+        }
+        return $return_lines;
     }
 
     public function formatOutput($output)
     {
+
+
         $lines = explode("\n", $output);
         $return_lines = [];
 
@@ -284,7 +312,7 @@ class RazerService
             $data = array_map('trim', $data);
             $return = [];
             foreach ($data as $item) {
-                $item_data = explode(':', $item);
+                $item_data = explode(': ', $item);
                 $item_data = array_map('trim', $item_data);
 
                 if (count($item_data) >= 2) {

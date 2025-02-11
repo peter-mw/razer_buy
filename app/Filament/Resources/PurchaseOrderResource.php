@@ -125,6 +125,8 @@ class PurchaseOrderResource extends Resource
     {
         return $table
             ->defaultSort('created_at', 'desc')
+            ->actionsPosition(Tables\Enums\ActionsPosition::BeforeColumns)
+
             ->columns([
                 Tables\Columns\TextColumn::make('id')->toggleable(),
 

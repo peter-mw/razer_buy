@@ -11,6 +11,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class ProcessBuyJob implements ShouldQueue
@@ -43,7 +44,7 @@ class ProcessBuyJob implements ShouldQueue
 
         $eligibleAccount = null;
         $actualQuantity = 0;
-
+        $ready = [];
         foreach ($accounts as $acc) {
             // Calculate today's spent amount
             $todaySpent = Transaction::where('account_id', $acc->id)
@@ -82,38 +83,85 @@ class ProcessBuyJob implements ShouldQueue
 
         $service = new \App\Services\RazerService($eligibleAccount);
         $account = $eligibleAccount;
-        $ready = [];
+
         $remainingQuantity = $actualQuantity;
 
         // Process in chunks of 5
-
+        $ordersCompleted = [];
         while ($remainingQuantity > 0) {
-            $chunkSize = min(2, $remainingQuantity);
+            $chunkSize = min(200, $remainingQuantity);
 
             $buyProductsResults = $service->buyProduct($product, $chunkSize);
 
 
-
-            $foundProduct = false;
-            if ($buyProductsResults and count($buyProductsResults) == 2) {
-                foreach ($buyProductsResults as $buyProducts) {
-                    if (isset($buyProducts['Code'])) {
-                        $foundProduct = true;
-                    }
-                }
-            }
-
-            if (!$foundProduct) {
-                // retry
-                sleep(1);
-                $buyProductsResults = $service->buyProduct($product, $chunkSize);
-            }
-
             if (empty($buyProductsResults)) {
                 continue;
             }
+            if (isset($buyProductsResults['orders'])) {
+                $ordersCompleted = array_merge($ordersCompleted, $buyProductsResults['orders']);
+            }
+            /*  sleep(3);
+            $format = $this->getTransactionDetails($format['order_id']);
+            dd($format);*/
 
-            foreach ($buyProductsResults as $buyProducts) {
+
+            $remainingQuantity -= $chunkSize;
+        }
+
+
+        foreach ($ordersCompleted as $orderId) {
+
+
+            try {
+                $orderDetails = $service->getTransactionDetails($orderId);
+
+            } catch (\Exception $e) {
+                try {
+                    $orderDetails = $service->getTransactionDetails($orderId);
+
+                } catch (\Exception $e) {
+
+                    Log::error('Error while getTransactionDetails 2 time: ' . $orderId);
+                    continue;
+                }
+                Log::error('Error while getTransactionDetails: ' . $orderId);
+                continue;
+            }
+            $orderDetail = array_pop($orderDetails);
+
+
+            /*array:6 [▼ // app\Jobs\ProcessBuyJob.php:120
+              "Product" => "Yalla Ludo - USD 5 Diamonds"
+              "Code" => "PPHN51L35GRR"
+              "SN" => "M01911015173920860221514035972"
+              "Amount" => "5.190000"
+              "Timestamp" => "2026-02-11"
+              "TransactionDate" => "2025-02-11 12:25:56.2533503"
+            ]*/
+            if (!isset($orderDetail['Code'])) {
+                continue;
+            }
+
+            $item = [
+                'code' => $orderDetail['Code'],
+                'serial_number' => $orderDetail['SN'],
+                'amount' => $orderDetail['Amount'],
+                'buy_date' => date('Y-m-d H:i:s', strtotime($orderDetail['TransactionDate'])),
+                'transaction_id' => $orderDetail['SN'] // Using SN as transaction ID since it's unique
+            ];
+            $ready[] = $item;
+
+        }
+
+
+        //dd($ready);
+
+        /*
+
+
+
+
+          foreach ($buyProductsResults as $buyProducts) {
                 if (!isset($buyProducts['Code'])) {
                     continue;
                 }
@@ -125,11 +173,12 @@ class ProcessBuyJob implements ShouldQueue
                     'transaction_id' => $buyProducts['SN'] // Using SN as transaction ID since it's unique
                 ];
             }
+*/
 
-            $remainingQuantity -= $chunkSize;
-        }
 
         $totalAmount = 0;
+
+        Log::info('Ready: ' . json_encode($ready));
 
         // Create transaction and code for each item
         foreach ($ready as $item) {
