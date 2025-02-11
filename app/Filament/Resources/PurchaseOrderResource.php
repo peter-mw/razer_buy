@@ -29,7 +29,7 @@ class PurchaseOrderResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-shopping-cart';
     protected static ?int $navigationSort = 3;
 
-    private static function validateBalance(Forms\Get $get, Forms\Set $set): void
+    public static function validateBalance($get, $set): void
     {
         $accountId = $get('account_id');
         $quantity = $get('quantity');
@@ -66,6 +66,7 @@ class PurchaseOrderResource extends Resource
 
             ->schema([
                 Forms\Components\Select::make('product_id')
+                    ->default(fn () => request()->get('product_id'))
                     ->relationship(
                         'product',
                         'product_name',
@@ -104,8 +105,8 @@ class PurchaseOrderResource extends Resource
                         'global' => 'Global',
                         'usa' => 'USA',
                     ])
-                    ->default(fn () => request()->get('account_type') ?? 'global')
                     ->live()
+                    ->default(fn () => request()->get('account_type') ?? 'global')
                     ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
                         // Clear product selection when account type changes
                         $set('product_id', null);
@@ -127,7 +128,6 @@ class PurchaseOrderResource extends Resource
                 Forms\Components\Hidden::make('buy_value'),
                 Forms\Components\Hidden::make('product_face_value'),
                 Forms\Components\Select::make('account_id')
-                    ->default(fn () => request()->get('account_id'))
                     ->relationship(
                         'account',
                         'name',
@@ -152,7 +152,8 @@ class PurchaseOrderResource extends Resource
                     ->afterStateUpdated(function ($state, Forms\Get $get, Forms\Set $set) {
                         // Validate after account change
                         static::validateBalance($get, $set);
-                    }),
+                    })
+                    ->default(fn () => request()->get('account_id')),
                 Forms\Components\Select::make('order_status')
                     ->options([
                         'draft' => 'Draft',

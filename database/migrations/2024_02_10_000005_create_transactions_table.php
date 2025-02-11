@@ -11,7 +11,8 @@ return new class extends Migration
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('account_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('product_id')->constrained('products_to_buy')->cascadeOnDelete();
+            $table->foreignId('order_id')->nullable()->constrained('purchase_orders')->nullOnDelete();
+            $table->foreignId('product_id')->constrained('products')->cascadeOnDelete(); // Fixed reference
             $table->decimal('amount', 10, 2)->nullable();
             $table->timestamp('transaction_date')->nullable();
             $table->string('transaction_id', 500)->unique()->nullable();

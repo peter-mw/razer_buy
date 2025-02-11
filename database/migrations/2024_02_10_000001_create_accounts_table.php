@@ -8,7 +8,6 @@ return new class extends Migration
 {
     public function up(): void
     {
-
         Schema::create('accounts', function (Blueprint $table) {
             $table->id();
             $table->string('name', 500)->nullable();
@@ -25,6 +24,7 @@ return new class extends Migration
             $table->string('last_ballance_update_status', 500)->nullable();
             $table->string('service_code', 500)->nullable();
             $table->string('client_id_login', 500)->nullable();
+            $table->boolean('is_active')->default(true);
 
             // Indexes
             $table->index('name');

@@ -16,6 +16,13 @@ return new class extends Migration {
             $table->timestamp('transaction_date')->nullable();
             $table->string('status')->default('pending');
             $table->text('error_message')->nullable();
+
+            // Indexes
+            $table->index('account_id');
+            $table->index('product_id');
+            $table->index('transaction_id');
+            $table->index('status');
+            $table->index('transaction_date');
             $table->timestamps();
         });
     }

@@ -11,10 +11,10 @@ return new class extends Migration {
             return;
         }
 
-
         Schema::create('purchase_orders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
+            $table->foreignId('account_id')->nullable()->constrained('accounts')->nullOnDelete();
             $table->string('product_name', 500)->nullable();
             $table->string('product_edition', 500)->nullable();
             $table->boolean('is_active')->default(true)->nullable();

@@ -149,12 +149,12 @@ class ProcessBuyJob implements ShouldQueue
 
         foreach ($ordersCompleted as $orderTransactionId) {
 
-            sleep(2);
+            sleep(5);
             try {
                 $orderDetails = $service->getTransactionDetails($orderTransactionId);
 
             } catch (\Exception $e) {
-                sleep(5);
+                sleep(15);
                 try {
                     $orderDetails = $service->getTransactionDetails($orderTransactionId);
                 } catch (\Exception $e) {
@@ -165,7 +165,7 @@ class ProcessBuyJob implements ShouldQueue
                 Log::error('Error while getTransactionDetails: ' . $orderTransactionId);
                 // Save to pending transactions
                 PendingTransaction::create([
-                    'account_id' => $account->account_id,
+                    'account_id' => $account->id,
                     'product_id' => $purchaseOrder->product_id,
                     'transaction_id' => $orderTransactionId,
                     'status' => 'pending',
@@ -239,12 +239,28 @@ class ProcessBuyJob implements ShouldQueue
         $totalAmount = 0;
 
         Log::info('Ready: ' . json_encode($ready));
+        Log::info('Purchase Order: ' . json_encode($purchaseOrder));
 
+
+
+
+
+
+
+        /*$ready = array:1 [▼ // app\Jobs\ProcessBuyJob.php:248
+  0 => array:5 [▼
+    "code" => "RIYXDMMPDK3XWJCNY3"
+    "serial_number" => "ROX010-310125--05548"
+    "amount" => "10.080000"
+    "buy_date" => "2025-02-11 20:02:29"
+    "transaction_id" => "ROX010-310125--05548"
+  ]
+]*/
         // Create transaction and code for each item
         foreach ($ready as $item) {
             // Create transaction
             Transaction::create([
-                'account_id' => $account->account_id,
+                'account_id' => $account->id,
                 'amount' => $item['amount'],
                 'product_id' => $purchaseOrder->product_id,
                 'transaction_date' => $item['buy_date'],
@@ -254,7 +270,7 @@ class ProcessBuyJob implements ShouldQueue
 
             // Create code
             Code::create([
-                'account_id' => $account->account_id,
+                'account_id' => $account->id,
                 'code' => $item['code'],
                 'serial_number' => $item['serial_number'],
                 'product_id' => $purchaseOrder->product_id,

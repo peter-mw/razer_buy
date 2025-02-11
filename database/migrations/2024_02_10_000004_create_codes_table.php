@@ -11,7 +11,8 @@ return new class extends Migration
         Schema::create('codes', function (Blueprint $table) {
             $table->id();
             $table->foreignId('account_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('product_id')->constrained('products_to_buy')->cascadeOnDelete();
+            $table->foreignId('order_id')->nullable()->constrained('purchase_orders')->nullOnDelete();
+            $table->foreignId('product_id')->constrained('products')->cascadeOnDelete(); // Fixed reference
             $table->string('code', 500)->nullable();
             $table->string('serial_number', 500)->nullable();
             $table->string('product_name', 500)->nullable();

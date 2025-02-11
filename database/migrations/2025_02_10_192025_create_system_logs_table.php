@@ -14,6 +14,10 @@ return new class extends Migration
             $table->json('params');
             $table->json('response')->nullable();
             $table->string('status');
+
+            // Indexes
+            $table->index('source');
+            $table->index('status');
             $table->timestamps();
         });
     }

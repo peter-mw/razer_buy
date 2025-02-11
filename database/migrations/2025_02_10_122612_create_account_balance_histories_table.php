@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('account_balance_histories', function (Blueprint $table) {
@@ -19,13 +16,14 @@ return new class extends Migration
             $table->string('balance_event')->nullable();
             $table->timestamp('balance_update_time')->nullable();
 
+            // Indexes
+            $table->index('balance_event');
+            $table->index('balance_update_time');
+            $table->index(['balance_gold', 'balance_silver']);
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('account_balance_histories');
