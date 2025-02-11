@@ -153,29 +153,19 @@ class ProcessBuyJob implements ShouldQueue
                 } catch (\Exception $e) {
                     Log::error('Error while getTransactionDetails 2 time: ' . $orderTransactionId);
 
-                    // Save to pending transactions
-                    PendingTransaction::create([
-                        'account_id' => $account->id,
-                        'product_id' => $product->id,
-                        'transaction_id' => $orderTransactionId,
-                        'status' => 'pending',
-                        'error_message' => 'Failed to retrieve transaction details after 2 attempts: ' . $e->getMessage(),
-                        'transaction_date' => now(),
-                    ]);
-
                     continue;
                 }
                 Log::error('Error while getTransactionDetails: ' . $orderTransactionId);
-
-                // Save to pending transactions on first failure
+                // Save to pending transactions
                 PendingTransaction::create([
                     'account_id' => $account->id,
                     'product_id' => $product->id,
-                    'order_id' => $orderTransactionId,
+                    'transaction_id' => $orderTransactionId,
                     'status' => 'pending',
-                    'error_message' => 'Failed to retrieve transaction details: ' . $e->getMessage(),
+                    'error_message' => 'Failed to retrieve transaction details after attempts: ' . $e->getMessage(),
                     'transaction_date' => now(),
                 ]);
+
 
                 continue;
             }

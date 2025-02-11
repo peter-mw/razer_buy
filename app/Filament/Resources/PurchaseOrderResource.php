@@ -17,7 +17,7 @@ use App\Models\Product;
 use Filament\Widgets\Widget;
 use App\Filament\Widgets\AccountBalancesWidget;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Illuminate\Support\Facades\Artisan;
+use App\Jobs\ProcessBuyJob;
 use Illuminate\Validation\ValidationException;
 
 class PurchaseOrderResource extends Resource
@@ -116,7 +116,16 @@ class PurchaseOrderResource extends Resource
                     ->relationship(
                         'account',
                         'name',
-                        fn($query) => $query->orderByDesc('ballance_gold')
+                        function ($query, Forms\Get $get) {
+                            $query->orderByDesc('ballance_gold');
+
+                            $accountType = $get('account_type');
+                            if ($accountType) {
+                                $query->where('account_type', $accountType);
+                            }
+
+                            return $query;
+                        }
                     )
                     ->label('Account')
                     ->searchable()
@@ -229,16 +238,7 @@ class PurchaseOrderResource extends Resource
                         foreach ($products as $product) {
                             $product->update(['order_status' => 'processing']);
 
-                            $exitCode = Artisan::call('app:process-buy', [
-                                'product' => $product->id,
-                                'quantity' => $product->quantity
-                            ]);
-
-                            $output .= Artisan::output();
-
-                            $product->update([
-                                'order_status' => $exitCode === 0 ? 'completed' : 'failed'
-                            ]);
+                            ProcessBuyJob::dispatch($product->id, $product->quantity);
                         }
 
                         Notification::make()
@@ -272,26 +272,13 @@ class PurchaseOrderResource extends Resource
 
                         $record->update(['order_status' => 'processing']);
 
-                        $exitCode = Artisan::call('app:process-buy', [
-                            'product' => $record->id,
-                            'quantity' => $data['quantity']
-                        ]);
+                        ProcessBuyJob::dispatch($record->id, $data['quantity']);
 
-                        if ($exitCode === 0) {
-                            $record->update(['order_status' => 'completed']);
-                            Notification::make()
-                                ->title('Buy process completed')
-                                ->success()
-                                ->body(Artisan::output())
-                                ->send();
-                        } else {
-                            $record->update(['order_status' => 'failed']);
-                            Notification::make()
-                                ->title('Failed to process buy')
-                                ->danger()
-                                ->body(Artisan::output())
-                                ->send();
-                        }
+                        Notification::make()
+                            ->title('Buy process started')
+                            ->body('The purchase order is being processed in the background')
+                            ->success()
+                            ->send();
                     })
                     ->hidden(fn(PurchaseOrders $record): bool => $record->order_status === 'completed'),
             ])
