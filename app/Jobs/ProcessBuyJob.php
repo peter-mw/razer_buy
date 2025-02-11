@@ -62,9 +62,15 @@ class ProcessBuyJob implements ShouldQueue
             }
 
 
+            if ($acc->ballance_gold == 0) {
+                continue;
+            }
+
+
+
             // Calculate maximum quantity possible based on balance and daily limit
-            $maxQuantityByBalance = floor($acc->ballance_gold / $product->buy_value);
-            $maxQuantityByDailyLimit = floor($remainingDailyLimit / $product->buy_value);
+            // $maxQuantityByBalance = floor($acc->ballance_gold / $product->buy_value);
+            //  $maxQuantityByDailyLimit = floor($remainingDailyLimit / $product->buy_value);
 
             // Calculate the actual quantity considering all constraints
             $possibleQuantity = $product->quantity;

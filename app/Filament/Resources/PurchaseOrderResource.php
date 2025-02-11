@@ -63,12 +63,12 @@ class PurchaseOrderResource extends Resource
     public static function form(Form $form): Form
     {
         return $form
-            ->statePath('data')
+
             ->schema([
                 Forms\Components\Select::make('product_id')
                     ->default(fn () => request()->get('product_id'))
                     ->relationship(
-                        'product', 
+                        'product',
                         'product_name',
                         fn($query, Forms\Get $get) => $query->where('account_type', $get('account_type'))
                     )
@@ -90,11 +90,11 @@ class PurchaseOrderResource extends Resource
                                 $set('buy_value', $product->product_buy_value);
                                 $set('product_face_value', $product->product_face_value);
                                 $set('account_type', $product->account_type);
-
-                                // Validate after product change
-                                static::validateBalance($get, $set);
                             }
                         }
+
+                        // Always validate balance regardless of product state
+                        static::validateBalance($get, $set);
                     }),
                 Forms\Components\Hidden::make('product_name')
                     ->label('Product Name (slug)'),
@@ -107,9 +107,12 @@ class PurchaseOrderResource extends Resource
                     ])
                     ->default(fn () => request()->get('account_type') ?? 'global')
                     ->live()
-                    ->afterStateUpdated(function ($state, Forms\Set $set) {
+                    ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
                         // Clear product selection when account type changes
                         $set('product_id', null);
+
+                        // Validate balance after account type change
+                        static::validateBalance($get, $set);
                     }),
                 Forms\Components\TextInput::make('quantity')
                     ->required()
@@ -266,8 +269,8 @@ class PurchaseOrderResource extends Resource
                 ExportAction::make()
                     ->label('Export Codes')
                     ->exporter(CodeExporter::class)
-                    ->visible(fn (PurchaseOrders $record): bool => 
-                        $record->order_status === 'completed' && 
+                    ->visible(fn (PurchaseOrders $record): bool =>
+                        $record->order_status === 'completed' &&
                         $record->codes()->count() > 0
                     ),
                 Tables\Actions\Action::make('processBuy')
