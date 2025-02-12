@@ -126,7 +126,7 @@ class PurchaseOrderResource extends Resource
                     }),
                 Forms\Components\TextInput::make('quantity')
                     ->required()
-                    ->reactive()
+
                     ->numeric()
                     ->default(0)
                     ->minValue(0)
@@ -200,6 +200,9 @@ class PurchaseOrderResource extends Resource
             ->actionsPosition(Tables\Enums\ActionsPosition::BeforeColumns)
             ->columns([
                 Tables\Columns\TextColumn::make('id')->toggleable(),
+                Tables\Columns\TextColumn::make('account_id')
+                    ->sortable()
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('product_id')
                     ->sortable()
                     ->searchable(),
@@ -317,7 +320,7 @@ class PurchaseOrderResource extends Resource
 
                         $record->update(['order_status' => 'processing']);
 
-                        ProcessBuyJob::dispatch($record->id, $data['quantity']);
+                        ProcessBuyJob::dispatchSync($record->id, $data['quantity']);
 
                         Notification::make()
                             ->title('Buy process started')

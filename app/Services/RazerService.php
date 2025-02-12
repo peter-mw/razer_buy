@@ -161,13 +161,11 @@ class RazerService
             escapeshellarg($region_id),
             escapeshellarg($quantity)
         );
-//dd($cmd);
-
-        // $executalbe = normalize_path($workdir . '/razerG.exe', false);
 
 
         file_put_contents($workdir . '/buy_cmd.txt', $cmd);
         chdir($workdir);
+
         $output = shell_exec($cmd);
 
 
@@ -390,7 +388,6 @@ class RazerService
                             $item_data_first = $str;
                         }
                         //TransactionDate
-                        //$item_data_first = $str[0];
 
 
                         $return[$item_data[0]] = $item_data_first;

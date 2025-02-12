@@ -38,17 +38,7 @@ class FetchAccountCodesJob implements ShouldQueue
         $codes = $service->fetchAllCodes();
 
 
-        if (!empty($codes)) {
-            // Send failure notification to all users
-            foreach (User::all() as $user) {
-                Notification::make()
-                    ->title('Fetch Account Codes Failed')
-                    ->body("Failed to fetch codes for account: {$account->id}")
-                    ->danger()
 
-                    ->sendToDatabase($user);
-            }
-        }
         if (!empty($codes)) {
             // Create a single order for all codes
             $firstCode = $codes[0];
