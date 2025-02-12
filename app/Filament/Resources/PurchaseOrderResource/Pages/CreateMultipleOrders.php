@@ -20,6 +20,7 @@ use Illuminate\Support\HtmlString;
 use Livewire\Attributes\Computed;
 use Filament\Actions\Action;
 use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Forms;
 
 class CreateMultipleOrders extends Page
 {
@@ -62,8 +63,10 @@ class CreateMultipleOrders extends Page
                         ->required()
                         ->reactive()
                         ->live()
-                        ->afterStateUpdated(function ($state) {
+                        ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
                             $this->data['account_type'] = $state;
+                            $this->data['product_id'] = null;
+                            $this->data['selected_accounts'] = [];
                             $this->refreshOrderDetails();
                         }),
                 ]),
