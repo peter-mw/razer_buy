@@ -113,18 +113,23 @@ class CreateMultipleOrders extends Page
                         ->afterStateUpdated(function ($state) {
                             $this->data['order_details'] = $this->getOrderDetails();
                             // Reset quantities when accounts change
-                            $this->data['quantities'] = [];
+                        //    $this->data['quantities'] = [];
                         })
                         ->reactive(),
 
 
 
+
+                ]),
+
+            Section::make('Quantity')
+                ->schema([
                     Grid::make()
                         ->schema(fn() => $this->getQuantityInputs())
                         ->columns(3)
                         ->visible(fn() => !empty($this->data['selected_accounts'])),
-                ]),
 
+                ]),
             Section::make('Order Summary')
                 ->schema([
                     OrderDetails::make('data.order_details')
@@ -155,17 +160,17 @@ class CreateMultipleOrders extends Page
 
             $maxQuantity = 0;
             if (isset($this->data['product'])) {
-                $maxQuantity = floor($account->ballance_gold / $this->data['product']->product_buy_value);
+                $maxQuantity = intval($account->ballance_gold / $this->data['product']->product_buy_value);
             }
 
             $inputs["data.quantities.{$accountId}"] = TextInput::make("data.quantities.{$accountId}")
                 ->label("Quantity for {$account->name}")
                 ->numeric()
-                ->default(0)
+                ->default($maxQuantity)
                 ->minValue(0)
                 ->maxValue($maxQuantity)
                 ->required()
-                ->live()
+                ->live(debounce: 1500)
                 ->afterStateUpdated(function ($state) {
                     $this->data['order_details'] = $this->getOrderDetails();
                 })
