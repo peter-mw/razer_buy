@@ -126,6 +126,7 @@ class CreateMultipleOrders extends Page
     {
         $accounts = Account::where('is_active', true)
             ->where('account_type', $this->data['account_type'] ?? null)
+            ->where('is_active', true)
             ->get();
 
         if ($accounts->isEmpty()) {

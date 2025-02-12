@@ -141,7 +141,8 @@ class PurchaseOrderResource extends Resource
                         'account',
                         'name',
                         function ($query, Forms\Get $get) {
-                            $query->orderByDesc('ballance_gold');
+                            $query->where('is_active', true)
+                                ->orderByDesc('ballance_gold');
 
                             $accountType = $get('account_type');
                             if ($accountType) {
