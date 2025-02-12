@@ -37,17 +37,15 @@ class ProcessBuyJob implements ShouldQueue
         $purchaseOrder = PurchaseOrders::findOrFail($this->productId);
 
 
-
         $purchaseOrder->update(['order_status' => 'processing']);
-        
+
         // Send processing status notification to all users
         foreach (User::all() as $user) {
             Notification::make()
                 ->title('Purchase Order Started')
                 ->body("Purchase order #{$purchaseOrder->id} for {$purchaseOrder->product_name} is now processing")
                 ->info()
-                    ->duration(10)
-                    ->sendToDatabase($user);
+                ->sendToDatabase($user);
         }
 
         // If account_id is set, use that specific account
@@ -66,56 +64,9 @@ class ProcessBuyJob implements ShouldQueue
         $eligibleAccount = null;
         $actualQuantity = 0;
         $ready = [];
-        foreach ($accounts as $acc) {
-            // Calculate today's spent amount
-            $todaySpent = Transaction::where('account_id', $acc->id)
-                ->whereDate('transaction_date', now())
-                ->sum('amount');
-            $remainingDailyLimit = $acc->limit_amount_per_day - $todaySpent;
-
-            // Calculate remaining daily limit
-            if ($acc->limit_amount_per_day > 0 and $todaySpent > 0) {
-                if ($remainingDailyLimit <= 0) {
-                    continue;
-                }
-            }
 
 
-            if ($acc->ballance_gold == 0) {
-                continue;
-            }
-
-
-            // Calculate maximum quantity possible based on balance and daily limit
-            // $maxQuantityByBalance = floor($acc->ballance_gold / $product->buy_value);
-            //  $maxQuantityByDailyLimit = floor($remainingDailyLimit / $product->buy_value);
-
-            // Calculate the actual quantity considering all constraints
-            $possibleQuantity = $purchaseOrder->quantity;
-
-            if ($possibleQuantity > 0) {
-                $eligibleAccount = $acc;
-                $actualQuantity = $possibleQuantity;
-                break;
-            }
-        }
-
-        if (!$eligibleAccount || $actualQuantity <= 0) {
-            // Update status to failed if no eligible account found
-            $purchaseOrder->update(['order_status' => 'failed']);
-            
-            // Send failure notification to all users
-            foreach (User::all() as $user) {
-                Notification::make()
-                    ->title('Purchase Order Failed')
-                    ->body("Purchase order #{$purchaseOrder->id} failed: No eligible account found with sufficient balance and daily limit, or product is out of stock")
-                    ->danger()
-                    ->duration(10)
-                    ->sendToDatabase($user);
-            }
-                
-            throw new \Exception("No eligible account found with sufficient balance and daily limit, or product is out of stock");
-        }
+        $eligibleAccount = $accounts->first();
 
 
         $service = new \App\Services\RazerService($eligibleAccount);
@@ -142,14 +93,13 @@ class ProcessBuyJob implements ShouldQueue
                 'balance_silver' => $ballanceResponse['silver'],
                 'balance_update_time' => $account->last_ballance_update_at ?? now(),
             ]);
-            
+
             // Send balance update notification to all users
             foreach (User::all() as $user) {
                 Notification::make()
                     ->title('Account Balance Updated')
                     ->body("Account {$account->name} balance updated: Gold {$ballanceResponse['gold']}, Silver {$ballanceResponse['silver']}")
                     ->info()
-                    ->duration(10)
                     ->sendToDatabase($user);
             }
         }
@@ -157,17 +107,16 @@ class ProcessBuyJob implements ShouldQueue
 
         if ($ballanceResponse['gold'] < $purchaseOrder->buy_value) {
             $purchaseOrder->update(['order_status' => 'failed']);
-            
+
             // Send failure notification to all users
             foreach (User::all() as $user) {
                 Notification::make()
                     ->title('Purchase Order Failed')
                     ->body("Purchase order #{$purchaseOrder->id} failed: Not enough gold to buy the product")
                     ->danger()
-                    ->duration(10)
                     ->sendToDatabase($user);
             }
-                
+
             throw new \Exception("Not enough gold to buy the product");
         }
 
@@ -181,14 +130,13 @@ class ProcessBuyJob implements ShouldQueue
             $purchaseOrder->update([
                 'order_status' => 'buying',
             ]);
-            
+
             // Send buying status notification to all users
             foreach (User::all() as $user) {
                 Notification::make()
                     ->title('Purchase Order Update')
                     ->body("Purchase order #{$purchaseOrder->id} is now buying products")
                     ->info()
-                    ->duration(10)
                     ->sendToDatabase($user);
             }
             $buyProductsResults = $service->buyProduct($purchaseOrder, $chunkSize);
@@ -201,8 +149,7 @@ class ProcessBuyJob implements ShouldQueue
                         ->title('Purchase Attempt Failed')
                         ->body("Failed to buy products for purchase order #{$purchaseOrder->id} (chunk size: {$chunkSize})")
                         ->warning()
-                    ->duration(10)
-                    ->sendToDatabase($user);
+                        ->sendToDatabase($user);
                 }
                 continue;
             }
@@ -220,16 +167,22 @@ class ProcessBuyJob implements ShouldQueue
         $purchaseOrder->update([
             'order_status' => 'fetching'
         ]);
-        
+
         // Send fetching status notification to all users
         foreach (User::all() as $user) {
             Notification::make()
                 ->title('Purchase Order Update')
                 ->body("Purchase order #{$purchaseOrder->id} is now fetching transaction details")
                 ->info()
-                    ->duration(10)
-                    ->sendToDatabase($user);
+                ->sendToDatabase($user);
         }
+
+        if (empty($ordersCompleted)) {
+            $purchaseOrder->update([
+                'order_status' => 'failed'
+            ]);
+        }
+
         foreach ($ordersCompleted as $orderTransactionId) {
 
             sleep(2);
@@ -262,8 +215,7 @@ class ProcessBuyJob implements ShouldQueue
                         ->title('Transaction Pending')
                         ->body("Transaction {$orderTransactionId} for purchase order #{$purchaseOrder->id} has been saved to pending transactions")
                         ->warning()
-                    ->duration(10)
-                    ->sendToDatabase($user);
+                        ->sendToDatabase($user);
                 }
 
 
@@ -275,17 +227,16 @@ class ProcessBuyJob implements ShouldQueue
                 $purchaseOrder->update([
                     'order_status' => 'failed'
                 ]);
-                
+
                 // Send failure notification to all users
                 foreach (User::all() as $user) {
                     Notification::make()
                         ->title('Purchase Order Failed')
                         ->body("Purchase order #{$purchaseOrder->id} failed: Error retrieving transaction details")
                         ->danger()
-                    ->duration(10)
-                    ->sendToDatabase($user);
+                        ->sendToDatabase($user);
                 }
-                    
+
                 Log::error('Error while getTransactionDetails: ' . $orderTransactionId);
                 continue;
             }
@@ -309,8 +260,7 @@ class ProcessBuyJob implements ShouldQueue
                         ->title('Code Missing')
                         ->body("Transaction {$orderTransactionId} for purchase order #{$purchaseOrder->id} did not contain a code")
                         ->warning()
-                    ->duration(10)
-                    ->sendToDatabase($user);
+                        ->sendToDatabase($user);
                 }
                 continue;
             }
@@ -403,8 +353,7 @@ class ProcessBuyJob implements ShouldQueue
                 ->title('Final Balance Update')
                 ->body("Account {$account->name} balance reduced by {$totalAmount} gold after completing purchase order #{$purchaseOrder->id}")
                 ->info()
-                    ->duration(10)
-                    ->sendToDatabase($user);
+                ->sendToDatabase($user);
         }
 
         // Update product quantity and status
@@ -415,15 +364,14 @@ class ProcessBuyJob implements ShouldQueue
 
         // Send database notification
         $purchaseOrder->notify(new PurchaseOrderCompleted($purchaseOrder));
-        
+
         // Send completion notification to all users
         foreach (User::all() as $user) {
             Notification::make()
                 ->title('Purchase Order Completed')
                 ->body("Purchase order #{$purchaseOrder->id} for {$purchaseOrder->product_name} has been completed")
                 ->success()
-                    ->duration(10)
-                    ->sendToDatabase($user);
+                ->sendToDatabase($user);
         }
     }
 

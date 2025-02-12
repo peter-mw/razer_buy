@@ -66,7 +66,7 @@ class RescueTransactionJob implements ShouldQueue
                 return;
             }
             $product = Product::find($pendingTransaction->product_id);
- 
+
 
             // Create or update transaction record
             Transaction::updateOrCreate(
@@ -110,10 +110,8 @@ class RescueTransactionJob implements ShouldQueue
                 'transaction_date' => date('Y-m-d H:i:s', strtotime($orderDetail['TransactionDate']))
             ]);
 
-            Log::info('Successfully rescued transaction: ' . $this->transactionId);
 
         } catch (\Exception $e) {
-            Log::error('Failed to rescue transaction: ' . $this->transactionId . ' - ' . $e->getMessage());
 
             $pendingTransaction->update([
                 'status' => 'failed',

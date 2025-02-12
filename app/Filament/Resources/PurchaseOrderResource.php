@@ -62,9 +62,11 @@ class PurchaseOrderResource extends Resource
 
     public function mount(): void
     {
+
         $this->form->fill([
             'product_id' => request()->get('product_id') ?? null,
             'account_type' => request()->get('account_type') ?? null,
+            'account_id' => request()->get('account_id') ?? null,
             'order_status' => request()->get('order_status') ?? 'pending'
         ]);
     }
@@ -117,6 +119,7 @@ class PurchaseOrderResource extends Resource
                     ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
                         // Clear product selection when account type changes
                         $set('product_id', null);
+                        $set('account_id', null);
 
                         // Validate balance after account type change
                         static::validateBalance($get, $set);
@@ -155,12 +158,18 @@ class PurchaseOrderResource extends Resource
                     ->preload()
                     ->nullable()
                     ->live()
-                    ->getOptionLabelFromRecordUsing(fn($record) => "{$record->name} - Balance: \${$record->ballance_gold} ({$record->account_type})")
+                    ->getOptionLabelFromRecordUsing(fn($record) => "{$record->name} - Balance: \${$record->ballance_gold} ({$record->account_type}) id: {$record->id}")
                     ->afterStateUpdated(function ($state, Forms\Get $get, Forms\Set $set) {
                         // Validate after account change
+
+                        if(!$get('account_type')) {
+                            $set('account_type', Account::find($state)->account_type);
+                        }
+
+
                         static::validateBalance($get, $set);
                     })
-                    ->default(fn() => request()->get('account_id')),
+                    ,
                 Forms\Components\Select::make('order_status')
                     ->default('pending')
                     ->options([
