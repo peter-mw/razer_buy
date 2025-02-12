@@ -29,63 +29,72 @@ class FetchAccountCodesJob implements ShouldQueue
     )
     {
     }
+
     public function middleware()
     {
-        return [(new WithoutOverlapping('FetchAccountCodesJob'.$this->accountId))->dontRelease()];
+        return [(new WithoutOverlapping('FetchAccountCodesJob' . $this->accountId))->dontRelease()];
     }
+
     public function handle(): void
     {
         $account = Account::findOrFail($this->accountId);
         $service = new RazerService($account);
 
         // Fetch all codes for the account
-        $codes = $service->fetchAllCodes();
+        try {
+            $codes = $service->fetchAllCodes();
+            if (!empty($codes)) {
+                // Create a single order for all codes
+                $firstCode = $codes[0];
+                $productName = $firstCode['Product'];
 
 
+                $product = Product::where('product_name', 'LIKE', '%' . $productName . '%')->first();
 
-        if (!empty($codes)) {
-            // Create a single order for all codes
-            $firstCode = $codes[0];
-            $productName = $firstCode['Product'];
+                if (!$product) {
+
+                    $product = Product::create([
+                        'product_name' => $productName,
+                        'product_slug' => Str::slug($productName),
+                        'account_type' => 'unknown',
+                        'product_edition' => 'unknown',
+                        'product_buy_value' => 0,
+                        'product_face_value' => 0,
+                    ]);
+                    $product->save();
 
 
-            $product = Product::where('product_name', 'LIKE', '%' . $productName . '%')->first();
+                }
 
-            if (!$product) {
+                $newOrder = PurchaseOrders::create([
+                    'product_id' => $product->id,
+                    'product_name' => $product->product_name,
+                    'account_type' => $product->account_type,
+                    'product_edition' => $product->product_edition,
+                    'buy_value' => $product->product_buy_value,
+                    'product_face_value' => $product->product_face_value,
 
-                $product = Product::create([
-                    'product_name' => $productName,
-                    'product_slug' => Str::slug($productName),
-                    'account_type' => 'unknown',
-                    'product_edition' => 'unknown',
-                    'product_buy_value' => 0,
-                    'product_face_value' => 0,
+                    'quantity' => 0,
+                    'order_status' => 'completed',
+                    'account_id' => $account->id
                 ]);
-                $product->save();
+
+                foreach ($codes as $codeData) {
+                    $this->processCode($account, $codeData, $newOrder);
+                }
 
 
+                // Update account balance after processing
+                $this->updateAccountBalance($account, $service);
             }
-
-            $newOrder = PurchaseOrders::create([
-                'product_id' => $product->id,
-                'product_name' => $product->product_name,
-                'account_type' => $product->account_type,
-                'product_edition' => $product->product_edition,
-                'buy_value' => $product->product_buy_value,
-                'product_face_value' => $product->product_face_value,
-
-                'quantity' => 0,
-                'order_status' => 'completed',
-                'account_id' => $account->id
-            ]);
-
-            foreach ($codes as $codeData) {
-                $this->processCode($account, $codeData, $newOrder);
-            }
+        } catch (\Exception $e) {
+            Log::error('Failed to fetch codes: ' . $e->getMessage());
+            return;
         }
 
-        // Update account balance after processing
-        $this->updateAccountBalance($account, $service);
+
+
+
     }
 
     protected function processCode(Account $account, array $codeData, PurchaseOrders $order): void
@@ -138,7 +147,7 @@ class FetchAccountCodesJob implements ShouldQueue
         ]);
     }
 
-    protected function updateAccountBalance(Account $account, RazerService $service): void
+    public function updateAccountBalance(Account $account, RazerService $service): void
     {
         try {
             $balance = $service->getAccountBallance();

@@ -72,7 +72,6 @@ class AccountResource extends Resource
                     ->maxLength(255),
                 Password::make('email_password')
                     ->revealable()
-
                     ->maxLength(255),
 
                 Forms\Components\TextInput::make('service_code')
@@ -111,7 +110,6 @@ class AccountResource extends Resource
                     ->label('Sync All Accounts')
                     ->icon('heroicon-o-arrow-path')
                     ->color('success')
-
                     ->action(function () {
                         try {
                             Artisan::call('accounts:sync-balances');
@@ -229,6 +227,13 @@ class AccountResource extends Resource
                         'usa' => 'USA',
                     ])
                     ->label('Account Type'),
+
+                Tables\Filters\SelectFilter::make('is_active')
+                    ->options([
+                        '1' => 'Active',
+                        '0' => 'Inactive',
+                    ])
+                    ->label('Status'),
                 Tables\Filters\SelectFilter::make('last_ballance_update_status')
                     ->options([
                         'success' => 'Success',
@@ -244,11 +249,10 @@ class AccountResource extends Resource
                 Action::make('create_order')
                     ->label('Create Order')
                     ->icon('heroicon-o-shopping-cart')
-                    ->url(fn (Account $record): string =>
-                        PurchaseOrderResource::getUrl('create', [
-                            'account_id' => $record->id,
-                            'account_type' => $record->account_type
-                        ])
+                    ->url(fn(Account $record): string => PurchaseOrderResource::getUrl('create', [
+                        'account_id' => $record->id,
+                        'account_type' => $record->account_type
+                    ])
                     )
                     ->openUrlInNewTab(),
                 Action::make('sync')

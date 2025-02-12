@@ -176,6 +176,12 @@ class CreateMultipleOrders extends Page
                         ->visible(fn() => $this->data['selected_accounts'][$account->id] ?? false)
                         ->required()
                         ->live(debounce: 1500)
+                        ->beforeStateDehydrated(function ($state) {
+                            if (!isset($state)) {
+                                return 0;
+                            }
+                            return $state;
+                        })
                         ->afterStateUpdated(function ($state) {
                             $this->refreshOrderDetails();
                         })
