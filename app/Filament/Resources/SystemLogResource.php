@@ -74,7 +74,33 @@ class SystemLogResource extends Resource
                     ->limit(50),
             ])
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('status')
+                    ->options([
+                        'success' => 'Success',
+                        'error' => 'Error',
+                    ]),
+                Tables\Filters\Filter::make('command')
+                    ->form([
+                        Forms\Components\TextInput::make('command')
+                            ->label('Command')
+                            ->placeholder('Search command...'),
+                    ])
+                    ->query(function ($query, array $data) {
+                        if ($data['command']) {
+                            $query->where('command', 'like', "%{$data['command']}%");
+                        }
+                    }),
+                Tables\Filters\Filter::make('source')
+                    ->form([
+                        Forms\Components\TextInput::make('source')
+                            ->label('Source')
+                            ->placeholder('Search source...'),
+                    ])
+                    ->query(function ($query, array $data) {
+                        if ($data['source']) {
+                            $query->where('source', 'like', "%{$data['source']}%");
+                        }
+                    }),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
