@@ -13,8 +13,6 @@ use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use App\Forms\Components\OrderDetails;
-use Filament\Forms\Components\Wizard;
-use Filament\Forms\Components\Wizard\Step;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Page;
@@ -35,110 +33,108 @@ class CreateMultipleOrders extends Page
     public function mount(): void
     {
         $this->form->fill([
-            'account_type' => null,
-            'product_id' => null,
-            'selected_accounts' => [],
-            'quantities' => [],
-            'execute_immediately' => false,
+            'data.account_type' => null,
+            'data.product_id' => null,
+            'data.selected_accounts' => [],
+            'data.quantities' => [],
+            'data.execute_immediately' => false,
         ]);
     }
 
-    protected function getFormStatePath(): string
-    {
-        return 'data';
-    }
 
     public function form(Form $form): Form
     {
         return $form->schema([
-            Wizard::make([])
-                ->afterStateUpdated(function () {
-                    $this->data['order_details'] = $this->getOrderDetails();
-                })
+            Section::make('Account Type')
                 ->schema([
-                Step::make('Account Type')
-                    ->schema([
-                        Select::make('data.account_type')
-                            ->label('Select Account Type')
-                            ->options([
-                                'global' => 'Global',
-                                'usa' => 'USA',
-                            ])
-                            ->required()
-                            ->live()
-                            ->afterStateUpdated(function ($state) {
-                                $this->data['account_type'] = $state;
-                                $this->data['order_details'] = $this->getOrderDetails();
-                            }),
-                    ]),
+                    Select::make('data.account_type')
+                        ->label('Select Account Type')
+                        ->options([
+                            'global' => 'Global',
+                            'usa' => 'USA',
+                        ])
+                        ->required()
+                        ->reactive()
+                        ->live()
+                        ->afterStateUpdated(function ($state) {
+                            $this->data['account_type'] = $state;
+                            $this->data['order_details'] = $this->getOrderDetails();
+                        }),
+                ]),
 
-                Step::make('Product')
-                    ->schema([
-                        Select::make('data.product_id')
-                            ->label('Select Product')
-                            ->options(fn () => Product::where('account_type', $this->data['account_type'] ?? null)
-                                ->pluck('product_slug', 'id'))
-                            ->required()
-                            ->live()
-                            ->afterStateUpdated(function ($state) {
-                                if ($state) {
-                                    $this->data['product'] = Product::find($state);
+            Section::make('Product')
+                ->schema([
+                    Select::make('data.product_id')
+                        ->label('Select Product')
+                        ->options(fn() => Product::where('account_type', $this->data['account_type'] ?? null)
+                            ->get()
+                            ->mapWithKeys(function ($product) {
+                                return [
+                                    $product->id => "{$product->product_slug} - {$product->product_edition} (Buy: {$product->product_buy_value} Gold, Face: {$product->product_face_value})"
+                                ];
+                            }))
+                        ->required()
+                        ->reactive()
+                        ->live()
+                        ->afterStateUpdated(function ($state) {
+                            if ($state) {
+                                $product = Product::find($state);
+                                $this->data['product'] = $product;
+                                $this->data['product_id'] = $state;
+                                $this->data['product_name'] = $product->product_slug;
+                                $this->data['product_edition'] = $product->product_edition;
+                                $this->data['buy_value'] = $product->product_buy_value;
+                                $this->data['product_face_value'] = $product->product_face_value;
+                            }
+                            $this->data['order_details'] = $this->getOrderDetails();
+                        }),
+                ]),
+
+            Section::make('Select Accounts')
+                ->schema([
+                    CheckboxList::make('data.selected_accounts')
+                        ->label('Select Accounts')
+                        ->options(fn() => Account::where('is_active', true)
+                            ->where('account_type', $this->data['account_type'] ?? null)
+                            ->get()
+                            ->mapWithKeys(function ($account) {
+                                $maxQuantity = 0;
+                                if (isset($this->data['product'])) {
+                                    $maxQuantity = floor($account->ballance_gold / $this->data['product']->product_buy_value);
                                 }
-                                $this->data['order_details'] = $this->getOrderDetails();
-                            }),
-                    ]),
+                                return [
+                                    $account->id => "{$account->name} (Balance: {$account->ballance_gold} Gold, Max: {$maxQuantity})"
+                                ];
+                            }))
+                        ->required()
+                        ->columns(2)
+                        ->live()
+                        ->afterStateUpdated(function ($state) {
+                            $this->data['order_details'] = $this->getOrderDetails();
+                            // Reset quantities when accounts change
+                            $this->data['quantities'] = [];
+                        })
+                        ->reactive(),
 
-                Step::make('Accounts')
-                    ->schema([
-                        Section::make('Select Accounts')
-                            ->schema([
-                                CheckboxList::make('data.selected_accounts')
-                                    ->label('Select Accounts')
-                                    ->options(fn () => Account::where('is_active', true)
-                                        ->get()
-                                        ->mapWithKeys(function ($account) {
-                                            $maxQuantity = 0;
-                                            if (isset($this->data['product'])) {
-                                                $maxQuantity = floor($account->ballance_gold / $this->data['product']->product_buy_value);
-                                            }
-                                            return [
-                                                $account->id => "{$account->name} (Max: {$maxQuantity})"
-                                            ];
-                                        }))
-                                    ->required()
-                                    ->columns(2)
-                                    ->live()
-                                    ->afterStateUpdated(function ($state) {
-                                        $this->data['order_details'] = $this->getOrderDetails();
-                                    })
-                                    ->reactive(),
+                    Grid::make()
+                        ->schema(fn() => $this->getQuantityInputs())
+                        ->columns(3)
+                        ->visible(fn() => !empty($this->data['selected_accounts'])),
+                ]),
 
-                                Grid::make()
-                                    ->schema(fn () => $this->getQuantityInputs())
-                                    ->columns(3)
-                                    ->visible(fn () => !empty($this->data['selected_accounts'])),
-                            ]),
-                    ]),
+            Section::make('Order Summary')
+                ->schema([
+                    OrderDetails::make('data.order_details')
+                        ->columnSpanFull()
+                        ->afterStateHydrated(function () {
+                            $this->data['order_details'] = $this->getOrderDetails();
+                        }),
 
-                Step::make('Summary')
-                    ->schema([
-                        Section::make('Order Summary')
-                            ->schema([
-                                OrderDetails::make('data.order_details')
-                                    ->columnSpanFull()
-                                    ->afterStateHydrated(function () {
-                                        $this->data['order_details'] = $this->getOrderDetails();
-                                    }),
-
-                                Checkbox::make('execute_immediately')
-                                    ->label('Create and Execute Orders Immediately')
-                                    ->default(false),
-                            ]),
-                    ]),
-            ])
-            ->persistStepInQueryString()
-            ->skippable(false)
-            ->submitAction('Create Orders'),
+                    Checkbox::make('data.execute_immediately')
+                        ->label('Create and Execute Orders Immediately')
+                        ->default(false)
+                        ->live(),
+                ]),
         ]);
     }
 
@@ -167,10 +163,10 @@ class CreateMultipleOrders extends Page
                 ->maxValue($maxQuantity)
                 ->required()
                 ->live()
-                                ->afterStateUpdated(function ($state) {
-                                    $this->data['order_details'] = $this->getOrderDetails();
-                                })
-                                ->reactive();
+                ->afterStateUpdated(function ($state) {
+                    $this->data['order_details'] = $this->getOrderDetails();
+                })
+                ->reactive();
         }
 
         return $inputs;
@@ -191,11 +187,11 @@ class CreateMultipleOrders extends Page
         foreach ($this->data['selected_accounts'] as $accountId) {
             $account = Account::find($accountId);
             $quantity = $this->data['quantities'][$accountId] ?? 0;
-            
+
             if ($quantity > 0) {
                 $cost = $quantity * $product->product_buy_value;
                 if ($cost > $account->ballance_gold) {
-                    $warnings[] = "Insufficient balance for {$account->name}. Needs additional " . 
+                    $warnings[] = "Insufficient balance for {$account->name}. Needs additional " .
                         ($cost - $account->ballance_gold) . " Gold";
                 }
 
@@ -234,11 +230,11 @@ class CreateMultipleOrders extends Page
             $this->form->validate();
             $data = $this->form->getState();
 
-            $product = Product::findOrFail($data['product_id']);
+            $product = Product::findOrFail($data['data']['product_id']);
             $hasValidQuantity = false;
 
-            foreach ($data['selected_accounts'] as $accountId) {
-                $quantity = $data['quantities'][$accountId] ?? 0;
+            foreach ($data['data']['selected_accounts'] as $accountId) {
+                $quantity = $data['data']['quantities'][$accountId] ?? 0;
 
                 if ($quantity > 0) {
                     $hasValidQuantity = true;
@@ -282,10 +278,10 @@ class CreateMultipleOrders extends Page
             $data = $this->form->getState();
 
             /** @var Product $product */
-            $product = Product::findOrFail($data['product_id']);
-            $selectedAccounts = $data['selected_accounts'];
-            $quantities = $data['quantities'];
-            $executeImmediately = $data['execute_immediately'] ?? false;
+            $product = Product::findOrFail($data['data']['product_id']);
+            $selectedAccounts = $data['data']['selected_accounts'];
+            $quantities = $data['data']['quantities'];
+            $executeImmediately = $data['data']['execute_immediately'] ?? false;
 
             foreach ($selectedAccounts as $accountId) {
                 $quantity = $quantities[$accountId] ?? 0;
@@ -296,7 +292,7 @@ class CreateMultipleOrders extends Page
                         'product_id' => $product->id,
                         'product_name' => $product->product_slug,
                         'product_edition' => $product->product_edition,
-                        'account_type' => $data['account_type'],
+                        'account_type' => $data['data']['account_type'],
                         'quantity' => $quantity,
                         'buy_value' => $product->product_buy_value,
                         'product_face_value' => $product->product_face_value,
