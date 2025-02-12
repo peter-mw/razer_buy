@@ -24,10 +24,13 @@ class SystemLogResource extends Resource
                 Forms\Components\TextInput::make('source')
                     ->required()
                     ->maxLength(255),
-
                 Forms\Components\TextInput::make('status')
                     ->required()
                     ->maxLength(255),
+                Forms\Components\Textarea::make('command')
+                    ->columnSpanFull(),
+
+
                 \InvadersXX\FilamentJsoneditor\Forms\JsonEditor::make('params')
                     ->required(),
                 \InvadersXX\FilamentJsoneditor\Forms\JsonEditor::make('response')
@@ -38,6 +41,9 @@ class SystemLogResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->paginated([10, 25, 50, 100,200, 500, 1000, 'all'])
+            ->poll(30)
+            ->defaultSort('created_at', 'desc')
             ->columns([
                 Tables\Columns\TextColumn::make('status')
                     ->searchable(),
@@ -45,12 +51,22 @@ class SystemLogResource extends Resource
                     ->dateTime()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('source')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('params')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('response')
+                    ->limit(50)
                     ->searchable(),
 
+                Tables\Columns\TextColumn::make('params')
+                    ->limit(50)
+                    ->searchable(),
+
+                Tables\Columns\TextColumn::make('response')
+                    ->limit(50)
+                    ->searchable(),
+
+                Tables\Columns\TextColumn::make('command')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+
+                    ->limit(50),
             ])
             ->filters([
                 //
