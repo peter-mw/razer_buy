@@ -9,10 +9,10 @@ use App\Models\PurchaseOrders;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Grid;
-use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use App\Forms\Components\OrderDetails;
 use Filament\Forms\Components\Wizard;
 use Filament\Forms\Components\Wizard\Step;
 use Filament\Forms\Form;
@@ -51,7 +51,11 @@ class CreateMultipleOrders extends Page
     public function form(Form $form): Form
     {
         return $form->schema([
-            Wizard::make([
+            Wizard::make([])
+                ->afterStateUpdated(function () {
+                    $this->data['order_details'] = $this->getOrderDetails();
+                })
+                ->schema([
                 Step::make('Account Type')
                     ->schema([
                         Select::make('data.account_type')
@@ -64,6 +68,7 @@ class CreateMultipleOrders extends Page
                             ->live()
                             ->afterStateUpdated(function ($state) {
                                 $this->data['account_type'] = $state;
+                                $this->data['order_details'] = $this->getOrderDetails();
                             }),
                     ]),
 
@@ -79,6 +84,7 @@ class CreateMultipleOrders extends Page
                                 if ($state) {
                                     $this->data['product'] = Product::find($state);
                                 }
+                                $this->data['order_details'] = $this->getOrderDetails();
                             }),
                     ]),
 
@@ -101,7 +107,11 @@ class CreateMultipleOrders extends Page
                                         }))
                                     ->required()
                                     ->columns(2)
-                                    ->live(),
+                                    ->live()
+                                    ->afterStateUpdated(function ($state) {
+                                        $this->data['order_details'] = $this->getOrderDetails();
+                                    })
+                                    ->reactive(),
 
                                 Grid::make()
                                     ->schema(fn () => $this->getQuantityInputs())
@@ -114,17 +124,11 @@ class CreateMultipleOrders extends Page
                     ->schema([
                         Section::make('Order Summary')
                             ->schema([
-                                Placeholder::make('product_info')
-                                    ->label('Product Information')
-                                    ->content(fn () => $this->getProductSummary()),
-
-                                Placeholder::make('accounts_info')
-                                    ->label('Accounts Information')
-                                    ->content(fn () => $this->getAccountsSummary()),
-
-                                Placeholder::make('total_info')
-                                    ->label('Total')
-                                    ->content(fn () => $this->getTotalSummary()),
+                                OrderDetails::make('data.order_details')
+                                    ->columnSpanFull()
+                                    ->afterStateHydrated(function () {
+                                        $this->data['order_details'] = $this->getOrderDetails();
+                                    }),
 
                                 Checkbox::make('execute_immediately')
                                     ->label('Create and Execute Orders Immediately')
@@ -162,63 +166,67 @@ class CreateMultipleOrders extends Page
                 ->minValue(0)
                 ->maxValue($maxQuantity)
                 ->required()
-                ->live();
+                ->live()
+                                ->afterStateUpdated(function ($state) {
+                                    $this->data['order_details'] = $this->getOrderDetails();
+                                })
+                                ->reactive();
         }
 
         return $inputs;
     }
 
-    protected function getProductSummary(): string
+    protected function getOrderDetails(): ?string
     {
-        if (!isset($this->data['product'])) {
-            return 'No product selected';
+        if (!isset($this->data['product']) || empty($this->data['selected_accounts'])) {
+            return null;
         }
 
         $product = $this->data['product'];
-        return "
-            Product: {$product->product_slug}<br>
-            Buy Value: {$product->product_buy_value}<br>
-            Face Value: {$product->product_face_value}
-        ";
-    }
+        $accounts = [];
+        $totalQuantity = 0;
+        $totalCost = 0;
+        $warnings = [];
 
-    protected function getAccountsSummary(): string
-    {
-        if (empty($this->data['selected_accounts']) || empty($this->data['quantities'])) {
-            return 'No accounts selected';
-        }
-
-        $summary = '';
         foreach ($this->data['selected_accounts'] as $accountId) {
             $account = Account::find($accountId);
             $quantity = $this->data['quantities'][$accountId] ?? 0;
+            
             if ($quantity > 0) {
-                $summary .= "{$account->name}: {$quantity} units<br>";
+                $cost = $quantity * $product->product_buy_value;
+                if ($cost > $account->ballance_gold) {
+                    $warnings[] = "Insufficient balance for {$account->name}. Needs additional " . 
+                        ($cost - $account->ballance_gold) . " Gold";
+                }
+
+                $accounts[] = [
+                    'id' => $account->id,
+                    'name' => $account->name,
+                    'quantity' => $quantity,
+                    'balance' => $account->ballance_gold,
+                ];
+
+                $totalQuantity += $quantity;
+                $totalCost += $cost;
             }
         }
 
-        return $summary ?: 'No quantities specified';
+        $orderDetails = [
+            'product' => [
+                'name' => $product->product_slug,
+                'buy_value' => $product->product_buy_value,
+                'face_value' => $product->product_face_value,
+            ],
+            'accounts' => $accounts,
+            'total' => [
+                'quantity' => $totalQuantity,
+                'cost' => $totalCost,
+            ],
+            'warnings' => $warnings,
+        ];
+
+        return json_encode($orderDetails);
     }
-
-    protected function getTotalSummary(): string
-    {
-        if (!isset($this->data['product']) || empty($this->data['quantities'])) {
-            return 'No orders configured';
-        }
-
-        $totalQuantity = 0;
-        $totalCost = 0;
-        foreach ($this->data['quantities'] as $quantity) {
-            $totalQuantity += $quantity;
-            $totalCost += $quantity * $this->data['product']->product_buy_value;
-        }
-
-        return "
-            Total Quantity: {$totalQuantity}<br>
-            Total Cost: {$totalCost} Gold
-        ";
-    }
-
 
     public function createMultipleOrders(): void
     {
@@ -319,6 +327,4 @@ class CreateMultipleOrders extends Page
                 ->send();
         }
     }
-
-
 }
