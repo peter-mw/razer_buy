@@ -41,6 +41,7 @@ class ProcessBuyCommand extends Command
 
         } catch (\Exception $e) {
             $this->error("Error queueing purchase: {$e->getMessage()}");
+            $product->update(['order_status' => 'failed']);
             return Command::FAILURE;
         }
     }

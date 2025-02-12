@@ -17,8 +17,9 @@ use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Page;
 use Illuminate\Support\HtmlString;
-use Filament\Forms\Concerns\InteractsWithForms;
 use Livewire\Attributes\Computed;
+use Filament\Actions\Action;
+use Filament\Forms\Concerns\InteractsWithForms;
 
 class CreateMultipleOrders extends Page
 {
@@ -30,7 +31,7 @@ class CreateMultipleOrders extends Page
 
     public ?array $data = [];
 
-    public function mount(): void
+       public function mount(): void
     {
         $this->form->fill([
             'data.account_type' => null,
@@ -224,12 +225,18 @@ class CreateMultipleOrders extends Page
         return json_encode($orderDetails);
     }
 
-    public function createMultipleOrders(): void
+    public function createAndExecuteOrders()
     {
-        try {
-            $this->form->validate();
-            $data = $this->form->getState();
+        $this->data['execute_immediately'] = true;
+        $this->createOrders();
+    }
 
+    public function createOrders()
+    {
+        $this->form->validate();
+
+        try {
+            $data = $this->form->getState();
             $product = Product::findOrFail($data['data']['product_id']);
             $hasValidQuantity = false;
 
@@ -261,7 +268,7 @@ class CreateMultipleOrders extends Page
                 return;
             }
 
-            $this->createOrders();
+            $this->processOrders($data);
 
         } catch (\Exception $e) {
             Notification::make()
@@ -272,7 +279,7 @@ class CreateMultipleOrders extends Page
         }
     }
 
-    protected function createOrders(): void
+    protected function processOrders(array $data): void
     {
         try {
             $data = $this->form->getState();

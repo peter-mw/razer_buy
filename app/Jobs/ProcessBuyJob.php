@@ -132,7 +132,9 @@ class ProcessBuyJob implements ShouldQueue
         $ordersCompleted = [];
         while ($remainingQuantity > 0) {
             $chunkSize = min(200, $remainingQuantity);
-
+            $purchaseOrder->update([
+                'order_status' => 'buying',
+            ]);
             $buyProductsResults = $service->buyProduct($purchaseOrder, $chunkSize);
 
 
@@ -150,10 +152,12 @@ class ProcessBuyJob implements ShouldQueue
             $remainingQuantity -= $chunkSize;
         }
 
-
+        $purchaseOrder->update([
+            'order_status' => 'fetching'
+        ]);
         foreach ($ordersCompleted as $orderTransactionId) {
 
-
+            sleep(1);
             try {
                 $orderDetails = $service->getTransactionDetails($orderTransactionId);
 
