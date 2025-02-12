@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\Account;
 use App\Models\Code;
 use App\Models\PendingTransaction;
+use App\Models\Product;
 use App\Models\PurchaseOrders;
 use App\Models\Transaction;
 use App\Notifications\PurchaseOrderCompleted;
@@ -35,7 +36,7 @@ class ProcessBuyJob implements ShouldQueue
 
     public function middleware()
     {
-        return [(new WithoutOverlapping('ProcessBuyJob'.$this->purchaseOrderId))->dontRelease()];
+        return [(new WithoutOverlapping('ProcessBuyJob' . $this->purchaseOrderId))->dontRelease()];
     }
 
     public function handle(): void
@@ -59,7 +60,6 @@ class ProcessBuyJob implements ShouldQueue
 
         $eligibleAccount = null;
         $ready = [];
-
 
         $eligibleAccount = $accounts->first();
 
@@ -123,12 +123,17 @@ class ProcessBuyJob implements ShouldQueue
                 $orderDetails = $service->getTransactionDetails($orderTransactionId);
 
             } catch (\Exception $e) {
+                $purchaseOrder->update([
+                    'order_status' => 'failed_get_transaction_details',
+                ]);
                 sleep(3);
                 //  Log::error('Error while getTransactionDetails: ' . $orderTransactionId);
                 try {
                     $orderDetails = $service->getTransactionDetails($orderTransactionId);
                 } catch (\Exception $e) {
-
+                    $purchaseOrder->update([
+                        'order_status' => 'failed_get_transaction_details',
+                    ]);
                     continue;
                 }
 

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Account;
+use App\Models\Product;
 use App\Models\PurchaseOrders;
 use App\Models\SystemLog;
 
@@ -131,6 +132,10 @@ class RazerService
     {
         $workdir = $this->getWorkdir();
         $account = $this->account;
+        $productData = Product::where('id', $productToBuy->product_id)->first();
+
+        $slug = $productData->product_slug;
+
 
         $params = [
             'setupKey' => $account->otp_seed,
@@ -139,7 +144,7 @@ class RazerService
             'clientIDlogin' => $account->client_id_login,
             'serviceCode' => $account->service_code,
             'productId' => $productToBuy->product_id,
-            'permalink' => $productToBuy->product_name,
+            'permalink' => $slug,
             'count' => $quantity,
         ];
 
@@ -155,11 +160,11 @@ class RazerService
             escapeshellarg($account->email),
             escapeshellarg($account->password),
             escapeshellarg($account->client_id_login),
-            escapeshellarg($account->service_code),
+            $account->service_code,
             $productToBuy->product_id,
-            escapeshellarg($productToBuy->product_name),
-            escapeshellarg($region_id),
-            escapeshellarg($quantity)
+            $slug,
+            $region_id,
+            $quantity
         );
 
 

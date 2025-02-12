@@ -200,16 +200,21 @@ class PurchaseOrderResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('id')->toggleable(),
                 Tables\Columns\TextColumn::make('account_id')
+                    ->label('Account')
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('product_id')
                     ->sortable()
+                    ->label('Product')
+                     ->limit(50)
                     ->searchable(),
                 Tables\Columns\TextColumn::make('product_name')
+                    ->label('Name')
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('product_edition')
                     ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(),
                 Tables\Columns\TextColumn::make('account_type')
                     ->badge()
@@ -319,7 +324,7 @@ class PurchaseOrderResource extends Resource
 
                         $record->update(['order_status' => 'processing']);
 
-                        ProcessBuyJob::dispatchSync($record->id, $data['quantity']);
+                        ProcessBuyJob::dispatch($record->id, $data['quantity']);
 
                         Notification::make()
                             ->title('Buy process started')

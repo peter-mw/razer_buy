@@ -160,6 +160,10 @@ class AccountResource extends Resource
                 Tables\Columns\TextColumn::make('email')
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\IconColumn::make('is_active')
+                    ->boolean()
+                    ->toggleable()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('service_code')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true)
@@ -207,9 +211,7 @@ class AccountResource extends Resource
                     })
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\IconColumn::make('is_active')
-                    ->boolean()
-                    ->sortable(),
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
