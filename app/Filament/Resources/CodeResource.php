@@ -115,11 +115,11 @@ class CodeResource extends Resource
                 Tables\Filters\SelectFilter::make('product_name')
                     ->label('Product Name')
                     ->searchable()
-                    ->options(fn(): array => Code::distinct()->pluck('product_name', 'product_name')->toArray()),
+                    ->options(fn(): array => Code::whereNotNull('product_name')->distinct()->pluck('product_name', 'product_name')->toArray()),
                 Tables\Filters\SelectFilter::make('product_edition')
                     ->label('Product Edition')
                     ->searchable()
-                    ->options(fn(): array => Code::distinct()->pluck('product_edition', 'product_edition')->toArray()),
+                    ->options(fn(): array => Code::whereNotNull('product_edition')->distinct()->pluck('product_edition', 'product_edition')->toArray()),
 
 
                 Tables\Filters\Filter::make('buy_date')

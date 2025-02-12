@@ -40,6 +40,7 @@ class AccountResource extends Resource
                     ->required()
                     ->maxLength(255)
                     ->unique(ignoreRecord: true),
+
                 Forms\Components\Select::make('account_type')
                     ->required()
                     ->options([
@@ -109,6 +110,7 @@ class AccountResource extends Resource
                     ->label('Sync All Accounts')
                     ->icon('heroicon-o-arrow-path')
                     ->color('success')
+
                     ->action(function () {
                         try {
                             Artisan::call('accounts:sync-balances');
@@ -121,6 +123,27 @@ class AccountResource extends Resource
                             Notification::make()
                                 ->danger()
                                 ->title('Failed to sync accounts')
+                                ->body($e->getMessage())
+                                ->send();
+                        }
+                    }),
+                Tables\Actions\Action::make('sync_all_codes')
+                    ->label('Sync All Codes')
+                    ->icon('heroicon-o-document-duplicate')
+                    ->action(function () {
+                        try {
+                            $accounts = Account::where('is_active', true)->get();
+                            foreach ($accounts as $account) {
+                                dispatch(new \App\Jobs\FetchAccountCodesJob($account->id));
+                            }
+                            Notification::make()
+                                ->success()
+                                ->title('Code sync jobs dispatched for all active accounts')
+                                ->send();
+                        } catch (\Exception $e) {
+                            Notification::make()
+                                ->danger()
+                                ->title('Failed to dispatch code sync jobs')
                                 ->body($e->getMessage())
                                 ->send();
                         }
@@ -280,6 +303,24 @@ class AccountResource extends Resource
                     })
                     ->hidden()
                     ->icon('heroicon-o-arrow-path'),
+                Action::make('sync_codes')
+                    ->label('Sync Codes')
+                    ->icon('heroicon-o-document-duplicate')
+                    ->action(function (Account $record): void {
+                        try {
+                            dispatch(new \App\Jobs\FetchAccountCodesJob($record->id));
+                            Notification::make()
+                                ->success()
+                                ->title('Code sync job dispatched successfully')
+                                ->send();
+                        } catch (\Exception $e) {
+                            Notification::make()
+                                ->danger()
+                                ->title('Failed to dispatch code sync job')
+                                ->body($e->getMessage())
+                                ->send();
+                        }
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
