@@ -7,6 +7,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "calebporzio/sushi": "^2.5",
         "filament/actions": "^3.2",
         "filament/filament": "^3.2",
         "invaders-xx/filament-jsoneditor": "^5.0",

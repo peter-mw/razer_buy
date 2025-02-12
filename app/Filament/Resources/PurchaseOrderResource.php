@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Exports\CodeExporter;
+use App\Filament\Exports\PurchaseOrderCodesExporter;
 use Filament\Tables\Actions\ExportAction;
 use App\Filament\Resources\PurchaseOrderResource\Pages;
 use App\Filament\Resources\PurchaseOrderResource\RelationManagers;
@@ -272,15 +272,15 @@ class PurchaseOrderResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                ExportAction::make()
+/*                ExportAction::make()
                     ->label('Export Codes')
-                    ->exporter(CodeExporter::class)
-                    ->modifyQueryUsing(function (PurchaseOrders $record, $query) {
-                        return $query->where('id', $record->id);
-                    })
+                    ->exporter(PurchaseOrderCodesExporter::class)
+//                    ->modifyQueryUsing(function (PurchaseOrders $record, $query) {
+//                        return $query->where('id', $record->id);
+//                    })
                     ->visible(fn(PurchaseOrders $record): bool => $record->order_status === 'completed' &&
                         $record->codes()->count() > 0
-                    ),
+                    ),*/
                 Tables\Actions\Action::make('processBuy')
                     ->label('Process Buy')
                     ->icon('heroicon-o-shopping-cart')

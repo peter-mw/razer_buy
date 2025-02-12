@@ -10,12 +10,18 @@ Route::get('/aaa', function () {
     //fetchAllCodes
 
     $account = \App\Models\Account::find(6);
+    //$account = \App\Models\Account::find(1);
     $productTobuy = \App\Models\PurchaseOrders::find(2);
 
     $service = new \App\Services\RazerService($account);
+   //$codes = $service->fetchAllCodes();
+ //dd($codes);
+    $job = new \App\Jobs\FetchAccountCodesJob($account->id);
+    $job->handle();
 
-    $codes = $service->fetchAllCodes();
-    dd($codes);
+
+
+   // dd($codes);
 
 });
 
