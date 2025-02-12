@@ -104,6 +104,7 @@ class AccountResource extends Resource
     {
         return $table
             ->paginated(false)
+            ->defaultSort('ballance_gold', 'desc')
             ->actionsPosition(Tables\Enums\ActionsPosition::BeforeColumns)
             ->headerActions([
                 Tables\Actions\Action::make('sync_all')

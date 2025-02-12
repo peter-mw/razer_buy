@@ -157,20 +157,20 @@ class ProcessBuyJob implements ShouldQueue
         ]);
         foreach ($ordersCompleted as $orderTransactionId) {
 
-            sleep(1);
+            sleep(2);
             try {
                 $orderDetails = $service->getTransactionDetails($orderTransactionId);
 
             } catch (\Exception $e) {
                 sleep(3);
+                Log::error('Error while getTransactionDetails: ' . $orderTransactionId);
                 try {
                     $orderDetails = $service->getTransactionDetails($orderTransactionId);
                 } catch (\Exception $e) {
-                    Log::error('Error while getTransactionDetails 2 time: ' . $orderTransactionId);
 
                     continue;
                 }
-                Log::error('Error while getTransactionDetails: ' . $orderTransactionId);
+
                 // Save to pending transactions
                 PendingTransaction::create([
                     'account_id' => $account->id,
