@@ -3,6 +3,7 @@
 namespace App\Filament\Exports;
 
 use App\Models\Code;
+use App\Models\PurchaseOrders;
 use Filament\Actions\Exports\ExportColumn;
 use Filament\Actions\Exports\Exporter;
 use Filament\Actions\Exports\Models\Export;
@@ -10,6 +11,17 @@ use Filament\Actions\Exports\Models\Export;
 class CodeExporter extends Exporter
 {
     protected static ?string $model = Code::class;
+
+/*    public static function modifyQuery(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    {
+        $parameters = request()->query();
+
+        if (isset($parameters['record'])) {
+            return $query->where('order_id', $parameters['record']);
+        }
+
+        return $query;
+    }*/
 
     public static function getColumns(): array
     {

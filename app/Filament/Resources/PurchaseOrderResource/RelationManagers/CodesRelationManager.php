@@ -10,6 +10,7 @@ use Filament\Tables\Actions\ExportAction;
 use Filament\Tables\Actions\ExportBulkAction;
 use App\Models\Code;
 use App\Filament\Exports\CodeExporter;
+use Illuminate\Database\Eloquent\Builder;
 
 class CodesRelationManager extends RelationManager
 {
@@ -44,12 +45,14 @@ class CodesRelationManager extends RelationManager
                 ExportAction::make()
                     ->label('Export to Excel')
                     ->exporter(CodeExporter::class)
+                    ->modifyQueryUsing(fn (Builder $query) => $query->where('order_id', $this->getOwnerRecord()->id))
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     ExportBulkAction::make()
                         ->label('Export Selected to Excel')
                         ->exporter(CodeExporter::class)
+                        ->modifyQueryUsing(fn (Builder $query) => $query->where('order_id', $this->getOwnerRecord()->id))
                 ]),
             ]);
     }

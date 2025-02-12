@@ -182,6 +182,7 @@ class PurchaseOrderResource extends Resource
     {
         return $table
             ->defaultSort('created_at', 'desc')
+
             ->actionsPosition(Tables\Enums\ActionsPosition::BeforeColumns)
             ->columns([
                 Tables\Columns\TextColumn::make('id')->toggleable(),
@@ -274,6 +275,9 @@ class PurchaseOrderResource extends Resource
                 ExportAction::make()
                     ->label('Export Codes')
                     ->exporter(CodeExporter::class)
+                    ->modifyQueryUsing(function (PurchaseOrders $record, $query) {
+                        return $query->where('id', $record->id);
+                    })
                     ->visible(fn(PurchaseOrders $record): bool => $record->order_status === 'completed' &&
                         $record->codes()->count() > 0
                     ),
