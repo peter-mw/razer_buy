@@ -215,6 +215,76 @@ class RazerService
         return $format;
     }
 
+    public function fetchAllCodes(): array
+    {
+        $workdir = $this->getWorkdir();
+        $account = $this->account;
+
+        $params = [
+            'email' => $account->email,
+            'password' => $account->password,
+            'clientIDlogin' => $account->client_id_login,
+            'serviceCode' => $account->service_code,
+        ];
+
+        $cmd = sprintf(
+            '"%s" -email=%s -password=%s -clientIDlogin=%s -serviceCode=%s 2>&1',
+            normalize_path($workdir . '/razer-fetchcodes.exe', false),
+            escapeshellarg($account->email),
+            escapeshellarg($account->password),
+            escapeshellarg($account->client_id_login),
+            escapeshellarg($account->service_code)
+        );
+        chdir($workdir);
+
+        file_put_contents($workdir . '/fetch_codes_cmd.txt', $cmd);
+
+        $output = shell_exec($cmd);
+        if ($output === null) {
+            SystemLog::create([
+                'source' => 'RazerService::fetchAllCodes',
+                'params' => $params,
+                'response' => ['error' => 'Command execution failed'],
+                'status' => 'error'
+            ]);
+            throw new \RuntimeException("Command execution failed");
+        }
+
+        file_put_contents($workdir . '/fetch_codes_log.txt', $output);
+
+        $data_items = $this->formatOutput($output);
+
+        dd($data_items);
+
+        $gold = 0;
+        $silver = 0;
+        if ($data_items) {
+            foreach ($data_items as $data_item) {
+                if (isset($data_item['Total Gold'])) {
+                    $gold = $data_item['Total Gold'];
+                }
+                if (isset($data_item['Silver Balance'])) {
+                    $silver = $data_item['Silver Balance'];
+                }
+            }
+        }
+
+        $return = [
+            'gold' => $gold,
+            'silver' => $silver,
+        ];
+
+        SystemLog::create([
+            'source' => 'RazerService::getAccountBallance',
+            'params' => $params,
+            'response' => $return,
+            'status' => 'success'
+        ]);
+
+        return $return;
+    }
+
+
     public function getAccountBallance(): array
     {
         $workdir = $this->getWorkdir();
@@ -318,7 +388,15 @@ class RazerService
                 if (count($item_data) >= 2) {
                     if ($item_data[0] == 'Timestamp' || $item_data[0] == 'TransactionDate') {
                         $item_data_first = array_shift($item_data);
-                        $return[$item_data_first] = implode(':', $item_data);
+
+                        $str =  implode(':', $item_data);
+                        $str = explode('.', $str);
+                        //TransactionDate
+                        $item_data_first = array_shift($str);
+
+
+                        $return[$item_data_first] = $item_data_first;
+
                     } else {
                         $return[$item_data[0]] = $item_data[1];
                     }

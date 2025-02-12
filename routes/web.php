@@ -5,8 +5,21 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
-
 Route::get('/aaa', function () {
+
+    //fetchAllCodes
+
+    $account = \App\Models\Account::find(6);
+    $productTobuy = \App\Models\PurchaseOrders::find(2);
+
+    $service = new \App\Services\RazerService($account);
+
+    $codes = $service->fetchAllCodes();
+    dd($codes);
+
+});
+
+Route::get('/aaa11', function () {
 
     $outpt = 'Product ID: 14484
 Permalink: yalla-ludo
@@ -52,6 +65,7 @@ New credentials saved successfully.
     $order_id = '122GOXEVAYI3E8C56AE77';
      dump($service->formatOutputOrder($orderOutput));
   //  dump($service->formatOutput($outpt));
+    dd($service->getTransactionDetails($order_id));
     dd($service->getTransactionDetails($order_id));
     $productID = '14484';
 
