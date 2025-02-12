@@ -63,10 +63,9 @@ class PurchaseOrderResource extends Resource
     public static function form(Form $form): Form
     {
         return $form
-
             ->schema([
                 Forms\Components\Select::make('product_id')
-                    ->default(fn () => request()->get('product_id'))
+                    ->default(fn() => request()->get('product_id'))
                     ->relationship(
                         'product',
                         'product_name',
@@ -106,7 +105,7 @@ class PurchaseOrderResource extends Resource
                         'usa' => 'USA',
                     ])
                     ->live()
-                    ->default(fn () => request()->get('account_type') ?? 'global')
+                    ->default(fn() => request()->get('account_type') ?? 'global')
                     ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
                         // Clear product selection when account type changes
                         $set('product_id', null);
@@ -153,7 +152,7 @@ class PurchaseOrderResource extends Resource
                         // Validate after account change
                         static::validateBalance($get, $set);
                     })
-                    ->default(fn () => request()->get('account_id')),
+                    ->default(fn() => request()->get('account_id')),
                 Forms\Components\Select::make('order_status')
                     ->options([
                         'draft' => 'Draft',
@@ -163,6 +162,8 @@ class PurchaseOrderResource extends Resource
                         'failed' => 'Failed'
                     ])
                     ->default('pending')
+                    ->live()
+                    ->reactive()
                     ->required(),
 
                 Forms\Components\Hidden::make('balance_check'),
@@ -237,6 +238,10 @@ class PurchaseOrderResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->headerActions([
+                Tables\Actions\Action::make('create_multiple')
+                    ->label('Create Multiple Orders')
+                    ->icon('heroicon-o-plus')
+                    ->url(fn (): string => static::getUrl('create-multiple')),
                 Tables\Actions\Action::make('buy_all_products')
                     ->label('Buy All Products')
                     ->icon('heroicon-o-shopping-cart')
@@ -269,8 +274,7 @@ class PurchaseOrderResource extends Resource
                 ExportAction::make()
                     ->label('Export Codes')
                     ->exporter(CodeExporter::class)
-                    ->visible(fn (PurchaseOrders $record): bool =>
-                        $record->order_status === 'completed' &&
+                    ->visible(fn(PurchaseOrders $record): bool => $record->order_status === 'completed' &&
                         $record->codes()->count() > 0
                     ),
                 Tables\Actions\Action::make('processBuy')
@@ -326,6 +330,7 @@ class PurchaseOrderResource extends Resource
             'index' => Pages\ListProductToBuys::route('/'),
             'create' => Pages\CreateProductToBuy::route('/create'),
             'edit' => Pages\EditProductToBuy::route('/{record}/edit'),
+            'create-multiple' => Pages\CreateMultipleOrders::route('/create-multiple'),
         ];
     }
 }

@@ -153,7 +153,7 @@ class ProcessBuyJob implements ShouldQueue
 
         foreach ($ordersCompleted as $orderTransactionId) {
 
-            sleep(1);
+
             try {
                 $orderDetails = $service->getTransactionDetails($orderTransactionId);
 
