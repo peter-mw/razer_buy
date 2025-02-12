@@ -11,6 +11,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
@@ -23,7 +24,10 @@ class RescueTransactionJob implements ShouldQueue
     )
     {
     }
-
+    public function middleware()
+    {
+        return [(new WithoutOverlapping('RescueTransactionJob'.$this->transactionId))->dontRelease()];
+    }
     public function handle(): void
     {
         // Find the pending transaction with its relationships

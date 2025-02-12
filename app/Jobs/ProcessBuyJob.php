@@ -12,6 +12,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -30,6 +31,11 @@ class ProcessBuyJob implements ShouldQueue
         protected int $quantity
     )
     {
+    }
+
+    public function middleware()
+    {
+        return [(new WithoutOverlapping('ProcessBuyJob'.$this->purchaseOrderId))->dontRelease()];
     }
 
     public function handle(): void
@@ -52,11 +58,10 @@ class ProcessBuyJob implements ShouldQueue
         }
 
         $eligibleAccount = null;
-         $ready = [];
+        $ready = [];
 
 
         $eligibleAccount = $accounts->first();
-
 
 
         $service = new \App\Services\RazerService($eligibleAccount);
@@ -91,8 +96,7 @@ class ProcessBuyJob implements ShouldQueue
             $purchaseOrder->update(['order_status' => 'not_enough_balance']);
 
 
-         }
-
+        }
 
 
         $remainingQuantity = $purchaseOrder->quantity;
@@ -120,7 +124,7 @@ class ProcessBuyJob implements ShouldQueue
 
             } catch (\Exception $e) {
                 sleep(3);
-              //  Log::error('Error while getTransactionDetails: ' . $orderTransactionId);
+                //  Log::error('Error while getTransactionDetails: ' . $orderTransactionId);
                 try {
                     $orderDetails = $service->getTransactionDetails($orderTransactionId);
                 } catch (\Exception $e) {

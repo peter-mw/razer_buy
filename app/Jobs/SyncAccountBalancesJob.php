@@ -7,6 +7,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 
 class SyncAccountBalancesJob implements ShouldQueue
@@ -18,7 +19,10 @@ class SyncAccountBalancesJob implements ShouldQueue
     )
     {
     }
-
+    public function middleware()
+    {
+        return [(new WithoutOverlapping('SyncAccountBalancesJob'.$this->accountId))->dontRelease()];
+    }
     public function handle(): void
     {
         if ($this->accountId) {

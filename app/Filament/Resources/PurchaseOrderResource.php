@@ -95,7 +95,7 @@ class PurchaseOrderResource extends Resource
                             $product = Product::find($state);
 
                             if ($product) {
-                                $set('product_name', $product->product_slug);
+                                $set('product_name', $product->product_name);
                                 $set('product_edition', $product->product_edition);
                                 $set('buy_value', $product->product_buy_value);
                                 $set('product_face_value', $product->product_face_value);
@@ -126,7 +126,6 @@ class PurchaseOrderResource extends Resource
                     }),
                 Forms\Components\TextInput::make('quantity')
                     ->required()
-
                     ->numeric()
                     ->default(0)
                     ->minValue(0)
@@ -162,14 +161,14 @@ class PurchaseOrderResource extends Resource
                     ->afterStateUpdated(function ($state, Forms\Get $get, Forms\Set $set) {
                         // Validate after account change
 
-                        if(!$get('account_type')) {
+                        if (!$get('account_type')) {
                             $set('account_type', Account::find($state)->account_type);
                         }
 
 
                         static::validateBalance($get, $set);
                     })
-                    ,
+                ,
                 Forms\Components\Select::make('order_status')
                     ->default('pending')
                     ->options([

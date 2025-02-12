@@ -7,6 +7,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 
 class RedeemSilverToGoldJob implements ShouldQueue
@@ -19,7 +20,10 @@ class RedeemSilverToGoldJob implements ShouldQueue
     )
     {
     }
-
+    public function middleware()
+    {
+        return [(new WithoutOverlapping($this->accountId))->dontRelease()];
+    }
     public function handle(): void
     {
 

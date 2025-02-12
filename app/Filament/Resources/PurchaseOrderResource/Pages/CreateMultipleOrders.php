@@ -71,7 +71,7 @@ class CreateMultipleOrders extends Page
                             ->get()
                             ->mapWithKeys(function ($product) {
                                 return [
-                                    $product->id => "{$product->product_slug} - {$product->product_edition} (Buy: {$product->product_buy_value} Gold, Face: {$product->product_face_value})"
+                                    $product->id => "{$product->product_name} - {$product->product_edition} (Buy: {$product->product_buy_value} Gold, Face: {$product->product_face_value})"
                                 ];
                             }))
                         ->required()
@@ -82,7 +82,7 @@ class CreateMultipleOrders extends Page
                                 $product = Product::find($state);
                                 $this->data['product'] = $product;
                                 $this->data['product_id'] = $state;
-                                $this->data['product_name'] = $product->product_slug;
+                                $this->data['product_name'] = $product->product_name;
                                 $this->data['product_edition'] = $product->product_edition;
                                 $this->data['buy_value'] = $product->product_buy_value;
                                 $this->data['product_face_value'] = $product->product_face_value;
@@ -116,6 +116,8 @@ class CreateMultipleOrders extends Page
                             $this->data['quantities'] = [];
                         })
                         ->reactive(),
+
+
 
                     Grid::make()
                         ->schema(fn() => $this->getQuantityInputs())
