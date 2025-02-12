@@ -11,36 +11,42 @@ class AccountBalanceChart extends ChartWidget
     protected static ?string $heading = 'Gold Balance History';
     protected static ?string $maxHeight = '400px';
     protected static ?string $pollingInterval = null;
-    
+
+    protected int | string | array $columnSpan = 12;
+
     protected function getData(): array
     {
-        $data = AccountBalanceHistory::select('account_id', 'balance_update_time', 'balance_gold')
-            ->orderBy('balance_update_time')
+        $data = AccountBalanceHistory::selectRaw('
+                account_id,
+                DATE(balance_update_time) as date,
+                MAX(balance_gold) as daily_gold
+            ')
+            ->groupBy('account_id', 'date')
+            ->orderBy('date')
             ->get()
             ->groupBy('account_id');
 
         $datasets = [];
-        $labels = [];
-        
+        $allDates = collect();
+
         foreach ($data as $accountId => $records) {
             $accountName = Account::find($accountId)->name;
-            $balances = $records->pluck('balance_gold')->toArray();
-            $timestamps = $records->pluck('balance_update_time')->map(function($date) {
-                return $date->format('Y-m-d H:i');
-            })->toArray();
-            
+
+            // Collect all unique dates
+            $allDates = $allDates->merge($records->pluck('date'));
+
             $datasets[] = [
                 'label' => $accountName,
-                'data' => $balances,
+                'data' => $records->pluck('daily_gold')->toArray(),
                 'borderWidth' => 2,
                 'tension' => 0.3,
+                'fill' => false,
             ];
-            
-            $labels = array_unique(array_merge($labels, $timestamps));
         }
-        
-        sort($labels);
-        
+
+        // Get unique sorted dates for labels
+        $labels = $allDates->unique()->sort()->values()->toArray();
+
         return [
             'datasets' => $datasets,
             'labels' => $labels,
@@ -72,9 +78,9 @@ class AccountBalanceChart extends ChartWidget
                 'x' => [
                     'type' => 'time',
                     'time' => [
-                        'unit' => 'hour',
+                        'unit' => 'day',
                         'displayFormats' => [
-                            'hour' => 'MMM D, HH:mm',
+                            'day' => 'MMM D, YYYY',
                         ],
                     ],
                     'ticks' => [
