@@ -225,6 +225,11 @@ class RazerService
         $workdir = $this->getWorkdir();
         $account = $this->account;
 
+
+        $this->getAccountBallance();
+        $creds = $workdir . '/balance_credentials.txt';
+        copy($creds, $workdir . '/credentials.txt');
+
         $params = [
             'email' => $account->email,
             'password' => $account->password,
