@@ -10,6 +10,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use App\Filament\Exports;
 
 class AccountTopupResource extends Resource
 {
@@ -101,6 +102,8 @@ class AccountTopupResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\ExportBulkAction::make()
+                        ->exporter(Exports\AccountTopupExporter::class)
                 ]),
             ])
             ->defaultSort('topup_time', 'desc');
