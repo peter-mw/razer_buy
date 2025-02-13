@@ -162,7 +162,7 @@ class RazerService
             escapeshellarg($account->client_id_login),
             $account->service_code,
             $productToBuy->product_id,
-            $slug,
+            escapeshellarg($slug),
             $region_id,
             $quantity
         );

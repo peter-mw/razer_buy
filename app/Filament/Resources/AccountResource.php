@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Exports;
+use App\Filament\Imports;
 use App\Filament\Resources\AccountResource\Pages;
 use App\Filament\Resources\AccountResource\RelationManagers;
 use App\Models\Account;
@@ -107,6 +109,10 @@ class AccountResource extends Resource
             ->defaultSort('ballance_gold', 'desc')
             ->actionsPosition(Tables\Enums\ActionsPosition::BeforeColumns)
             ->headerActions([
+                Tables\Actions\ImportAction::make()
+                    ->importer(Imports\AccountImporter::class),
+                Tables\Actions\ExportAction::make()
+                    ->exporter(Exports\AccountExporter::class),
                 Tables\Actions\Action::make('sync_all')
                     ->label('Sync All Accounts')
                     ->icon('heroicon-o-arrow-path')
@@ -333,6 +339,8 @@ class AccountResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\ExportBulkAction::make()
+                        ->exporter(Exports\AccountExporter::class),
 
 
                     Tables\Actions\BulkAction::make('bulk_redeem_silver_to_gold')
