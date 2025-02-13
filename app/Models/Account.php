@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 class Account extends Model
 {
@@ -57,5 +58,25 @@ class Account extends Model
     public function balanceHistories(): HasMany
     {
         return $this->hasMany(AccountBalanceHistory::class);
+    }
+
+    public function accountTopups(): HasMany
+    {
+        return $this->hasMany(AccountTopup::class);
+    }
+
+    public function getTopupBalanceAttribute(): float
+    {
+        return $this->accountTopups()->sum('topup_amount');
+    }
+
+    public function getTransactionBalanceAttribute(): float
+    {
+        return $this->transactions()->sum('amount');
+    }
+
+    public function getBalanceDifferenceAttribute(): float
+    {
+        return ($this->topup_balance - $this->transaction_balance) - $this->ballance_gold;
     }
 }

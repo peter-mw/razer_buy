@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Exports\AccountReconciliationExporter;
 use App\Filament\Resources\AccountReconciliationResource\Pages;
 use App\Models\Account;
 use Filament\Resources\Resource;
@@ -25,6 +26,10 @@ class AccountReconciliationResource extends Resource
     {
         return $table
             ->paginated([10, 25, 50, 100, 1000, 'all'])
+            ->headerActions([
+                Tables\Actions\ExportAction::make()
+                    ->exporter(AccountReconciliationExporter::class),
+            ])
             ->columns([
                 Tables\Columns\TextColumn::make('id')
                     ->label('ID')
@@ -40,35 +45,14 @@ class AccountReconciliationResource extends Resource
                 Tables\Columns\TextColumn::make('topup_balance')
                     ->label('Topup Balance')
                     ->money('USD')
-                    ->state(function (Account $record): float {
-                        return DB::table('account_topups')
-                            ->where('account_id', $record->id)
-                            ->sum('topup_amount');
-                    })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('transaction_balance')
                     ->label('Transaction Balance')
                     ->money('USD')
-                    ->state(function (Account $record): float {
-                        return DB::table('transactions')
-                            ->where('account_id', $record->id)
-                            ->sum('amount');
-                    })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('balance_difference')
                     ->label('Balance Difference')
                     ->money('USD')
-                    ->state(function (Account $record): float {
-                        $topupBalance = DB::table('account_topups')
-                            ->where('account_id', $record->id)
-                            ->sum('topup_amount');
-
-                        $transactionBalance = DB::table('transactions')
-                            ->where('account_id', $record->id)
-                            ->sum('amount');
-
-                        return ($topupBalance - $transactionBalance) - $record->ballance_gold;
-                    })
                     ->sortable()
                     ->color(fn(string $state): string => $state < -0.1 ? 'danger' : 'success'),
             ])
@@ -79,6 +63,8 @@ class AccountReconciliationResource extends Resource
                 //
             ])
             ->bulkActions([
+                Tables\Actions\ExportBulkAction::make()
+                    ->exporter(AccountReconciliationExporter::class),
                 Tables\Actions\BulkAction::make('reconcile')
                     ->label('Reconcile')
                     ->icon('heroicon-o-scale')
@@ -86,15 +72,7 @@ class AccountReconciliationResource extends Resource
                     ->deselectRecordsAfterCompletion()
                     ->action(function ($records) {
                         foreach ($records as $account) {
-                            $topupBalance = DB::table('account_topups')
-                                ->where('account_id', $account->id)
-                                ->sum('topup_amount');
-
-                            $transactionBalance = DB::table('transactions')
-                                ->where('account_id', $account->id)
-                                ->sum('amount');
-
-                            $difference = ($topupBalance - $transactionBalance) - $account->ballance_gold;
+                            $difference = $account->balance_difference;
 
                             if ($difference != 0) {
                                 AccountTopup::create([
