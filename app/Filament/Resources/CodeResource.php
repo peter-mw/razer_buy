@@ -65,7 +65,11 @@ class CodeResource extends Resource
     {
         return $table
             ->defaultSort('created_at', 'desc')
-            ->paginated([10, 25, 50, 100, 500, 1000, 'all'])
+            ->paginated([100, 250, 500, 1000, 5000, 10000, 'all'])
+            ->headerActions([
+                Tables\Actions\ExportAction::make()
+                    ->exporter(CodeExporter::class),
+            ])
             ->columns([
                 Tables\Columns\TextColumn::make('id')
                     ->sortable()
@@ -77,7 +81,7 @@ class CodeResource extends Resource
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('order.id')
-                    ->label('Order ID')
+                    ->label('Order')
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('code')
@@ -88,6 +92,7 @@ class CodeResource extends Resource
                 Tables\Columns\TextColumn::make('product_name')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('product_edition')
+                    ->toggleable(isToggledHiddenByDefault : true)
                     ->searchable(),
                 Tables\Columns\TextColumn::make('buy_date')
                     ->dateTime()
@@ -118,6 +123,7 @@ class CodeResource extends Resource
                     ->options(fn(): array => Code::whereNotNull('product_name')->distinct()->pluck('product_name', 'product_name')->toArray()),
                 Tables\Filters\SelectFilter::make('product_edition')
                     ->label('Product Edition')
+
                     ->searchable()
                     ->options(fn(): array => Code::whereNotNull('product_edition')->distinct()->pluck('product_edition', 'product_edition')->toArray()),
 
