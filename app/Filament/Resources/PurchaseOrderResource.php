@@ -234,16 +234,20 @@ class PurchaseOrderResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(),
-                Tables\Columns\TextColumn::make('account_type')
+
+                Tables\Columns\TextColumn::make('order_status')
                     ->badge()
-                    ->label('Type')
+                    ->searchable()
+                    ->label('Status')
                     ->color(fn(string $state): string => match ($state) {
-                        'global' => 'warning',
-                        'usa' => 'success',
+                        'completed' => 'success',
+                        'processing' => 'warning',
+                        'failed' => 'danger',
                         default => 'gray',
                     })
-                    ->searchable()
                     ->sortable(),
+
+
                 Tables\Columns\TextColumn::make('quantity')
                     ->label('To buy')
                     ->numeric()
@@ -260,15 +264,16 @@ class PurchaseOrderResource extends Resource
                     ->money()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
-                Tables\Columns\TextColumn::make('order_status')
+
+                Tables\Columns\TextColumn::make('account_type')
                     ->badge()
-                    ->label('Status')
+                    ->label('Type')
                     ->color(fn(string $state): string => match ($state) {
-                        'completed' => 'success',
-                        'processing' => 'warning',
-                        'failed' => 'danger',
+                        'global' => 'warning',
+                        'usa' => 'success',
                         default => 'gray',
                     })
+                    ->searchable()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('updated_at')
