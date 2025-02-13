@@ -44,43 +44,63 @@ class FetchAccountCodesJob implements ShouldQueue
         try {
             $codes = $service->fetchAllCodes();
             if (!empty($codes)) {
-                // Create a single order for all codes
-                $firstCode = $codes[0];
-                $productName = $firstCode['Product'];
+                // Track if we found any new codes
+                $hasNewCodes = false;
+                $firstNewCode = null;
+                $processedCodes = [];
 
+                // First pass - check for new codes
+                foreach ($codes as $codeData) {
+                    $code = $codeData['Code'];
+                    $serialNumber = $codeData['SN'];
 
-                $product = Product::where('product_name', 'LIKE', '%' . $productName . '%')->first();
+                    // Check if code already exists
+                    $existingCode = Code::where('code', $code)
+                        ->orWhere('serial_number', $serialNumber)
+                        ->first();
 
-                if (!$product) {
-
-                    $product = Product::create([
-                        'product_name' => $productName,
-                        'product_slug' => Str::slug($productName),
-                        'account_type' => 'unknown',
-                        'product_edition' => 'unknown',
-                        'product_buy_value' => 0,
-                        'product_face_value' => 0,
-                    ]);
-                    $product->save();
-
-
+                    if (!$existingCode) {
+                        $hasNewCodes = true;
+                        if (!$firstNewCode) {
+                            $firstNewCode = $codeData;
+                        }
+                        $processedCodes[] = $codeData;
+                    }
                 }
 
-                $newOrder = PurchaseOrders::create([
-                    'product_id' => $product->id,
-                    'product_name' => $product->product_name,
-                    'account_type' => $product->account_type,
-                    'product_edition' => $product->product_edition,
-                    'buy_value' => $product->product_buy_value,
-                    'product_face_value' => $product->product_face_value,
+                // Only create order and process codes if we found new ones
+                if ($hasNewCodes && $firstNewCode) {
+                    $productName = $firstNewCode['Product'];
+                    $product = Product::where('product_name', 'LIKE', '%' . $productName . '%')->first();
 
-                    'quantity' => 0,
-                    'order_status' => 'completed',
-                    'account_id' => $account->id
-                ]);
+                    if (!$product) {
+                        $product = Product::create([
+                            'product_name' => $productName,
+                            'product_slug' => Str::slug($productName),
+                            'account_type' => 'unknown',
+                            'product_edition' => 'unknown',
+                            'product_buy_value' => 0,
+                            'product_face_value' => 0,
+                        ]);
+                        $product->save();
+                    }
 
-                foreach ($codes as $codeData) {
-                    $this->processCode($account, $codeData, $newOrder);
+                    $newOrder = PurchaseOrders::create([
+                        'product_id' => $product->id,
+                        'product_name' => $product->product_name,
+                        'account_type' => $product->account_type,
+                        'product_edition' => $product->product_edition,
+                        'buy_value' => $product->product_buy_value,
+                        'product_face_value' => $product->product_face_value,
+                        'quantity' => count($processedCodes),
+                        'order_status' => 'completed',
+                        'account_id' => $account->id
+                    ]);
+
+                    // Process only the new codes
+                    foreach ($processedCodes as $codeData) {
+                        $this->processCode($account, $codeData, $newOrder);
+                    }
                 }
 
 
@@ -99,22 +119,12 @@ class FetchAccountCodesJob implements ShouldQueue
 
     protected function processCode(Account $account, array $codeData, PurchaseOrders $order): void
     {
-
         // Extract data from code response
         $code = $codeData['Code'];
         $serialNumber = $codeData['SN'];
         $productName = $codeData['Product'];
         $amount = floatval($codeData['Amount']);
         $buyDate = date('Y-m-d H:i:s', strtotime($codeData['TransactionDate']));
-
-        // Check if code already exists
-        $existingCode = Code::where('code', $code)
-            ->orWhere('serial_number', $serialNumber)
-            ->first();
-
-        if ($existingCode) {
-            return; // Skip if code already exists
-        }
 
 
         // Find matching product by name
@@ -131,7 +141,7 @@ class FetchAccountCodesJob implements ShouldQueue
             'amount' => $amount,
             'product_id' => $product->id,
             'transaction_date' => $buyDate,
-            'transaction_id' => 'unknown-' . $code,
+            'transaction_id' => 'sync-' . $code,
             'order_id' => $order->id
         ]);
 

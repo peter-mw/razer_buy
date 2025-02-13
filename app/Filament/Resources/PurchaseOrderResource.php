@@ -198,7 +198,7 @@ class PurchaseOrderResource extends Resource
     {
         return $table
             ->defaultSort('created_at', 'desc')
-            ->actionsPosition(Tables\Enums\ActionsPosition::BeforeColumns)
+            ->actionsPosition(Tables\Enums\ActionsPosition::BeforeCells)
             ->columns([
                 Tables\Columns\TextColumn::make('id')
                     ->sortable()
@@ -229,6 +229,7 @@ class PurchaseOrderResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('account_type')
                     ->badge()
+                    ->label('Type')
                     ->color(fn(string $state): string => match ($state) {
                         'global' => 'warning',
                         'usa' => 'success',
@@ -254,6 +255,7 @@ class PurchaseOrderResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('order_status')
                     ->badge()
+                    ->label('Status')
                     ->color(fn(string $state): string => match ($state) {
                         'completed' => 'success',
                         'processing' => 'warning',

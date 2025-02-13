@@ -56,6 +56,14 @@ class AccountReconciliationResource extends Resource
                     ->money('USD')
                     ->sortable()
                     ->color(fn(string $state): string => $state < -0.1 ? 'danger' : 'success'),
+                Tables\Columns\TextColumn::make('codes_count')
+                    ->label('Total Codes')
+                    ->counts('codes')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('transactions_count')
+                    ->label('Total Transactions')
+                    ->counts('transactions')
+                    ->sortable(),
             ])
             ->filters([
                 //

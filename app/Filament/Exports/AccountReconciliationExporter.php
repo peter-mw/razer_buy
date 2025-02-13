@@ -27,6 +27,12 @@ class AccountReconciliationExporter extends Exporter
                 ->label('Transaction Balance'),
             ExportColumn::make('balance_difference')
                 ->label('Balance Difference'),
+            ExportColumn::make('codes_count')
+                ->label('Total Codes')
+                ->state(fn (Account $record): int => $record->codes()->count()),
+            ExportColumn::make('transactions_count')
+                ->label('Total Transactions')
+                ->state(fn (Account $record): int => $record->transactions()->count()),
         ];
     }
 
