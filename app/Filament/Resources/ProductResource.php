@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Exports\ProductExporter;
 use App\Filament\Imports\ProductImporter;
 use App\Filament\Resources\ProductResource\Pages;
+use App\Filament\Resources\ProductResource\RelationManagers;
 use App\Models\Product;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -134,6 +135,14 @@ class ProductResource extends Resource
                         ->exporter(ProductExporter::class),
                 ]),
             ]);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            RelationManagers\CodesRelationManager::class,
+            RelationManagers\TransactionsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

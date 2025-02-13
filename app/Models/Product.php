@@ -2,14 +2,11 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends Model
 {
-    use HasFactory;
-
     protected $fillable = [
         'id',
         'product_name',
@@ -21,13 +18,13 @@ class Product extends Model
         'remote_crm_product_name',
     ];
 
-    protected $casts = [
-        'product_buy_value' => 'decimal:2',
-        'product_face_value' => 'decimal:2',
-    ];
-
-    public function productsToBuy(): HasMany
+    public function codes()
     {
-        return $this->hasMany(PurchaseOrders::class, 'product_id');
+        return $this->hasMany(Code::class, 'product_id');
+    }
+
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class, 'product_id');
     }
 }
