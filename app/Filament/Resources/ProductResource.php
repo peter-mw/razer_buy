@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Exports\ProductExporter;
+use App\Filament\Imports\ProductImporter;
 use App\Filament\Resources\ProductResource\Pages;
 use App\Models\Product;
 use Filament\Forms;
@@ -65,6 +67,12 @@ class ProductResource extends Resource
             ->paginated(false)
             ->defaultSort('id', 'desc')
             ->actionsPosition(Tables\Enums\ActionsPosition::BeforeColumns)
+            ->headerActions([
+                Tables\Actions\ImportAction::make()
+                    ->importer(ProductImporter::class),
+                Tables\Actions\ExportAction::make()
+                    ->exporter(ProductExporter::class),
+            ])
             ->columns([
                 Tables\Columns\TextColumn::make('id')
                     ->label('Product ID')
@@ -122,6 +130,8 @@ class ProductResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\ExportBulkAction::make()
+                        ->exporter(ProductExporter::class),
                 ]),
             ]);
     }
