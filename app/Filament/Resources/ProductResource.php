@@ -106,7 +106,7 @@ class ProductResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\Action::make('create_order')
+            /*    Tables\Actions\Action::make('create_order')
                     ->label('Create Order')
                     ->icon('heroicon-o-shopping-cart')
                     ->url(fn (Product $record): string =>
@@ -115,7 +115,7 @@ class ProductResource extends Resource
                             'account_type' => $record->account_type
                         ])
                     )
-                    ->openUrlInNewTab(),
+                    ->openUrlInNewTab(),*/
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])

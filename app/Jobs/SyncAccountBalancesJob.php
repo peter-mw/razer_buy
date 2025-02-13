@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Account;
+use App\Models\AccountTopup;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -63,6 +64,15 @@ class SyncAccountBalancesJob implements ShouldQueue
                     'balance_update_time' => $account->last_ballance_update_at ?? now(),
                     'balance_event' => $isTopUp ? 'topup' : null,
                 ]);
+
+                // If it's a top-up, create a record in the account_topups table
+                if ($isTopUp) {
+                    AccountTopup::create([
+                        'account_id' => $account->id,
+                        'topup_amount' => floatval($response['gold']) - floatval($account->ballance_gold),
+                        'topup_time' => now(),
+                    ]);
+                }
             }
 
             $account->update([

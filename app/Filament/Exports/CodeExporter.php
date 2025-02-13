@@ -3,52 +3,46 @@
 namespace App\Filament\Exports;
 
 use App\Models\Code;
-use App\Models\PurchaseOrders;
 use Filament\Actions\Exports\ExportColumn;
 use Filament\Actions\Exports\Exporter;
-use Filament\Actions\Exports\Models\Export;
+use Illuminate\Database\Eloquent\Builder;
 
 class CodeExporter extends Exporter
 {
     protected static ?string $model = Code::class;
 
-/*    public static function modifyQuery(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    public static function getCompletedNotificationBody(\Filament\Actions\Exports\Models\Export $export): string
     {
-        $parameters = request()->query();
-
-        if (isset($parameters['record'])) {
-            return $query->where('order_id', $parameters['record']);
-        }
-
-        return $query;
-    }*/
+        return 'Your codes export has completed and is ready to download.';
+    }
 
     public static function getColumns(): array
     {
         return [
             ExportColumn::make('id')
                 ->label('ID'),
-            ExportColumn::make('account.name'),
-            ExportColumn::make('code'),
-            ExportColumn::make('serial_number'),
-            ExportColumn::make('product.id'),
-            ExportColumn::make('product_name'),
-            ExportColumn::make('product_edition'),
-            ExportColumn::make('buy_date'),
-            ExportColumn::make('buy_value'),
-            ExportColumn::make('created_at'),
-            ExportColumn::make('updated_at'),
+            ExportColumn::make('account.name')
+                ->label('Account'),
+            ExportColumn::make('order.id')
+                ->label('Order ID'),
+            ExportColumn::make('code')
+                ->label('Code'),
+            ExportColumn::make('serial_number')
+                ->label('Serial Number'),
+            ExportColumn::make('product_name')
+                ->label('Product Name'),
+            ExportColumn::make('product_edition')
+                ->label('Product Edition'),
+            ExportColumn::make('buy_date')
+                ->label('Buy Date'),
+            ExportColumn::make('buy_value')
+                ->label('Buy Value'),
+            ExportColumn::make('created_at')
+                ->label('Created At'),
+            ExportColumn::make('updated_at')
+                ->label('Updated At'),
         ];
     }
 
-    public static function getCompletedNotificationBody(Export $export): string
-    {
-        $body = 'Your code export has completed and ' . number_format($export->successful_rows) . ' ' . str('row')->plural($export->successful_rows) . ' exported.';
 
-        if ($failedRowsCount = $export->getFailedRowsCount()) {
-            $body .= ' ' . number_format($failedRowsCount) . ' ' . str('row')->plural($failedRowsCount) . ' failed to export.';
-        }
-
-        return $body;
-    }
 }
