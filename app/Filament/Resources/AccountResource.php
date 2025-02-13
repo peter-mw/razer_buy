@@ -43,6 +43,7 @@ class AccountResource extends Resource
 
                 Forms\Components\Select::make('account_type')
                     ->required()
+                    ->native(true)
                     ->options([
                         'global' => 'Global',
                         'usa' => 'USA',

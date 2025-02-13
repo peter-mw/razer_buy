@@ -110,6 +110,7 @@ class PurchaseOrderResource extends Resource
                     ->label('Product Name (slug)'),
                 Forms\Components\Hidden::make('product_edition'),
                 Forms\Components\Select::make('account_type')
+                    ->native(true)
                     ->required()
                     ->options([
                         'global' => 'Global',
@@ -207,7 +208,7 @@ class PurchaseOrderResource extends Resource
                 Tables\Columns\TextColumn::make('product_id')
                     ->sortable()
                     ->label('Product')
-                     ->limit(50)
+                    ->limit(50)
                     ->searchable(),
                 Tables\Columns\TextColumn::make('product_name')
                     ->label('Name')

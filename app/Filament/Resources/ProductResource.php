@@ -32,17 +32,18 @@ class ProductResource extends Resource
                 Forms\Components\TextInput::make('product_slug')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\Select::make('account_type')
+                Forms\Components\Radio::make('account_type')
                     ->required()
-                    ->searchable()
+
+
                     ->options([
                         'global' => 'Global',
                         'usa' => 'USA',
                     ]),
 
                 Forms\Components\TextInput::make('product_edition')
-                    ->required()
-                    ->maxLength(255),
+                    ->label('Product Edition (same as product name if not applicable)')
+                     ->maxLength(255),
                 Forms\Components\TextInput::make('product_buy_value')
                     ->required()
                     ->numeric()
@@ -61,6 +62,7 @@ class ProductResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->paginated(false)
             ->defaultSort('id', 'desc')
             ->actionsPosition(Tables\Enums\ActionsPosition::BeforeColumns)
             ->columns([
