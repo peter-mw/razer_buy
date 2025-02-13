@@ -7,6 +7,7 @@ use App\Filament\Imports;
 use App\Filament\Resources\AccountResource\Pages;
 use App\Filament\Resources\AccountResource\RelationManagers;
 use App\Models\Account;
+use App\Filament\Widgets\AccountCodesInlineChartWidget;
 use App\Models\PurchaseOrders;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -156,6 +157,12 @@ class AccountResource extends Resource
                     })
             ])
             ->columns([
+                \LaraZeus\InlineChart\Tables\Columns\InlineChart::make('activity')
+                    ->chart(AccountCodesInlineChartWidget::class)
+                    ->maxWidth(200)
+                    ->maxHeight(90)
+                    ->description('Last 7 days activity')
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('id')->toggleable(),
 
 
