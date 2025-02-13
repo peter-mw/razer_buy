@@ -108,7 +108,7 @@ class AccountResource extends Resource
         return $table
             ->paginated(false)
             ->defaultSort('ballance_gold', 'desc')
-            ->actionsPosition(Tables\Enums\ActionsPosition::BeforeColumns)
+            ->actionsPosition(Tables\Enums\ActionsPosition::AfterCells)
             ->headerActions([
                 Tables\Actions\ImportAction::make()
                     ->importer(Imports\AccountImporter::class),
@@ -198,6 +198,7 @@ class AccountResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('ballance_silver')
                     ->money()
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
                 Tables\Columns\TextColumn::make('limit_amount_per_day')
                     ->toggleable(isToggledHiddenByDefault: true)

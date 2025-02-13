@@ -7,6 +7,7 @@ use App\Filament\Imports\ProductImporter;
 use App\Filament\Resources\ProductResource\Pages;
 use App\Filament\Resources\ProductResource\RelationManagers;
 use App\Models\Product;
+use App\Filament\Widgets\ProductActivityInlineChartWidget;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -75,6 +76,12 @@ class ProductResource extends Resource
                     ->exporter(ProductExporter::class),
             ])
             ->columns([
+                \LaraZeus\InlineChart\Tables\Columns\InlineChart::make('activity')
+                    ->chart(ProductActivityInlineChartWidget::class)
+                    ->maxWidth(350)
+                    ->maxHeight(90)
+                    ->description('Last 7 days activity')
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('id')
                     ->label('Product ID')
                     ->sortable()

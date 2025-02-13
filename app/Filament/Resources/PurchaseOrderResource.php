@@ -200,11 +200,20 @@ class PurchaseOrderResource extends Resource
             ->defaultSort('created_at', 'desc')
             ->actionsPosition(Tables\Enums\ActionsPosition::BeforeColumns)
             ->columns([
-                Tables\Columns\TextColumn::make('id')->toggleable(),
+                Tables\Columns\TextColumn::make('id')
+                    ->sortable()
+                    ->searchable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('account_id')
                     ->label('Account')
                     ->sortable()
                     ->searchable(),
+
+                Tables\Columns\TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable()
+                 ,
+
                 Tables\Columns\TextColumn::make('product_id')
                     ->sortable()
                     ->label('Product')
@@ -252,10 +261,7 @@ class PurchaseOrderResource extends Resource
                         default => 'gray',
                     })
                     ->sortable(),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+
                 Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
