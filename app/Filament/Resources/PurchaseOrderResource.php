@@ -75,40 +75,7 @@ class PurchaseOrderResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Select::make('product_id')
-                    //  ->default(fn() => request()->get('product_id'))
-                    ->relationship(
-                        'product',
-                        'product_name',
-                        fn($query, Forms\Get $get) => $query->where('account_type', $get('account_type'))
-                    )
-                    ->label('Product')
-                    ->required()
-                    ->live()
-                    ->reactive()
-                    ->preload()
-                    ->searchable()
-                    ->native(false)
-                    ->getOptionLabelFromRecordUsing(fn($record) => "{$record->product_name} - {$record->product_edition} - \${$record->product_buy_value}")
-                    ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
-                        if ($state) {
-                            $product = Product::find($state);
 
-                            if ($product) {
-                                $set('product_name', $product->product_name);
-                                $set('product_edition', $product->product_edition);
-                                $set('buy_value', $product->product_buy_value);
-                                $set('product_face_value', $product->product_face_value);
-                                $set('account_type', $product->account_type);
-                            }
-                        }
-
-                        // Always validate balance regardless of product state
-                        static::validateBalance($get, $set);
-                    }),
-                Forms\Components\Hidden::make('product_name')
-                    ->label('Product Name (slug)'),
-                Forms\Components\Hidden::make('product_edition'),
                 Forms\Components\Select::make('account_type')
                     ->native(true)
                     ->required()
@@ -125,18 +92,8 @@ class PurchaseOrderResource extends Resource
                         // Validate balance after account type change
                         static::validateBalance($get, $set);
                     }),
-                Forms\Components\TextInput::make('quantity')
-                    ->required()
-                    ->numeric()
-                    ->default(0)
-                    ->minValue(0)
-                    ->live(debounce: 1500)
-                    ->afterStateUpdated(function ($state, Forms\Get $get, Forms\Set $set) {
-                        // Validate after quantity change
-                        static::validateBalance($get, $set);
-                    }),
-                Forms\Components\Hidden::make('buy_value'),
-                Forms\Components\Hidden::make('product_face_value'),
+
+
                 Forms\Components\Select::make('account_id')
                     ->relationship(
                         'account',
@@ -171,6 +128,56 @@ class PurchaseOrderResource extends Resource
                         static::validateBalance($get, $set);
                     })
                 ,
+
+
+                Forms\Components\Select::make('product_id')
+                    //  ->default(fn() => request()->get('product_id'))
+                    ->relationship(
+                        'product',
+                        'product_name',
+                        fn($query, Forms\Get $get) => $query->where('account_type', $get('account_type'))
+                    )
+                    ->label('Product')
+                    ->required()
+                    ->live()
+                    ->reactive()
+                    ->preload()
+                    ->searchable()
+                    ->native(false)
+                    ->getOptionLabelFromRecordUsing(fn($record) => "{$record->product_name} - {$record->product_edition} - \${$record->product_buy_value}")
+                    ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
+                        if ($state) {
+                            $product = Product::find($state);
+
+                            if ($product) {
+                                $set('product_name', $product->product_name);
+                                $set('product_edition', $product->product_edition);
+                                $set('buy_value', $product->product_buy_value);
+                                $set('product_face_value', $product->product_face_value);
+                                $set('account_type', $product->account_type);
+                            }
+                        }
+
+                        // Always validate balance regardless of product state
+                        static::validateBalance($get, $set);
+                    }),
+                Forms\Components\Hidden::make('product_name')
+                    ->label('Product Name (slug)'),
+                Forms\Components\Hidden::make('product_edition'),
+
+                Forms\Components\TextInput::make('quantity')
+                    ->required()
+                    ->numeric()
+                    ->reactive()
+
+                    ->live(debounce: 1500)
+                    ->afterStateUpdated(function ($state, Forms\Get $get, Forms\Set $set) {
+                        // Validate after quantity change
+                        static::validateBalance($get, $set);
+                    }),
+                Forms\Components\Hidden::make('buy_value'),
+                Forms\Components\Hidden::make('product_face_value'),
+
                 Forms\Components\Select::make('order_status')
                     ->default('pending')
                     ->options([

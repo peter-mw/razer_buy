@@ -10,6 +10,10 @@ use App\Models\SystemLog;
 class RazerService
 {
     public ?Account $account;
+    private string $checkBalanceBin;
+    private string $checkTransactionBin;
+    private string $fetchCodesBin;
+    private string $razerGBin;
 
     public function __construct(Account $account)
     {
@@ -31,17 +35,31 @@ class RazerService
         return normalize_path($dir, true);
     }
 
+    public function isWindows(): bool
+    {
+        if (strncasecmp(PHP_OS, 'WIN', 3) == 0) {
+            return true;
+        }
+        return false;
+    }
+
     public function setUp()
     {
         $workdir = $this->getWorkdir();
-
-        //copy from bin folder
         $binFolder = base_path('bin');
+
+        // Set binary names based on OS
+        $ext = $this->isWindows() ? '.exe' : '';
+        $this->checkBalanceBin = 'razer-check-balance' . $ext;
+        $this->checkTransactionBin = 'razer-check-transaction' . $ext;
+        $this->fetchCodesBin = 'razer-fetchcodes' . $ext;
+        $this->razerGBin = 'razerG' . $ext;
+
         $files = [
-            'razer-check-balance.exe',
-            'razerG.exe',
-            'razer-check-transaction.exe',
-            'razer-fetchcodes.exe',
+            $this->checkBalanceBin,
+            $this->checkTransactionBin,
+            $this->fetchCodesBin,
+            $this->razerGBin,
         ];
 
         foreach ($files as $file) {
@@ -76,7 +94,7 @@ class RazerService
 
         $cmd = sprintf(
             '"%s" -email=%s -password=%s -clientIDlogin=%s -serviceCode=%s -transactionID=%s 2>&1',
-            normalize_path($workdir . '/razer-check-transaction.exe', false),
+            normalize_path($workdir . '/' . $this->checkTransactionBin, false),
             escapeshellarg($account->email),
             escapeshellarg($account->password),
             escapeshellarg($account->client_id_login),
@@ -155,16 +173,16 @@ class RazerService
 
         $cmd = sprintf(
             '"%s" -setupKey=%s -email=%s -password=%s -clientIDlogin=%s -serviceCode=%s -productId=%d -permalink=%s -regionId=%s -count=%s 2>&1',
-            normalize_path($workdir . '/razerG.exe', false),
+            normalize_path($workdir . '/' . $this->razerGBin, false),
             escapeshellarg($account->otp_seed),
             escapeshellarg($account->email),
             escapeshellarg($account->password),
             escapeshellarg($account->client_id_login),
-            $account->service_code,
-            $productToBuy->product_id,
+            escapeshellarg($account->service_code),
+            escapeshellarg($productToBuy->product_id),
             escapeshellarg($slug),
-            $region_id,
-            $quantity
+            escapeshellarg($region_id),
+            escapeshellarg($quantity)
         );
 
 
@@ -244,7 +262,7 @@ class RazerService
 
         $cmd = sprintf(
             '"%s" -email=%s -password=%s -clientIDlogin=%s -serviceCode=%s 2>&1',
-            normalize_path($workdir . '/razer-fetchcodes.exe', false),
+            normalize_path($workdir . '/' . $this->fetchCodesBin, false),
             escapeshellarg($account->email),
             escapeshellarg($account->password),
             escapeshellarg($account->client_id_login),
@@ -298,7 +316,7 @@ class RazerService
 
         $cmd = sprintf(
             '"%s" -email=%s -password=%s -clientIDlogin=%s -serviceCode=%s 2>&1',
-            normalize_path($workdir . '/razer-check-balance.exe', false),
+            normalize_path($workdir . '/' . $this->checkBalanceBin, false),
             escapeshellarg($account->email),
             escapeshellarg($account->password),
             escapeshellarg($account->client_id_login),

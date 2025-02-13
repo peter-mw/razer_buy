@@ -95,7 +95,6 @@ class ProcessBuyJob implements ShouldQueue
         if ($ballanceResponse['gold'] < $purchaseOrder->buy_value) {
             $purchaseOrder->update(['order_status' => 'not_enough_balance']);
 
-
         }
 
 
