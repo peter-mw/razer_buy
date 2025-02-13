@@ -13,6 +13,12 @@ class AccountCodesInlineChartWidget extends InlineChartWidget
 
     public function getData(): array
     {
+        if(!isset( $this->record)) {
+            return [];
+        }
+
+
+
         // Get the account's codes and transactions for the last 7 days
         $codes = \App\Models\Code::where('account_id', $this->record->id)
             ->whereBetween('created_at', [now()->subDays(7), now()])

@@ -13,6 +13,11 @@ class ProductActivityInlineChartWidget extends InlineChartWidget
 
     public function getData(): array
     {
+
+        if(!isset( $this->record)) {
+            return [];
+        }
+
         // Get the product's codes and transactions for the last 7 days
         $codes = \App\Models\Code::where('product_id', $this->record->id)
             ->whereBetween('created_at', [now()->subDays(7), now()])
