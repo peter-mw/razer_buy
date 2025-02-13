@@ -112,7 +112,17 @@ class ProductResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('account_type')
+                    ->options([
+                        'global' => 'Global',
+                        'usa' => 'USA',
+                    ]),
+                Tables\Filters\SelectFilter::make('product_slug')
+                    ->options(fn(): array => Product::query()
+                        ->whereNotNull('product_slug')
+                        ->pluck('product_slug', 'product_slug')
+                        ->toArray()
+                    )
             ])
             ->actions([
             /*    Tables\Actions\Action::make('create_order')

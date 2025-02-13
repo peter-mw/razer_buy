@@ -17,6 +17,7 @@ class AccountTopupResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-arrow-trending-up';
 
+    protected static ?int $navigationSort = 20;
 
 
     public static function form(Form $form): Form

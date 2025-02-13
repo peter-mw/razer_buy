@@ -27,7 +27,7 @@ class PurchaseOrderResource extends Resource
     protected static ?string $label = 'Purchase order';
 
     protected static ?string $navigationIcon = 'heroicon-o-shopping-cart';
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 2;
 
     public static function validateBalance($get, $set): void
     {

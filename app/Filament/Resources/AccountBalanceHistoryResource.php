@@ -21,7 +21,7 @@ class AccountBalanceHistoryResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-clock';
 
     protected static ?string $navigationLabel = 'Balance History';
-
+    protected static ?int $navigationSort = 20;
     public static function form(Form $form): Form
     {
         return $form

@@ -17,7 +17,8 @@ class PendingTransactionResource extends Resource
     protected static ?string $model = PendingTransaction::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-clock';
-    protected static ?int $navigationSort = 6;
+    protected static ?int $navigationSort = 20;
+
 
     public static function form(Form $form): Form
     {

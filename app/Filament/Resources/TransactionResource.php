@@ -18,7 +18,8 @@ class TransactionResource extends Resource
     protected static ?string $model = Transaction::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-currency-dollar';
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 20;
+
     public static function form(Form $form): Form
     {
         return $form

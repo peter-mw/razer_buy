@@ -21,6 +21,7 @@ class AccountReconciliationResource extends Resource
     protected static ?string $navigationLabel = 'Account Reconciliation';
 
     protected static ?string $modelLabel = 'Account Reconciliation';
+    protected static ?int $navigationSort = 20;
 
     public static function table(Table $table): Table
     {
