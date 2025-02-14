@@ -22,6 +22,7 @@ class PurchaseOrderCodesView extends Model
                 'codes.code',
                 'codes.serial_number',
                 'products.id as product_id',
+                'products.remote_crm_product_name',
                 'codes.product_name',
                 'codes.product_edition',
                 'codes.buy_date',

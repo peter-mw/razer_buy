@@ -27,6 +27,8 @@ class PurchaseOrderCodesExporter extends Exporter
                 ->label('Serial Number'),
             ExportColumn::make('product.id')
                 ->label('Product ID'),
+            ExportColumn::make('product.remote_crm_product_name')
+                ->label('Remote CRM Product'),
             ExportColumn::make('product_name')
                 ->label('Product Name'),
             ExportColumn::make('product_edition')
