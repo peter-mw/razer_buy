@@ -248,6 +248,23 @@ class AccountResource extends Resource
                     ->searchable()
                     ->sortable(),
 
+                Tables\Columns\TextColumn::make('last_topup_sync_at')
+                    ->label('Last Topup Sync')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('last_topup_sync_status')
+                    ->label('Last Topup Sync Status')
+                    ->badge()
+                    ->color(fn(string $state): string => match ($state) {
+                        'success' => 'success',
+                        'error' => 'danger',
+                        default => 'warning',
+                    })
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

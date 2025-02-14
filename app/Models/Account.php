@@ -25,6 +25,8 @@ class Account extends Model
         'limit_amount_per_day',
         'last_ballance_update_at',
         'last_ballance_update_status',
+        'last_topup_sync_at',
+        'last_topup_sync_status',
         'service_code',
         'client_id_login',
         'is_active',
@@ -35,7 +37,8 @@ class Account extends Model
         'ballance_gold' => 'decimal:2',
         'ballance_silver' => 'decimal:2',
         'limit_amount_per_day' => 'decimal:2',
-        'last_ballance_update_at' => 'datetime'
+        'last_ballance_update_at' => 'datetime',
+        'last_topup_sync_at' => 'datetime'
     ];
 
     public function transactions(): HasMany

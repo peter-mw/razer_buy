@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Account;
 use App\Models\AccountTopup;
+use App\Models\Transaction;
 use App\Services\RazerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -28,22 +29,25 @@ class SyncAccountTopupsJob implements ShouldQueue
         try {
             $account = Account::findOrFail($this->accountId);
             $razerService = new RazerService($account);
-            
+
             $topups = $razerService->fetchTopUps();
-            
+
+
+
             foreach ($topups as $topup) {
-                AccountTopup::updateOrCreate(
+                // Create or update the account topup
+                $accountTopup = AccountTopup::updateOrCreate(
                     [
                         'account_id' => $account->id,
-                        'transaction_id' => $topup['TransactionID'] ?? null,
+                        'transaction_id' => $topup['transaction'] ?? null,
                     ],
                     [
-                        'amount' => $topup['Amount'] ?? 0,
-                        'status' => $topup['Status'] ?? 'pending',
-                        'transaction_date' => $topup['TransactionDate'] ?? now(),
-                        'details' => json_encode($topup),
+                        'topup_amount' => $topup['amount'] ?? 0,
+                        'transaction_ref' => $topup['product'] ?? '',
+                        'topup_time' => $topup['transaction_date'] ?? now(),
                     ]
                 );
+
             }
 
             $account->last_topup_sync_at = now();
