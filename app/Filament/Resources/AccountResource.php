@@ -61,22 +61,18 @@ class AccountResource extends Resource
                     ->required(),
 
 
-                Password::make('password')
-                    ->revealable()
-                    ->required()
-                    ->maxLength(255),
-                Password::make('otp_seed')
-                    ->label('OTP Seed (Setup Key)')
-                    ->revealable()
-                    ->required()
-                    ->maxLength(255),
+                Forms\Components\TextInput::make('password')
+
+                    ,
+                Forms\Components\TextInput::make('otp_seed')
+
+                   ,
 
 
                 Forms\Components\TextInput::make('vendor')
                     ->maxLength(255),
-                Password::make('email_password')
-                    ->revealable()
-                    ->maxLength(255),
+                Forms\Components\TextInput::make('email_password')
+                ,
 
                 Forms\Components\TextInput::make('service_code')
                     ->required()

@@ -89,7 +89,16 @@ class ProductResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('product_slug')
                     ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(),
+
+
+                Tables\Columns\TextColumn::make('product_buy_value')
+                    ->money()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('product_face_value')
+                    ->money()
+                    ->sortable(),
 
 
                 Tables\Columns\TextColumn::make('account_type')
@@ -99,12 +108,7 @@ class ProductResource extends Resource
                 Tables\Columns\TextColumn::make('product_edition')
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('product_buy_value')
-                    ->money()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('product_face_value')
-                    ->money()
-                    ->sortable(),
+
                 Tables\Columns\TextColumn::make('remote_crm_product_name')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')

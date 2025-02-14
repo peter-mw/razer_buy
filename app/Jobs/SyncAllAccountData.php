@@ -28,7 +28,7 @@ class SyncAllAccountData implements ShouldQueue
             $account = Account::findOrFail($this->accountId);
 
             // Create initial system log
-            SystemLog::create([
+            $log = SystemLog::create([
                 'source' => 'SyncAllAccountData',
                 'account_id' => $account->id,
                 'status' => 'processing',
@@ -45,9 +45,7 @@ class SyncAllAccountData implements ShouldQueue
                 new FetchAccountCodesJob($this->accountId),
             ])->dispatch();
 
-            SystemLog::create([
-                'source' => 'SyncAllAccountData',
-                'account_id' => $account->id,
+            $log->update([
                 'status' => 'success',
                 'command' => 'sync_all_data',
                 'params' => [
@@ -58,7 +56,7 @@ class SyncAllAccountData implements ShouldQueue
             return;
         } else {
             // Create initial system log for all accounts sync
-            SystemLog::create([
+            $log = SystemLog::create([
                 'source' => 'SyncAllAccountData',
                 'status' => 'processing',
                 'command' => 'sync_all_data',
@@ -78,9 +76,7 @@ class SyncAllAccountData implements ShouldQueue
                 }
             });
 
-            // Log completion of dispatching all account jobs
-            SystemLog::create([
-                'source' => 'SyncAllAccountData',
+            $log->update([
                 'status' => 'success',
                 'command' => 'sync_all_data',
                 'params' => [

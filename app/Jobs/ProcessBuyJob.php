@@ -47,7 +47,7 @@ class ProcessBuyJob implements ShouldQueue
         $purchaseOrder->update(['order_status' => 'processing']);
 
         // Create initial system log
-        SystemLog::create([
+        $log = SystemLog::create([
             'source' => 'ProcessBuyJob',
             'account_id' => $purchaseOrder->account_id,
             'status' => 'processing',
@@ -108,15 +108,12 @@ class ProcessBuyJob implements ShouldQueue
         if ($ballanceResponse['gold'] < $purchaseOrder->buy_value) {
             $purchaseOrder->update(['order_status' => 'not_enough_balance']);
 
-            SystemLog::create([
-                'source' => 'ProcessBuyJob',
-                'account_id' => $account->id,
+            $log->update([
                 'status' => 'error',
-                'command' => 'check_balance',
+                'command' => 'process_buy',
                 'params' => [
-                    'account_id' => $account->id,
-                    'balance' => $ballanceResponse['gold'],
-                    'required' => $purchaseOrder->buy_value,
+                    'purchase_order_id' => $purchaseOrder->id,
+                    'error' => 'Not enough balance',
                 ],
             ]);
         }
@@ -138,13 +135,10 @@ class ProcessBuyJob implements ShouldQueue
                 'order_status' => 'failed'
             ]);
 
-            SystemLog::create([
-                'source' => 'ProcessBuyJob',
-                'account_id' => $account->id,
+            $log->update([
                 'status' => 'error',
-                'command' => 'buy_products',
+                'command' => 'process_buy',
                 'params' => [
-                    'account_id' => $account->id,
                     'purchase_order_id' => $purchaseOrder->id,
                     'error' => 'No orders completed',
                 ],
@@ -277,28 +271,42 @@ class ProcessBuyJob implements ShouldQueue
         // Create transaction and code for each item
         foreach ($ready as $item) {
             // Create transaction
-            $transaction = Transaction::create([
-                'account_id' => $account->id,
-                'amount' => $item['amount'],
-                'product_id' => $purchaseOrder->product_id,
-                'transaction_date' => $item['buy_date'],
-                'transaction_id' => $item['transaction_id'],
-                'order_id' => $purchaseOrder->id
-            ]);
-            $transaction->save();
-            // Create code
-            $code = Code::create([
-                'account_id' => $account->id,
-                'code' => $item['code'],
-                'serial_number' => $item['serial_number'],
-                'product_id' => $purchaseOrder->product_id,
-                'product_name' => $purchaseOrder->product_name,
-                'product_edition' => $purchaseOrder->product_edition,
-                'buy_date' => $item['buy_date'],
-                'buy_value' => $item['amount'],
-                'order_id' => $purchaseOrder->id
-            ]);
-            $code->save();
+
+
+            //check if exists
+
+            $transaction = Transaction::where('transaction_id', $item['transaction_id'])->first();
+            if (!$transaction) {
+
+                $transaction = Transaction::create([
+                    'account_id' => $account->id,
+                    'amount' => $item['amount'],
+                    'product_id' => $purchaseOrder->product_id,
+                    'transaction_date' => $item['buy_date'],
+                    'transaction_id' => $item['transaction_id'],
+                    'order_id' => $purchaseOrder->id
+                ]);
+                $transaction->save();
+            }
+
+            $code = Code::where('code', $item['code'])
+                ->where('serial_number', $item['serial_number'])
+                ->first();
+            if (!$code) {
+                // Create code
+                $code = Code::create([
+                    'account_id' => $account->id,
+                    'code' => $item['code'],
+                    'serial_number' => $item['serial_number'],
+                    'product_id' => $purchaseOrder->product_id,
+                    'product_name' => $purchaseOrder->product_name,
+                    'product_edition' => $purchaseOrder->product_edition,
+                    'buy_date' => $item['buy_date'],
+                    'buy_value' => $item['amount'],
+                    'order_id' => $purchaseOrder->id
+                ]);
+                $code->save();
+            }
             $totalAmount += $item['amount'];
         }
 
@@ -315,16 +323,13 @@ class ProcessBuyJob implements ShouldQueue
                 'order_status' => 'completed'
             ]);
 
-            SystemLog::create([
-                'source' => 'ProcessBuyJob',
-                'account_id' => $account->id,
+            $log->update([
                 'status' => 'success',
                 'command' => 'process_buy',
+                'response' => $ready,
                 'params' => [
-                    'account_id' => $account->id,
                     'purchase_order_id' => $purchaseOrder->id,
-                    'codes_processed' => count($ready),
-                    'total_amount' => $totalAmount,
+                    'quantity' => count($ready),
                 ],
             ]);
         } else {
