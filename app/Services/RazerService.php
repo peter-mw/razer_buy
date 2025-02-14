@@ -251,6 +251,11 @@ class RazerService
         $workdir = $this->getWorkdir();
         $account = $this->account;
 
+        $this->getAccountBallance();
+        $creds = $workdir . '/balance_credentials.txt';
+        copy($creds, $workdir . '/credentials.txt');
+
+
         $params = [
             'email' => $account->email,
             'password' => $account->password,
@@ -284,7 +289,7 @@ class RazerService
 
         file_put_contents($workdir . '/topups_log.txt', $output);
 
-        $data_items = $this->formatOutput($output);
+        $data_items = $this->formatOutputTopUps($output);
 
         SystemLog::create([
             'source' => 'RazerService::fetchTopUps',
@@ -442,6 +447,32 @@ class RazerService
         return $return_lines;
     }
 
+    public function formatOutputTopUps($output)
+    {
+        $pattern = '/Product:\s+(.*?)\s+Transaction:\s+(\w+)\s+Amount:\s+(\d+)\s+Timestamp:\s+([\d\-:\. ]+)\s+\+\d+\s+\+\d+\s+TransactionDate:\s+([\d\-:\. ]+)\s+\+\d+\s+\+\d+/';
+        preg_match_all($pattern, $output, $matches, PREG_SET_ORDER);
+
+        $result = [];
+        foreach ($matches as $match) {
+            $item = [
+                'product' => $match[1] ?? '',
+                'transaction' => $match[2] ?? '',
+                'amount' => $match[3] ?? '',
+                'timestamp' => $match[4] ?? '',
+                'transaction_date' => $match[5] ?? '',
+            ];
+            if ($item['transaction_date']) {
+                $str = explode('.', $item['transaction_date']);
+                $item['transaction_date'] = $str[0];
+            }
+
+            $result[] = $item;
+
+        }
+
+        return $result;
+    }
+
     public function formatOutput($output)
     {
 
@@ -456,14 +487,15 @@ class RazerService
             $data = array_map('trim', $data);
             $return = [];
             foreach ($data as $item) {
-                $item_data = explode(': ', $item);
+
+                $item_data = explode(':', $item);
                 $item_data = array_map('trim', $item_data);
 
                 if (count($item_data) >= 2) {
                     if ($item_data[0] == 'TransactionDate') {
                         $item_data_first = reset($item_data);
 
-                        $str = implode(': ', $item_data);
+                        $str = implode(':', $item_data);
                         $str = explode('TransactionDate: ', $str);
                         if (isset($str[1])) {
                             $str = explode('.', $str[1]);
@@ -480,8 +512,11 @@ class RazerService
                     }
                 }
             }
+            //ss  $return = array_map('trim', $return);
             $return_lines[] = $return;
         }
+
+
         $return_lines = array_filter($return_lines);
 
         return $return_lines;
