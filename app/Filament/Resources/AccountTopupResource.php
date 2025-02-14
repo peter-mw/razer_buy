@@ -58,7 +58,7 @@ class AccountTopupResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->paginated([10, 25, 50, 100, 200, 500, 'all'])
+            ->paginated([100, 250, 500, 1000, 2000, 5000, 'all'])
             ->defaultSort('created_at', 'desc')
             ->columns([
                 Tables\Columns\TextColumn::make('account.id')
@@ -91,8 +91,8 @@ class AccountTopupResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->headerActions([
-                Tables\Actions\ImportAction::make()
-                    ->importer(Imports\AccountTopupImporter::class),
+                /*Tables\Actions\ImportAction::make()
+                    ->importer(Imports\AccountTopupImporter::class),*/
                 Tables\Actions\ExportAction::make()
                     ->exporter(Exports\AccountTopupExporter::class),
             ])

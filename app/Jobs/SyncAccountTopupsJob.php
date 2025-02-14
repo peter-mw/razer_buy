@@ -10,6 +10,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
@@ -19,9 +20,15 @@ class SyncAccountTopupsJob implements ShouldQueue
 
     protected $accountId;
 
+
     public function __construct($accountId)
     {
         $this->accountId = $accountId;
+    }
+
+    public function middleware()
+    {
+        return [(new WithoutOverlapping('SyncAccountTopupsJob' . $this->accountId))->dontRelease()];
     }
 
     public function handle(): void
@@ -31,7 +38,6 @@ class SyncAccountTopupsJob implements ShouldQueue
             $razerService = new RazerService($account);
 
             $topups = $razerService->fetchTopUps();
-
 
 
             foreach ($topups as $topup) {
@@ -65,7 +71,7 @@ class SyncAccountTopupsJob implements ShouldQueue
                 $account->save();
             }
 
-            throw $e;
+
         }
     }
 }
