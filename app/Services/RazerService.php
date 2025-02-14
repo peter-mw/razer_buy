@@ -496,7 +496,7 @@ class RazerService
                         $item_data_first = reset($item_data);
 
                         $str = implode(':', $item_data);
-                        $str = explode('TransactionDate: ', $str);
+                        $str = explode('TransactionDate:', $str);
                         if (isset($str[1])) {
                             $str = explode('.', $str[1]);
                             $str = $str[0];
