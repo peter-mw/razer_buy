@@ -80,6 +80,7 @@ class AccountReconciliationResource extends Resource
                     ->requiresConfirmation()
                     ->deselectRecordsAfterCompletion()
                     ->action(function ($records) {
+                /*
                         foreach ($records as $account) {
                             $difference = $account->balance_difference;
 
@@ -90,7 +91,8 @@ class AccountReconciliationResource extends Resource
                                     'topup_time' => now(),
                                 ]);
                             }
-                        }
+                        }*/
+
                     })
             ])
             ->defaultSort('id', 'asc');

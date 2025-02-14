@@ -270,14 +270,28 @@ class RazerService
             'serviceCode' => $account->service_code,
         ];
 
-        $cmd = sprintf(
-            '"%s" -email=%s -password=%s -clientIDlogin=%s -serviceCode=%s 2>&1',
-            normalize_path($workdir . '/' . $this->topUpsBin, false),
-            escapeshellarg($account->email),
-            escapeshellarg($account->password),
-            escapeshellarg($account->client_id_login),
-            escapeshellarg($account->service_code)
-        );
+        if ($this->isWindows()) {
+            $cmd = sprintf(
+                '"%s" -email=%s -password=%s -clientIDlogin=%s -serviceCode=%s 2>&1',
+                normalize_path($workdir . '/' . $this->topUpsBin, false),
+                escapeshellarg($account->email),
+                escapeshellarg($account->password),
+                escapeshellarg($account->client_id_login),
+                escapeshellarg($account->service_code)
+            );
+        } else {
+            $cmd = sprintf(
+                'cd %s && %s -email=%s -password=%s -clientIDlogin=%s -serviceCode=%s 2>&1',
+                normalize_path($workdir, true),
+                './' . $this->topUpsBin,
+                escapeshellarg($account->email),
+                escapeshellarg($account->password),
+                escapeshellarg($account->client_id_login),
+                escapeshellarg($account->service_code)
+            );
+        }
+
+
         chdir($workdir);
 
         file_put_contents($workdir . '/topups_cmd.txt', $cmd);
@@ -456,8 +470,9 @@ class RazerService
 
     public function formatOutputTopUps($output)
     {
-        $pattern = '/Product:\s+(.*?)\s+Transaction:\s+(\w+)\s+Amount:\s+(\d+)\s+Timestamp:\s+([\d\-:\. ]+)\s+\+\d+\s+\+\d+\s+TransactionDate:\s+([\d\-:\. ]+)\s+\+\d+\s+\+\d+/';
+        $pattern = '/Product:\s+(.*?)\s+Transaction:\s+(\S+)\s+Amount:\s+(\d+)\s+Timestamp:\s+([\d\-:\. ]+)\s+\+\d+\s+\w+\s+TransactionDate:\s+([\d\-:\. ]+)\s+\+\d+\s+\w+/';
         preg_match_all($pattern, $output, $matches, PREG_SET_ORDER);
+
 
         $result = [];
         foreach ($matches as $match) {

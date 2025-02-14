@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Exports;
 use App\Filament\Imports;
 use Illuminate\Support\Facades\Session;
+use Filament\Notifications\Notification;
 
 class AccountTopupResource extends Resource
 {
@@ -95,6 +96,28 @@ class AccountTopupResource extends Resource
                     ->importer(Imports\AccountTopupImporter::class),*/
                 Tables\Actions\ExportAction::make()
                     ->exporter(Exports\AccountTopupExporter::class),
+                Tables\Actions\Action::make('sync_all_topups')
+                    ->label('Sync All Topups')
+                    ->icon('heroicon-o-credit-card')
+                    ->action(function () {
+                        try {
+                            $accounts = \App\Models\Account::where('is_active', true)->get();
+                            foreach ($accounts as $account) {
+                                dispatch(new \App\Jobs\SyncAccountTopupsJob($account->id));
+                            }
+
+                            Notification::make()
+                                ->success()
+                                ->title('Topup sync jobs dispatched for all active accounts')
+                                ->send();
+                        } catch (\Exception $e) {
+                            Notification::make()
+                                ->danger()
+                                ->title('Failed to dispatch topup sync jobs')
+                                ->body($e->getMessage())
+                                ->send();
+                        }
+                    }),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('account')
@@ -124,7 +147,28 @@ class AccountTopupResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                     Tables\Actions\ExportBulkAction::make()
-                        ->exporter(Exports\AccountTopupExporter::class)
+                        ->exporter(Exports\AccountTopupExporter::class),
+                    Tables\Actions\BulkAction::make('sync_topups')
+                        ->label('Sync Topups')
+                        ->icon('heroicon-o-credit-card')
+                        ->action(function ($records): void {
+                            try {
+                                $accountIds = $records->pluck('account_id')->unique();
+                                foreach ($accountIds as $accountId) {
+                                    dispatch(new \App\Jobs\SyncAccountTopupsJob($accountId));
+                                }
+                                Notification::make()
+                                    ->success()
+                                    ->title('Topup sync jobs dispatched for selected accounts')
+                                    ->send();
+                            } catch (\Exception $e) {
+                                Notification::make()
+                                    ->danger()
+                                    ->title('Failed to dispatch topup sync jobs')
+                                    ->body($e->getMessage())
+                                    ->send();
+                            }
+                        }),
                 ]),
             ])
             ->defaultSort('topup_time', 'desc');

@@ -1,13 +1,27 @@
 <?php
 
+use App\Services\RazerService;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
 });
 
-
 Route::get('/aaa', function () {
+    $accountID = 51;
+
+    $account = \App\Models\Account::find($accountID);
+
+    $razerService = new RazerService($account);
+    $topups = $razerService->fetchTopUps();
+
+
+    dd($topups);
+
+});
+
+
+Route::get('/aaa22', function () {
 
     $output= ' ID: 122GOXW2166W8FC78123A , Product: Yalla Ludo - USD 50 Diamonds , Code: 222HJN3QQRKD, SN: M011911161739304001569614058786, Amount: 51.850000, Timestamp: 2026-02-13, TransactionDate: 2025-02-12 18:39:44.1696727 +0000 +0000
 ID: 122GOXW212TI0D1317FF8 , Product: Yalla Ludo - USD 50 Diamonds , Code: 41PKM3L6JR2F, SN: M111810041739304001569514058785, Amount: 51.850000, Timestamp: 2026-02-13, TransactionDate: 2025-02-12 18:39:38.8327933 +0000 +0000

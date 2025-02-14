@@ -83,11 +83,6 @@ class SyncAccountBalancesJob implements ShouldQueue
                 // If it's a top-up, create a record in the account_topups table
                 if ($isTopUp) {
                     $topupAmount = floatval($response['gold']) - floatval($account->ballance_gold);
-                    AccountTopup::create([
-                        'account_id' => $account->id,
-                        'topup_amount' => $topupAmount,
-                        'topup_time' => now(),
-                    ]);
 
                     SystemLog::create([
                         'source' => 'SyncAccountBalancesJob',

@@ -37,9 +37,6 @@ class SyncAccountTopupsJob implements ShouldQueue
     {
 
 
-
-
-
         try {
             $account = Account::findOrFail($this->accountId);
 
@@ -72,18 +69,7 @@ class SyncAccountTopupsJob implements ShouldQueue
                     ]
                 );
 
-                SystemLog::create([
-                    'source' => 'SyncAccountTopupsJob',
-                    'account_id' => $account->id,
-                    'status' => 'success',
-                    'command' => 'process_topup',
-                    'params' => [
-                        'account_id' => $account->id,
-                        'topup_amount' => $topup['amount'] ?? 0,
-                        'transaction_id' => $topup['transaction'] ?? null,
-                        'transaction_ref' => $topup['product'] ?? '',
-                    ],
-                ]);
+
             }
 
             $account->last_topup_sync_at = now();
