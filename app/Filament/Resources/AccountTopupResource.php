@@ -11,6 +11,8 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Exports;
+use App\Filament\Imports;
+use Illuminate\Support\Facades\Session;
 
 class AccountTopupResource extends Resource
 {
@@ -33,17 +35,18 @@ class AccountTopupResource extends Resource
                     ->relationship(
                         'account',
                         'id',
-                        fn ($query) => $query->select(['id',  'name'])
+                        fn($query) => $query->select(['id', 'name'])
                     )
-                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->name)
-                    ->required(),
+                    ->getOptionLabelFromRecordUsing(fn($record) => $record->name)
+                    ->required()
+                    ->default(fn() => Session::get('last_topup_account_id')),
                 Forms\Components\TextInput::make('topup_amount')
                     ->required()
                     ->numeric()
-                     ->step(0.01),
+                    ->step(0.01),
                 Forms\Components\DateTimePicker::make('topup_time')
                     ->native(true)
-                    ->default(now())
+                    ->default(fn() => Session::get('last_topup_time', now()))
                     ->required(),
             ]);
     }
@@ -51,6 +54,8 @@ class AccountTopupResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->paginated([10, 25, 50, 100, 200, 500, 'all'])
+            ->defaultSort('created_at', 'desc')
             ->columns([
                 Tables\Columns\TextColumn::make('account.id')
                     ->label('Account ID')
@@ -64,21 +69,27 @@ class AccountTopupResource extends Resource
                     ->money('USD')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('topup_time')
-                    ->dateTime()
+                    ->date(format: 'Y-m-d H:i:s')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->headerActions([
+                Tables\Actions\ImportAction::make()
+                    ->importer(Imports\AccountTopupImporter::class),
+                Tables\Actions\ExportAction::make()
+                    ->exporter(Exports\AccountTopupExporter::class),
+            ])
             ->filters([
                 Tables\Filters\SelectFilter::make('account')
                     ->relationship('account', 'id')
-                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->name),
+                    ->getOptionLabelFromRecordUsing(fn($record) => $record->name),
                 Tables\Filters\Filter::make('topup_time')
                     ->form([
                         Forms\Components\DatePicker::make('from'),
@@ -88,11 +99,11 @@ class AccountTopupResource extends Resource
                         return $query
                             ->when(
                                 $data['from'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('topup_time', '>=', $date),
+                                fn(Builder $query, $date): Builder => $query->whereDate('topup_time', '>=', $date),
                             )
                             ->when(
                                 $data['until'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('topup_time', '<=', $date),
+                                fn(Builder $query, $date): Builder => $query->whereDate('topup_time', '<=', $date),
                             );
                     })
             ])
@@ -120,12 +131,13 @@ class AccountTopupResource extends Resource
     {
         return [
             'index' => Pages\ListAccountTopups::route('/'),
+            'create' => Pages\CreateAccountTopup::route('/create'),
             'view' => Pages\ViewAccountTopup::route('/{record}'),
         ];
     }
 
-   /* public static function getNavigationBadge(): ?string
-    {
-        return static::getModel()::whereDate('created_at', today())->count();
-    }*/
+    /* public static function getNavigationBadge(): ?string
+     {
+         return static::getModel()::whereDate('created_at', today())->count();
+     }*/
 }
