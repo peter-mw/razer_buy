@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\Code;
 use App\Models\PendingTransaction;
 use App\Models\Product;
+use App\Models\SystemLog;
 use App\Models\Transaction;
 use App\Services\RazerService;
 use Illuminate\Bus\Queueable;
@@ -35,7 +36,29 @@ class RescueTransactionJob implements ShouldQueue
             ->where('transaction_id', $this->transactionId)
             ->firstOrFail();
 
+        // Create initial system log
+        SystemLog::create([
+            'source' => 'RescueTransactionJob',
+            'account_id' => $pendingTransaction->account_id,
+            'status' => 'processing',
+            'command' => 'rescue_transaction',
+            'params' => [
+                'transaction_id' => $this->transactionId,
+                'pending_transaction_id' => $pendingTransaction->id,
+            ],
+        ]);
+
         if (!$pendingTransaction->product_id) {
+            SystemLog::create([
+                'source' => 'RescueTransactionJob',
+                'account_id' => $pendingTransaction->account_id,
+                'status' => 'error',
+                'command' => 'rescue_transaction',
+                'params' => [
+                    'transaction_id' => $this->transactionId,
+                    'error' => 'Associated product not found',
+                ],
+            ]);
             $pendingTransaction->update([
                 'status' => 'failed',
                 'error_message' => 'Associated product not found'
@@ -52,6 +75,16 @@ class RescueTransactionJob implements ShouldQueue
             $orderDetails = $service->getTransactionDetails($this->transactionId);
 
             if (empty($orderDetails)) {
+                SystemLog::create([
+                    'source' => 'RescueTransactionJob',
+                    'account_id' => $account->id,
+                    'status' => 'error',
+                    'command' => 'rescue_transaction',
+                    'params' => [
+                        'transaction_id' => $this->transactionId,
+                        'error' => 'Transaction details not found',
+                    ],
+                ]);
                 $pendingTransaction->update([
                     'status' => 'failed',
                     'error_message' => 'Transaction details not found'
@@ -63,6 +96,16 @@ class RescueTransactionJob implements ShouldQueue
 
             // Check if we have the required data
             if (!isset($orderDetail['Code'])) {
+                SystemLog::create([
+                    'source' => 'RescueTransactionJob',
+                    'account_id' => $account->id,
+                    'status' => 'error',
+                    'command' => 'rescue_transaction',
+                    'params' => [
+                        'transaction_id' => $this->transactionId,
+                        'error' => 'Transaction code not found in response',
+                    ],
+                ]);
                 $pendingTransaction->update([
                     'status' => 'failed',
                     'error_message' => 'Transaction code not found in response'
@@ -114,9 +157,32 @@ class RescueTransactionJob implements ShouldQueue
                 'transaction_date' => date('Y-m-d H:i:s', strtotime($orderDetail['TransactionDate']))
             ]);
 
+            SystemLog::create([
+                'source' => 'RescueTransactionJob',
+                'account_id' => $account->id,
+                'status' => 'success',
+                'command' => 'rescue_transaction',
+                'params' => [
+                    'transaction_id' => $this->transactionId,
+                    'amount' => $orderDetail['Amount'],
+                    'code' => $orderDetail['Code'],
+                    'serial_number' => $orderDetail['SN'],
+                ],
+            ]);
+
 
         } catch (\Exception $e) {
 
+            SystemLog::create([
+                'source' => 'RescueTransactionJob',
+                'account_id' => $account->id,
+                'status' => 'error',
+                'command' => 'rescue_transaction',
+                'params' => [
+                    'transaction_id' => $this->transactionId,
+                    'error' => 'Rescue attempt failed: ' . $e->getMessage(),
+                ],
+            ]);
             $pendingTransaction->update([
                 'status' => 'failed',
                 'error_message' => 'Rescue attempt failed: ' . $e->getMessage()

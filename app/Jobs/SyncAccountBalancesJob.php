@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Account;
 use App\Models\AccountTopup;
+use App\Models\SystemLog;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -43,6 +44,18 @@ class SyncAccountBalancesJob implements ShouldQueue
     protected function syncAccount(Account $account): void
     {
         try {
+            // Create initial system log
+            SystemLog::create([
+                'source' => 'SyncAccountBalancesJob',
+                'account_id' => $account->id,
+                'status' => 'processing',
+                'command' => 'sync_balance',
+                'params' => [
+                    'account_id' => $account->id,
+                    'current_gold' => $account->ballance_gold,
+                    'current_silver' => $account->ballance_silver,
+                ],
+            ]);
 
             $service = new \App\Services\RazerService($account);
             $ballance = $service->getAccountBallance();
@@ -69,10 +82,24 @@ class SyncAccountBalancesJob implements ShouldQueue
 
                 // If it's a top-up, create a record in the account_topups table
                 if ($isTopUp) {
+                    $topupAmount = floatval($response['gold']) - floatval($account->ballance_gold);
                     AccountTopup::create([
                         'account_id' => $account->id,
-                        'topup_amount' => floatval($response['gold']) - floatval($account->ballance_gold),
+                        'topup_amount' => $topupAmount,
                         'topup_time' => now(),
+                    ]);
+
+                    SystemLog::create([
+                        'source' => 'SyncAccountBalancesJob',
+                        'account_id' => $account->id,
+                        'status' => 'success',
+                        'command' => 'detect_topup',
+                        'params' => [
+                            'account_id' => $account->id,
+                            'topup_amount' => $topupAmount,
+                            'previous_gold' => $account->ballance_gold,
+                            'new_gold' => $response['gold'],
+                        ],
                     ]);
                 }
             }
@@ -83,7 +110,31 @@ class SyncAccountBalancesJob implements ShouldQueue
                 'last_ballance_update_at' => now(),
                 'last_ballance_update_status' => 'success',
             ]);
+
+            SystemLog::create([
+                'source' => 'SyncAccountBalancesJob',
+                'account_id' => $account->id,
+                'status' => 'success',
+                'command' => 'sync_balance',
+                'params' => [
+                    'account_id' => $account->id,
+                    'gold' => $response['gold'],
+                    'silver' => $response['silver'],
+                    'balance_changed' => $balanceChanged,
+                ],
+            ]);
         } catch (\Exception $e) {
+            SystemLog::create([
+                'source' => 'SyncAccountBalancesJob',
+                'account_id' => $account->id,
+                'status' => 'error',
+                'command' => 'sync_balance',
+                'params' => [
+                    'account_id' => $account->id,
+                    'error' => $e->getMessage(),
+                ],
+            ]);
+
             $account->update([
                 'last_ballance_update_at' => now(),
                 'last_ballance_update_status' => 'error',

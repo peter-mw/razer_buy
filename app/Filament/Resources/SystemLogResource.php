@@ -21,6 +21,11 @@ class SystemLogResource extends Resource
     {
         return $form
             ->schema([
+                Forms\Components\Select::make('account_id')
+                    ->relationship('account', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->nullable(),
                 Forms\Components\TextInput::make('source')
                     ->required()
                     ->maxLength(255),
@@ -45,6 +50,9 @@ class SystemLogResource extends Resource
             ->poll(30)
             ->defaultSort('created_at', 'desc')
             ->columns([
+                Tables\Columns\TextColumn::make('account.name')
+                    ->searchable()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('status')
                     ->searchable()
                     ->color(fn (string $state): string => match ($state) {
@@ -74,6 +82,10 @@ class SystemLogResource extends Resource
                     ->limit(50),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('account')
+                    ->relationship('account', 'name')
+                    ->searchable()
+                    ->preload(),
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
                         'success' => 'Success',

@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Account;
 use App\Models\AccountTopup;
+use App\Models\SystemLog;
 use App\Models\Transaction;
 use App\Services\RazerService;
 use Illuminate\Bus\Queueable;
@@ -35,8 +36,19 @@ class SyncAccountTopupsJob implements ShouldQueue
     {
         try {
             $account = Account::findOrFail($this->accountId);
-            $razerService = new RazerService($account);
 
+            // Create initial system log
+            SystemLog::create([
+                'source' => 'SyncAccountTopupsJob',
+                'account_id' => $account->id,
+                'status' => 'processing',
+                'command' => 'sync_topups',
+                'params' => [
+                    'account_id' => $account->id,
+                ],
+            ]);
+
+            $razerService = new RazerService($account);
             $topups = $razerService->fetchTopUps();
 
 
@@ -54,13 +66,47 @@ class SyncAccountTopupsJob implements ShouldQueue
                     ]
                 );
 
+                SystemLog::create([
+                    'source' => 'SyncAccountTopupsJob',
+                    'account_id' => $account->id,
+                    'status' => 'success',
+                    'command' => 'process_topup',
+                    'params' => [
+                        'account_id' => $account->id,
+                        'topup_amount' => $topup['amount'] ?? 0,
+                        'transaction_id' => $topup['transaction'] ?? null,
+                        'transaction_ref' => $topup['product'] ?? '',
+                    ],
+                ]);
             }
 
             $account->last_topup_sync_at = now();
             $account->last_topup_sync_status = 'success';
             $account->save();
 
+            SystemLog::create([
+                'source' => 'SyncAccountTopupsJob',
+                'account_id' => $account->id,
+                'status' => 'success',
+                'command' => 'sync_topups',
+                'params' => [
+                    'account_id' => $account->id,
+                    'topups_processed' => count($topups),
+                ],
+            ]);
+
         } catch (\Exception $e) {
+            SystemLog::create([
+                'source' => 'SyncAccountTopupsJob',
+                'account_id' => isset($account) ? $account->id : $this->accountId,
+                'status' => 'error',
+                'command' => 'sync_topups',
+                'params' => [
+                    'account_id' => isset($account) ? $account->id : $this->accountId,
+                    'error' => $e->getMessage(),
+                ],
+            ]);
+
             Log::error('SyncAccountTopupsJob failed', [
                 'account_id' => $this->accountId,
                 'error' => $e->getMessage()

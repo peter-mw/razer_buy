@@ -12,7 +12,13 @@ class SystemLog extends Model
         'params',
         'response',
         'status',
+        'account_id',
     ];
+
+    public function account()
+    {
+        return $this->belongsTo(Account::class);
+    }
 
     protected $casts = [
         'command' => 'string',

@@ -7,6 +7,7 @@ use App\Models\Code;
 use App\Models\PendingTransaction;
 use App\Models\Product;
 use App\Models\PurchaseOrders;
+use App\Models\SystemLog;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Services\RazerService;
@@ -39,6 +40,15 @@ class FetchAccountCodesJob implements ShouldQueue
     {
         $account = Account::findOrFail($this->accountId);
         $service = new RazerService($account);
+
+        // Create initial system log
+        SystemLog::create([
+            'source' => 'FetchAccountCodesJob',
+            'account_id' => $account->id,
+            'status' => 'processing',
+            'command' => 'fetch_codes',
+            'params' => ['account_id' => $account->id],
+        ]);
 
         // Fetch all codes for the account
         try {
@@ -101,6 +111,19 @@ class FetchAccountCodesJob implements ShouldQueue
                     foreach ($processedCodes as $codeData) {
                         $this->processCode($account, $codeData, $newOrder);
                     }
+
+                    // Log successful code processing
+                    SystemLog::create([
+                        'source' => 'FetchAccountCodesJob',
+                        'account_id' => $account->id,
+                        'status' => 'success',
+                        'command' => 'process_codes',
+                        'params' => [
+                            'account_id' => $account->id,
+                            'new_codes_count' => count($processedCodes),
+                            'product_name' => $product->product_name,
+                        ],
+                    ]);
                 }
 
 
@@ -108,6 +131,16 @@ class FetchAccountCodesJob implements ShouldQueue
                 $this->updateAccountBalance($account, $service);
             }
         } catch (\Exception $e) {
+            SystemLog::create([
+                'source' => 'FetchAccountCodesJob',
+                'account_id' => $account->id,
+                'status' => 'error',
+                'command' => 'fetch_codes',
+                'params' => [
+                    'account_id' => $account->id,
+                    'error' => $e->getMessage(),
+                ],
+            ]);
             Log::error('Failed to fetch codes: ' . $e->getMessage());
             return;
         }
@@ -176,6 +209,16 @@ class FetchAccountCodesJob implements ShouldQueue
                 'balance_update_time' => now(),
             ]);
         } catch (\Exception $e) {
+            SystemLog::create([
+                'source' => 'FetchAccountCodesJob',
+                'account_id' => $account->id,
+                'status' => 'error',
+                'command' => 'update_balance',
+                'params' => [
+                    'account_id' => $account->id,
+                    'error' => $e->getMessage(),
+                ],
+            ]);
             Log::error('Failed to update account balance: ' . $e->getMessage());
             $account->update([
                 'last_ballance_update_at' => now(),

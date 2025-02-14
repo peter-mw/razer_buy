@@ -7,6 +7,7 @@ use App\Models\Code;
 use App\Models\PendingTransaction;
 use App\Models\Product;
 use App\Models\PurchaseOrders;
+use App\Models\SystemLog;
 use App\Models\Transaction;
 use App\Notifications\PurchaseOrderCompleted;
 use Illuminate\Bus\Queueable;
@@ -44,6 +45,18 @@ class ProcessBuyJob implements ShouldQueue
         $purchaseOrder = PurchaseOrders::findOrFail($this->purchaseOrderId);
 
         $purchaseOrder->update(['order_status' => 'processing']);
+
+        // Create initial system log
+        SystemLog::create([
+            'source' => 'ProcessBuyJob',
+            'account_id' => $purchaseOrder->account_id,
+            'status' => 'processing',
+            'command' => 'process_buy',
+            'params' => [
+                'purchase_order_id' => $purchaseOrder->id,
+                'quantity' => $this->quantity,
+            ],
+        ]);
 
         // If account_id is set, use that specific account
         if ($purchaseOrder->account_id) {
@@ -95,6 +108,17 @@ class ProcessBuyJob implements ShouldQueue
         if ($ballanceResponse['gold'] < $purchaseOrder->buy_value) {
             $purchaseOrder->update(['order_status' => 'not_enough_balance']);
 
+            SystemLog::create([
+                'source' => 'ProcessBuyJob',
+                'account_id' => $account->id,
+                'status' => 'error',
+                'command' => 'check_balance',
+                'params' => [
+                    'account_id' => $account->id,
+                    'balance' => $ballanceResponse['gold'],
+                    'required' => $purchaseOrder->buy_value,
+                ],
+            ]);
         }
 
 
@@ -113,6 +137,18 @@ class ProcessBuyJob implements ShouldQueue
             $purchaseOrder->update([
                 'order_status' => 'failed'
             ]);
+
+            SystemLog::create([
+                'source' => 'ProcessBuyJob',
+                'account_id' => $account->id,
+                'status' => 'error',
+                'command' => 'buy_products',
+                'params' => [
+                    'account_id' => $account->id,
+                    'purchase_order_id' => $purchaseOrder->id,
+                    'error' => 'No orders completed',
+                ],
+            ]);
         }
 
         foreach ($ordersCompleted as $orderTransactionId) {
@@ -125,6 +161,19 @@ class ProcessBuyJob implements ShouldQueue
                 $purchaseOrder->update([
                     'order_status' => 'failed_get_transaction_details',
                 ]);
+
+                SystemLog::create([
+                    'source' => 'ProcessBuyJob',
+                    'account_id' => $account->id,
+                    'status' => 'error',
+                    'command' => 'get_transaction_details',
+                    'params' => [
+                        'account_id' => $account->id,
+                        'transaction_id' => $orderTransactionId,
+                        'error' => $e->getMessage(),
+                    ],
+                ]);
+
                 sleep(3);
                 //  Log::error('Error while getTransactionDetails: ' . $orderTransactionId);
                 try {
@@ -155,7 +204,7 @@ class ProcessBuyJob implements ShouldQueue
                 ]);
 
 
-                Log::error('Error while getTransactionDetails: ' . $orderTransactionId);
+                //Log::error('Error while getTransactionDetails: ' . $orderTransactionId);
                 continue;
             }
 
@@ -265,10 +314,35 @@ class ProcessBuyJob implements ShouldQueue
                 'quantity' => $purchaseOrder->quantity - count($ready),
                 'order_status' => 'completed'
             ]);
+
+            SystemLog::create([
+                'source' => 'ProcessBuyJob',
+                'account_id' => $account->id,
+                'status' => 'success',
+                'command' => 'process_buy',
+                'params' => [
+                    'account_id' => $account->id,
+                    'purchase_order_id' => $purchaseOrder->id,
+                    'codes_processed' => count($ready),
+                    'total_amount' => $totalAmount,
+                ],
+            ]);
         } else {
             // Update purchase order status to failed
             $purchaseOrder->update([
                 'order_status' => 'failed'
+            ]);
+
+            SystemLog::create([
+                'source' => 'ProcessBuyJob',
+                'account_id' => $account->id,
+                'status' => 'error',
+                'command' => 'process_buy',
+                'params' => [
+                    'account_id' => $account->id,
+                    'purchase_order_id' => $purchaseOrder->id,
+                    'error' => 'No codes processed',
+                ],
             ]);
         }
 
