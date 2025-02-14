@@ -92,7 +92,7 @@ class FetchAccountCodesJob implements ShouldQueue
                         'product_edition' => $product->product_edition,
                         'buy_value' => $product->product_buy_value,
                         'product_face_value' => $product->product_face_value,
-                        'quantity' => count($processedCodes),
+                        'quantity' =>0,
                         'order_status' => 'completed',
                         'account_id' => $account->id
                     ]);

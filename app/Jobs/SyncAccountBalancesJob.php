@@ -29,13 +29,15 @@ class SyncAccountBalancesJob implements ShouldQueue
         if ($this->accountId) {
             $this->syncAccount(Account::findOrFail($this->accountId));
             return;
+        } else {
+            Account::chunk(100, function ($accounts) {
+                foreach ($accounts as $account) {
+                    $this->syncAccount($account);
+                }
+            });
         }
 
-        Account::chunk(100, function ($accounts) {
-            foreach ($accounts as $account) {
-                $this->syncAccount($account);
-            }
-        });
+
     }
 
     protected function syncAccount(Account $account): void

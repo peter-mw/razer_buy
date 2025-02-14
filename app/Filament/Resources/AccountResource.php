@@ -155,6 +155,25 @@ class AccountResource extends Resource
                                 ->send();
                         }
                     }),
+                Tables\Actions\Action::make('sync_all_data')
+                    ->label('Sync All Data')
+                    ->icon('heroicon-o-arrow-path')
+                    ->color('success')
+                    ->action(function () {
+                        try {
+                            dispatch(new \App\Jobs\SyncAllAccountData());
+                            Notification::make()
+                                ->success()
+                                ->title('All sync jobs dispatched successfully')
+                                ->send();
+                        } catch (\Exception $e) {
+                            Notification::make()
+                                ->danger()
+                                ->title('Failed to dispatch sync jobs')
+                                ->body($e->getMessage())
+                                ->send();
+                        }
+                    }),
                 Tables\Actions\Action::make('sync_all_topups')
                     ->label('Sync All Topups')
                     ->icon('heroicon-o-credit-card')
@@ -390,36 +409,26 @@ class AccountResource extends Resource
                                 ->title('Silver redeemed to Gold for selected accounts successfully')
                                 ->send();
                         }),
-                    Tables\Actions\BulkAction::make('sync')
-                        ->label('Sync Selected')
+                    Tables\Actions\BulkAction::make('sync_all_data')
+                        ->label('Sync All Data')
                         ->icon('heroicon-o-arrow-path')
                         ->color('success')
                         ->action(function ($records): void {
-                            $errors = [];
-
-                            foreach ($records as $record) {
-                                try {
-                                    Artisan::call('accounts:sync-balances', [
-                                        'account-id' => $record->id
-                                    ]);
-                                } catch (\Exception $e) {
-                                    $errors[] = $e->getMessage();
+                            try {
+                                foreach ($records as $record) {
+                                    dispatch(new \App\Jobs\SyncAllAccountData($record->id));
                                 }
-                            }
-
-                            if (count($errors) > 0) {
+                                Notification::make()
+                                    ->success()
+                                    ->title('Sync jobs dispatched for selected accounts')
+                                    ->send();
+                            } catch (\Exception $e) {
                                 Notification::make()
                                     ->danger()
-                                    ->title('Failed to sync some accounts')
-                                    ->body(implode('<br>', $errors))
+                                    ->title('Failed to dispatch sync jobs')
+                                    ->body($e->getMessage())
                                     ->send();
-                                return;
                             }
-
-                            Notification::make()
-                                ->success()
-                                ->title('Selected accounts synced successfully')
-                                ->send();
                         }),
                     Tables\Actions\BulkAction::make('sync_codes')
                         ->label('Sync Codes')
