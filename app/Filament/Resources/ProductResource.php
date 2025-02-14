@@ -38,8 +38,6 @@ class ProductResource extends Resource
                     ->maxLength(255),
                 Forms\Components\Radio::make('account_type')
                     ->required()
-
-
                     ->options([
                         'global' => 'Global',
                         'usa' => 'USA',
@@ -47,7 +45,7 @@ class ProductResource extends Resource
 
                 Forms\Components\TextInput::make('product_edition')
                     ->label('Product Edition (same as product name if not applicable)')
-                     ->maxLength(255),
+                    ->maxLength(255),
                 Forms\Components\TextInput::make('product_buy_value')
                     ->required()
                     ->numeric()
@@ -81,7 +79,7 @@ class ProductResource extends Resource
                     ->maxWidth(350)
                     ->maxHeight(90)
                     ->description('Last 7 days activity')
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('id')
                     ->label('Product ID')
                     ->sortable()
@@ -132,16 +130,16 @@ class ProductResource extends Resource
                     )
             ])
             ->actions([
-            /*    Tables\Actions\Action::make('create_order')
-                    ->label('Create Order')
-                    ->icon('heroicon-o-shopping-cart')
-                    ->url(fn (Product $record): string =>
-                        PurchaseOrderResource::getUrl('create', [
-                            'product_id' => $record->id,
-                            'account_type' => $record->account_type
-                        ])
-                    )
-                    ->openUrlInNewTab(),*/
+                /*    Tables\Actions\Action::make('create_order')
+                        ->label('Create Order')
+                        ->icon('heroicon-o-shopping-cart')
+                        ->url(fn (Product $record): string =>
+                            PurchaseOrderResource::getUrl('create', [
+                                'product_id' => $record->id,
+                                'account_type' => $record->account_type
+                            ])
+                        )
+                        ->openUrlInNewTab(),*/
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])

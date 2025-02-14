@@ -470,6 +470,7 @@ class AccountResource extends Resource
         return [
             RelationManagers\CodesRelationManager::class,
             RelationManagers\TransactionsRelationManager::class,
+            RelationManagers\AccountTopupsRelationManager::class,
         ];
     }
 
