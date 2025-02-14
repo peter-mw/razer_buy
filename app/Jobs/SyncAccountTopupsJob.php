@@ -7,6 +7,7 @@ use App\Models\AccountTopup;
 use App\Models\SystemLog;
 use App\Models\Transaction;
 use App\Services\RazerService;
+use Filament\Notifications\Notification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -34,6 +35,11 @@ class SyncAccountTopupsJob implements ShouldQueue
 
     public function handle(): void
     {
+
+
+
+
+
         try {
             $account = Account::findOrFail($this->accountId);
 
