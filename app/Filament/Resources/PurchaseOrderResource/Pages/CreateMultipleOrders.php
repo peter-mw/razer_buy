@@ -19,6 +19,7 @@ use Filament\Resources\Pages\Page;
 use Illuminate\Support\HtmlString;
 use Livewire\Attributes\Computed;
 use Filament\Actions\Action;
+use Filament\Forms\Components\Actions;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms;
 
@@ -101,6 +102,31 @@ class CreateMultipleOrders extends Page
 
             Section::make('Select Accounts')
                 ->schema([
+                    Actions::make([
+                        Actions\Action::make('setMaxQuantities')
+                        ->label('Set All to Max')
+                        ->icon('heroicon-m-arrow-up-circle')
+                        ->visible(fn() => collect($this->data['selected_accounts'] ?? [])->contains(true))
+                        ->action(function () {
+                            $accounts = Account::where('is_active', true)
+                                ->where('account_type', $this->data['account_type'] ?? null)
+                                ->where('is_active', true)
+                                ->get();
+
+                            foreach ($accounts as $account) {
+                                if (isset($this->data['selected_accounts'][$account->id]) && 
+                                    $this->data['selected_accounts'][$account->id] && 
+                                    isset($this->data['product'])) {
+                                    $maxQuantity = intval($account->ballance_gold / $this->data['product']->product_buy_value);
+                                    $this->data['quantities'][$account->id] = $maxQuantity;
+                                }
+                            }
+                            $this->refreshOrderDetails();
+                            $this->form->fill([
+                                'data.quantities' => $this->data['quantities']
+                            ]);
+                        }),
+                    ])->columnSpanFull(),
                     Grid::make()
                         ->schema(fn() => $this->getAccountsWithQuantityInputs())
                         ->columns(1),

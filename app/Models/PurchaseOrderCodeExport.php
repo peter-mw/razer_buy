@@ -32,6 +32,7 @@ class PurchaseOrderCodeExport extends Model
             'code' => $record->code,
             'serial_number' => $record->serial_number,
             'product.id' => $record->product?->id,
+            'product.remote_crm_product_name' => $record->product?->remote_crm_product_name,
             'product_name' => $record->product_name,
             'product_edition' => $record->product_edition,
             'buy_date' => $record->buy_date,

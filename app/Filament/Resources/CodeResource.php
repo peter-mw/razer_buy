@@ -93,6 +93,14 @@ class CodeResource extends Resource
                 Tables\Columns\TextColumn::make('serial_number')
                     ->searchable(),
 
+                Tables\Columns\TextColumn::make('product.id')
+                    ->label('Product ID')
+                    ->sortable()
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('product.remote_crm_product_name')
+                    ->label('Remote CRM Product')
+                    ->sortable()
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('product_name')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('product_edition')
