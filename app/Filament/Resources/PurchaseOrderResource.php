@@ -144,7 +144,7 @@ class PurchaseOrderResource extends Resource
                     ->preload()
                     ->searchable()
                     ->native(false)
-                    ->getOptionLabelFromRecordUsing(fn($record) => "{$record->product_name} - {$record->product_edition} - \${$record->product_buy_value}")
+                    ->getOptionLabelFromRecordUsing(fn($record) => "{$record->id} -{$record->product_name} - \${$record->product_buy_value}")
                     ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
                         if ($state) {
                             $product = Product::find($state);
