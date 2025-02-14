@@ -12,6 +12,8 @@ class AccountTopup extends Model
         'account_id',
         'topup_amount',
         'topup_time',
+        'transaction_ref',
+        'transaction_id',
     ];
 
     protected $casts = [

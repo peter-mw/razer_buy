@@ -58,6 +58,10 @@ class CodeResource extends Resource
                     ->required()
                     ->numeric()
                     ->step('0.01'),
+                Forms\Components\TextInput::make('transaction_ref')
+                    ->maxLength(255),
+                Forms\Components\TextInput::make('transaction_id')
+                    ->maxLength(255),
             ]);
     }
 
@@ -103,6 +107,12 @@ class CodeResource extends Resource
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('transaction_ref')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('transaction_id')
+                    ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime()

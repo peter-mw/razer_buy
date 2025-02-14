@@ -14,6 +14,7 @@ class RazerService
     private string $checkTransactionBin;
     private string $fetchCodesBin;
     private string $razerGBin;
+    private string $topUpsBin;
 
     public function __construct(Account $account)
     {
@@ -49,25 +50,27 @@ class RazerService
         $binFolder = base_path('bin');
 
         // Set binary names based on OS
-        $ext = $this->isWindows() ? '.exe' : '';
+        $ext = $this->isWindows() ? '.exe' : '_linux';
         $this->checkBalanceBin = 'razer-check-balance' . $ext;
         $this->checkTransactionBin = 'razer-check-transaction' . $ext;
         $this->fetchCodesBin = 'razer-fetchcodes' . $ext;
         $this->razerGBin = 'razerG' . $ext;
+        $this->topUpsBin = 'razer-topups' . $ext;
 
         $files = [
             $this->checkBalanceBin,
             $this->checkTransactionBin,
             $this->fetchCodesBin,
             $this->razerGBin,
+            $this->topUpsBin,
         ];
 
         foreach ($files as $file) {
             $source = $binFolder . '/' . $file;
             $dest = $workdir . '/' . $file;
-            if (!file_exists($dest)) {
-                copy($source, $dest);
-            }
+            //if (!file_exists($dest)) {
+            copy($source, $dest);
+            //  }
         }
     }
 
@@ -242,6 +245,58 @@ class RazerService
 
         return $format;
     }
+
+    public function fetchTopUps(): array
+    {
+        $workdir = $this->getWorkdir();
+        $account = $this->account;
+
+        $params = [
+            'email' => $account->email,
+            'password' => $account->password,
+            'clientIDlogin' => $account->client_id_login,
+            'serviceCode' => $account->service_code,
+        ];
+
+        $cmd = sprintf(
+            '"%s" -email=%s -password=%s -clientIDlogin=%s -serviceCode=%s 2>&1',
+            normalize_path($workdir . '/' . $this->topUpsBin, false),
+            escapeshellarg($account->email),
+            escapeshellarg($account->password),
+            escapeshellarg($account->client_id_login),
+            escapeshellarg($account->service_code)
+        );
+        chdir($workdir);
+
+        file_put_contents($workdir . '/topups_cmd.txt', $cmd);
+        $output = shell_exec($cmd);
+
+        if ($output === null) {
+            SystemLog::create([
+                'source' => 'RazerService::fetchTopUps',
+                'command' => $cmd,
+                'params' => $params,
+                'response' => ['error' => 'Command execution failed'],
+                'status' => 'error'
+            ]);
+            return [];
+        }
+
+        file_put_contents($workdir . '/topups_log.txt', $output);
+
+        $data_items = $this->formatOutput($output);
+
+        SystemLog::create([
+            'source' => 'RazerService::fetchTopUps',
+            'command' => $cmd,
+            'params' => $params,
+            'response' => $data_items,
+            'status' => 'success'
+        ]);
+
+        return $data_items;
+    }
+
 
     public function fetchAllCodes(): array
     {

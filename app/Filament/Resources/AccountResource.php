@@ -115,7 +115,7 @@ class AccountResource extends Resource
                 Tables\Actions\ExportAction::make()
                     ->exporter(Exports\AccountExporter::class),
                 Tables\Actions\Action::make('sync_all')
-                    ->label('Sync All Accounts')
+                    ->label('Sync All Balances')
                     ->icon('heroicon-o-arrow-path')
                     ->color('success')
                     ->action(function () {
@@ -154,6 +154,27 @@ class AccountResource extends Resource
                                 ->body($e->getMessage())
                                 ->send();
                         }
+                    }),
+                Tables\Actions\Action::make('sync_all_topups')
+                    ->label('Sync All Topups')
+                    ->icon('heroicon-o-credit-card')
+                    ->action(function () {
+                        try {
+                            $accounts = Account::where('is_active', true)->get();
+                            foreach ($accounts as $account) {
+                                dispatch(new \App\Jobs\SyncAccountTopupsJob($account->id));
+                            }
+                            Notification::make()
+                                ->success()
+                                ->title('Topup sync jobs dispatched for all active accounts')
+                                ->send();
+                        } catch (\Exception $e) {
+                            Notification::make()
+                                ->danger()
+                                ->title('Failed to dispatch topup sync jobs')
+                                ->body($e->getMessage())
+                                ->send();
+                        }
                     })
             ])
             ->columns([
@@ -162,8 +183,10 @@ class AccountResource extends Resource
                     ->maxWidth(200)
                     ->maxHeight(90)
                     ->description('Last 7 days activity')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('id')
+                    ->searchable()
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('id')->toggleable(),
 
 
                 Tables\Columns\TextColumn::make('name')
@@ -397,6 +420,26 @@ class AccountResource extends Resource
                                 Notification::make()
                                     ->danger()
                                     ->title('Failed to dispatch code sync jobs')
+                                    ->body($e->getMessage())
+                                    ->send();
+                            }
+                        }),
+                    Tables\Actions\BulkAction::make('sync_topups')
+                        ->label('Sync Topups')
+                        ->icon('heroicon-o-credit-card')
+                        ->action(function ($records): void {
+                            try {
+                                foreach ($records as $record) {
+                                    dispatch(new \App\Jobs\SyncAccountTopupsJob($record->id));
+                                }
+                                Notification::make()
+                                    ->success()
+                                    ->title('Topup sync jobs dispatched for selected accounts')
+                                    ->send();
+                            } catch (\Exception $e) {
+                                Notification::make()
+                                    ->danger()
+                                    ->title('Failed to dispatch topup sync jobs')
                                     ->body($e->getMessage())
                                     ->send();
                             }

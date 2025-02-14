@@ -19,7 +19,9 @@ class Code extends Model
         'product_edition',
         'buy_date',
         'buy_value',
-        'order_id'
+        'order_id',
+        'transaction_ref',
+        'transaction_id'
     ];
 
     protected $casts = [

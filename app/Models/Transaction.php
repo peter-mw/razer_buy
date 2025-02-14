@@ -16,7 +16,8 @@ class Transaction extends Model
         'product_id',
         'transaction_date',
         'transaction_id',
-        'order_id'
+        'order_id',
+        'transaction_ref'
     ];
 
     protected $casts = [

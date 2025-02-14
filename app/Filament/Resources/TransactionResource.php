@@ -52,6 +52,8 @@ class TransactionResource extends Resource
                     ->required()
                     ->unique(ignoreRecord: true)
                     ->maxLength(255),
+                Forms\Components\TextInput::make('transaction_ref')
+                    ->maxLength(255),
             ]);
     }
 
@@ -79,6 +81,9 @@ class TransactionResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('transaction_id')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('transaction_ref')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
