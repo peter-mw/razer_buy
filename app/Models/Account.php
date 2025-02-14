@@ -68,6 +68,11 @@ class Account extends Model
         return $this->hasMany(AccountTopup::class);
     }
 
+    public function systemLogs(): HasMany
+    {
+        return $this->hasMany(SystemLog::class);
+    }
+
     public function getTopupBalanceAttribute(): float
     {
         return $this->accountTopups()->sum('topup_amount');
