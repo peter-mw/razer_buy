@@ -164,7 +164,7 @@ class RazerService
             'password' => $account->password,
             'clientIDlogin' => $account->client_id_login,
             'serviceCode' => $account->service_code,
-            'productId' => $productToBuy->product_id,
+            'productId' => $productData->id,
             'permalink' => $slug,
             'count' => $quantity,
         ];
@@ -175,7 +175,7 @@ class RazerService
         }
 
         $cmd = sprintf(
-            '"%s" -setupKey=%s -email=%s -password=%s -clientIDlogin=%s -serviceCode=%s -productId=%d -permalink=%s -regionId=%s -count=%s 2>&1',
+            '"%s" -setupKey=%s -email=%s -password=%s -clientIDlogin=%s -serviceCode=%s -productId=%s -permalink=%s -regionId=%s -count=%s 2>&1',
             normalize_path($workdir . '/' . $this->razerGBin, false),
             escapeshellarg($account->otp_seed),
             escapeshellarg($account->email),
@@ -203,8 +203,7 @@ class RazerService
                 'response' => ['error' => 'Command execution failed'],
                 'status' => 'error'
             ]);
-            throw new \RuntimeException("Command execution failed");
-        }
+         }
 
         file_put_contents($workdir . '/buy_log.txt', $output);
 
@@ -216,7 +215,7 @@ class RazerService
                 'response' => ['error' => 'Error unmarshalling response: invalid character'],
                 'status' => 'error'
             ]);
-            throw new \RuntimeException("Error unmarshalling response: invalid character");
+
         }
 
         $format = $this->formatOutputOrder($output);

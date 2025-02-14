@@ -121,7 +121,7 @@ class ProcessBuyJob implements ShouldQueue
 
         $remainingQuantity = $purchaseOrder->quantity;
 
-        // Process in chunks of 5
+
         $ordersCompleted = [];
         $buyProductsResults = $service->buyProduct($purchaseOrder, $remainingQuantity);
 

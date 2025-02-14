@@ -63,10 +63,10 @@ class AccountResource extends Resource
 
                 Forms\Components\TextInput::make('password')
 
-                    ,
+                ,
                 Forms\Components\TextInput::make('otp_seed')
 
-                   ,
+                ,
 
 
                 Forms\Components\TextInput::make('vendor')

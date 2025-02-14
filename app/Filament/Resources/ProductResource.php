@@ -105,12 +105,24 @@ class ProductResource extends Resource
                     ->sortable()
                     ->searchable(),
 
+                Tables\Columns\TextColumn::make('codes_count')
+                    ->counts('codes')
+                    ->label('Total Codes'),
+                Tables\Columns\TextColumn::make('transactions_count')
+                    ->counts('transactions')
+                    ->label('Total Transactions'),
+
+
+
+
                 Tables\Columns\TextColumn::make('product_edition')
                     ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(),
 
                 Tables\Columns\TextColumn::make('remote_crm_product_name')
                     ->searchable(),
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
