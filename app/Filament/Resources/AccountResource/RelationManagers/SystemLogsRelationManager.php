@@ -14,16 +14,27 @@ class SystemLogsRelationManager extends RelationManager
 
     public function table(Table $table): Table
     {
+
+
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id')
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('command')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('message')
+                Tables\Columns\TextColumn::make('source')
+                    ->searchable()
+                    ->sortable(), Tables\Columns\TextColumn::make('command')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('params')
                     ->searchable()
                     ->sortable()
+                    ->wrap(),
+                Tables\Columns\TextColumn::make('response')
+                    ->searchable()
+                    ->sortable()
+                    ->wrap(), Tables\Columns\TextColumn::make('status')
+
                     ->wrap(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
