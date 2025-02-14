@@ -29,8 +29,13 @@ class RazerService
 
     public function getWorkdir(): string
     {
+        $dir = storage_path('app/razer/');
+        if (!is_dir($dir)) {
+            mkdir_recursive($dir);
+        }
+
         $dir = storage_path('app/razer/' . $this->account->id);
-        if (!file_exists($dir)) {
+        if (!is_dir($dir)) {
             mkdir_recursive($dir);
         }
         return normalize_path($dir, true);
@@ -68,9 +73,12 @@ class RazerService
         foreach ($files as $file) {
             $source = $binFolder . '/' . $file;
             $dest = $workdir . '/' . $file;
-            //if (!file_exists($dest)) {
-            copy($source, $dest);
-            //  }
+            if (!file_exists($dest)) {
+                copy($source, $dest);
+                if (!$this->isWindows() and !is_executable($dest)) {
+                    chmod($dest, 0755);
+                }
+            }
         }
     }
 
@@ -203,7 +211,7 @@ class RazerService
                 'response' => ['error' => 'Command execution failed'],
                 'status' => 'error'
             ]);
-         }
+        }
 
         file_put_contents($workdir . '/buy_log.txt', $output);
 

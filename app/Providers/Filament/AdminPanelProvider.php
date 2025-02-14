@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use Croustibat\FilamentJobsMonitor\FilamentJobsMonitorPlugin;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -29,6 +30,10 @@ class AdminPanelProvider extends PanelProvider
             ->login()
             ->databaseNotifications(isLazy: true)
             ->databaseNotificationsPolling(60)
+            ->plugins([
+                 FilamentJobsMonitorPlugin::make()
+                    ->enableNavigation(),
+            ])
             ->colors([
                 'primary' => Color::Amber,
             ])

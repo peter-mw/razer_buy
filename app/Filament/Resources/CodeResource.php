@@ -89,8 +89,11 @@ class CodeResource extends Resource
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('code')
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(),
+
                 Tables\Columns\TextColumn::make('serial_number')
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(),
 
                 Tables\Columns\TextColumn::make('product.id')
@@ -98,13 +101,14 @@ class CodeResource extends Resource
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('product.remote_crm_product_name')
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->label('Remote CRM Product')
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('product_name')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('product_edition')
-                    ->toggleable(isToggledHiddenByDefault : true)
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(),
                 Tables\Columns\TextColumn::make('buy_date')
                     ->dateTime()
@@ -141,7 +145,6 @@ class CodeResource extends Resource
                     ->options(fn(): array => Code::whereNotNull('product_name')->distinct()->pluck('product_name', 'product_name')->toArray()),
                 Tables\Filters\SelectFilter::make('product_edition')
                     ->label('Product Edition')
-
                     ->searchable()
                     ->options(fn(): array => Code::whereNotNull('product_edition')->distinct()->pluck('product_edition', 'product_edition')->toArray()),
 

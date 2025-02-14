@@ -36,9 +36,10 @@ class SystemLogResource extends Resource
                     ->columnSpanFull(),
 
 
-                \InvadersXX\FilamentJsoneditor\Forms\JsonEditor::make('params')
+
+                Forms\Components\Textarea::make('params')
                     ->required(),
-                \InvadersXX\FilamentJsoneditor\Forms\JsonEditor::make('response')
+                Forms\Components\Textarea::make('response')
                     ->nullable(),
             ]);
     }

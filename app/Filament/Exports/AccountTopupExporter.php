@@ -29,6 +29,11 @@ class AccountTopupExporter extends Exporter
         ];
     }
 
+    public function getFileName(Export $export): string
+    {
+        return 'topup_' . now();
+    }
+
     public static function getCompletedNotificationBody(Export $export): string
     {
         $body = 'Your account topup export has completed and ' . number_format($export->successful_rows) . ' ' . str('row')->plural($export->successful_rows) . ' exported.';

@@ -12,31 +12,94 @@ class AccountBalancesWidget extends BaseWidget
 
     protected function getStats(): array
     {
-        $globalGold = Account::where('account_type', 'global')->sum('ballance_gold');
-        $globalSilver = Account::where('account_type', 'global')->sum('ballance_silver');
-        $usaGold = Account::where('account_type', 'usa')->sum('ballance_gold');
-        $usaSilver = Account::where('account_type', 'usa')->sum('ballance_silver');
+        // Active accounts
+        $activeGlobalGold = Account::where('account_type', 'global')
+            ->where('is_active', true)
+            ->sum('ballance_gold');
+        $activeGlobalSilver = Account::where('account_type', 'global')
+            ->where('is_active', true)
+            ->sum('ballance_silver');
+        $activeUsaGold = Account::where('account_type', 'usa')
+            ->where('is_active', true)
+            ->sum('ballance_gold');
+        $activeUsaSilver = Account::where('account_type', 'usa')
+            ->where('is_active', true)
+            ->sum('ballance_silver');
+
+        // Inactive accounts
+        $inactiveGlobalGold = Account::where('account_type', 'global')
+            ->where('is_active', false)
+            ->sum('ballance_gold');
+        $inactiveGlobalSilver = Account::where('account_type', 'global')
+            ->where('is_active', false)
+            ->sum('ballance_silver');
+        $inactiveUsaGold = Account::where('account_type', 'usa')
+            ->where('is_active', false)
+            ->sum('ballance_gold');
+        $inactiveUsaSilver = Account::where('account_type', 'usa')
+            ->where('is_active', false)
+            ->sum('ballance_silver');
+
+        // Totals
+        $totalGlobalGold = $activeGlobalGold + $inactiveGlobalGold;
+        $totalGlobalSilver = $activeGlobalSilver + $inactiveGlobalSilver;
+        $totalUsaGold = $activeUsaGold + $inactiveUsaGold;
+        $totalUsaSilver = $activeUsaSilver + $inactiveUsaSilver;
 
         return [
-            Stat::make('Global Gold', '$' . number_format($globalGold, 2))
-                ->description('Global account gold balance')
-                ->descriptionIcon('heroicon-m-currency-dollar')
-                ->color('warning'),
-            
-            Stat::make('Global Silver', '$' . number_format($globalSilver, 2))
-                ->description('Global account silver balance')
-                ->descriptionIcon('heroicon-m-currency-dollar')
-                ->color('gray'),
-
-            Stat::make('USA Gold', '$' . number_format($usaGold, 2))
-                ->description('USA account gold balance')
+            // Active Global
+            Stat::make('Active Global Gold', '$' . number_format($activeGlobalGold, 2))
+                ->description('Active global account gold balance')
                 ->descriptionIcon('heroicon-m-currency-dollar')
                 ->color('success'),
 
-            Stat::make('USA Silver', '$' . number_format($usaSilver, 2))
-                ->description('USA account silver balance')
+            Stat::make('Active Global Silver', '$' . number_format($activeGlobalSilver, 2))
+                ->description('Active global account silver balance')
                 ->descriptionIcon('heroicon-m-currency-dollar')
                 ->color('gray'),
+
+            // Active USA
+            Stat::make('Active USA Gold', '$' . number_format($activeUsaGold, 2))
+                ->description('Active USA account gold balance')
+                ->descriptionIcon('heroicon-m-currency-dollar')
+                ->color('success'),
+
+            Stat::make('Active USA Silver', '$' . number_format($activeUsaSilver, 2))
+                ->description('Active USA account silver balance')
+                ->descriptionIcon('heroicon-m-currency-dollar')
+                ->color('gray'),
+
+            // Inactive Global
+            Stat::make('Inactive Global Gold', '$' . number_format($inactiveGlobalGold, 2))
+                ->description('Inactive global account gold balance')
+                ->descriptionIcon('heroicon-m-currency-dollar')
+                ->color('gray'),
+
+            /*
+                        // Total Global
+                        Stat::make('Total Global Gold', '$' . number_format($totalGlobalGold, 2))
+                            ->description('Total global account gold balance')
+                            ->descriptionIcon('heroicon-m-currency-dollar')
+                            ->color('warning'),
+
+                        Stat::make('Total Global Silver', '$' . number_format($totalGlobalSilver, 2))
+                            ->description('Total global account silver balance')
+                            ->descriptionIcon('heroicon-m-currency-dollar')
+                            ->color('gray'),
+
+             Stat::make('Total USA Silver', '$' . number_format($totalUsaSilver, 2))
+                            ->description('Total USA account silver balance')
+                            ->descriptionIcon('heroicon-m-currency-dollar')
+                            ->color('gray'),
+
+                        // Total USA
+                        Stat::make('Total USA Gold', '$' . number_format($totalUsaGold, 2))
+                            ->description('Total USA account gold balance')
+                            ->descriptionIcon('heroicon-m-currency-dollar')
+                            ->color('success'),
+            */
+
+
         ];
     }
 }

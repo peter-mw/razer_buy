@@ -11,7 +11,10 @@ use Illuminate\Support\Facades\DB;
 class AccountReconciliationExporter extends Exporter
 {
     protected static ?string $model = Account::class;
-
+    public function getFileName(Export $export): string
+    {
+        return 'accounts_reconciliation_'.now();
+    }
     public static function getColumns(): array
     {
         return [

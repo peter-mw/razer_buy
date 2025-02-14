@@ -10,7 +10,10 @@ use Filament\Actions\Exports\Models\Export;
 class AccountExporter extends Exporter
 {
     protected static ?string $model = Account::class;
-
+    public function getFileName(Export $export): string
+    {
+        return 'accounts_' . now();
+    }
     public static function getColumns(): array
     {
         return [

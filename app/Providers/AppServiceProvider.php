@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
+use InvadersXX\FilamentJsoneditor\FilamentJsoneditorServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -11,7 +13,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->terminating(function () {
+            // possible fix of mysql error https://github.com/laravel/framework/issues/18471
+            // user already has more than 'max_user_connections' active connections
+            DB::disconnect();
+        });
+
+        app()->register(FilamentJsoneditorServiceProvider::class);
+
     }
 
     /**
@@ -19,6 +28,5 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
     }
 }
