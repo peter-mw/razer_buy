@@ -59,7 +59,7 @@ class AccountTopupResource extends Resource
     {
         return $table
             ->paginated([100, 250, 500, 1000, 2000, 5000, 'all'])
-            ->defaultSort('created_at', 'desc')
+            ->defaultSort('topup_time', 'desc')
             ->columns([
                 Tables\Columns\TextColumn::make('account.id')
                     ->label('Account ID')
@@ -78,13 +78,13 @@ class AccountTopupResource extends Resource
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('transaction_ref')
                     ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('transaction_id')
                     ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
