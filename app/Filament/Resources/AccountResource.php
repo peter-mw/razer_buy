@@ -21,7 +21,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Phpsa\FilamentPasswordReveal\Password;
 use App\Services\OtpService;
-
+use App\Models\AccountType;
 class AccountResource extends Resource
 {
     protected static ?string $model = Account::class;
@@ -51,10 +51,9 @@ class AccountResource extends Resource
                 Forms\Components\Select::make('account_type')
                     ->required()
                     ->native(true)
-                    ->options([
-                        'global' => 'Global',
-                        'usa' => 'USA',
-                    ])
+                    ->options(fn() => AccountType::where('is_active', true)
+                        ->pluck('name', 'code')
+                        ->toArray())
                 ,
 
 
@@ -296,11 +295,8 @@ class AccountResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('account_type')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
-                        'global' => 'Global',
-                        'usa' => 'USA',
-                        default => 'gray',
-                    })
+                    ->formatStateUsing(fn (string $state) => AccountType::where('code', $state)->value('name') ?? $state)
+                    ->color('primary')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('vendor')
@@ -383,10 +379,9 @@ class AccountResource extends Resource
             ->filters([
 
                 Tables\Filters\SelectFilter::make('account_type')
-                    ->options([
-                        'global' => 'Global',
-                        'usa' => 'USA',
-                    ])
+                    ->options(fn() => AccountType::where('is_active', true)
+                        ->pluck('name', 'code')
+                        ->toArray())
                     ->label('Account Type'),
 
                 Tables\Filters\SelectFilter::make('is_active')

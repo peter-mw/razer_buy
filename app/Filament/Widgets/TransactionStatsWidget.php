@@ -2,53 +2,32 @@
 
 namespace App\Filament\Widgets;
 
+use App\Models\Account;
 use App\Models\Transaction;
-use Filament\Widgets\StatsOverviewWidget as BaseWidget;
-use Filament\Widgets\StatsOverviewWidget\Stat;
-use Illuminate\Support\Facades\DB;
+use Filament\Widgets\Widget;
+use Illuminate\Contracts\View\View;
 
-class TransactionStatsWidget extends BaseWidget
+class TransactionStatsWidget extends Widget
 {
-    protected static ?string $pollingInterval = '15s';
+    protected static ?string $pollingInterval = '10s';
 
-    protected function getStats(): array
+    protected int|string|array $columnSpan = 'full';
+
+    protected array $accountTypes = ['global', 'usa'];
+
+    public function render(): View
     {
+        $stats = [];
 
-        $globalStats = Transaction::query()
-            ->join('accounts', 'transactions.account_id', '=', 'accounts.id')
-            ->where('accounts.account_type', 'global')
-            ->where('transactions.created_at', '>=', now()->subHours(24))
-            ->select(
-                DB::raw('COUNT(*) as count'),
-                DB::raw('SUM(amount) as total_amount')
-            )
-            ->first();
+        foreach ($this->accountTypes as $type) {
+            $stats[$type] = Transaction::join('accounts', 'transactions.account_id', '=', 'accounts.id')
+                ->where('accounts.account_type', $type)
+                ->where('transactions.created_at', '>=', now()->subHours(24))
+                ->sum('transactions.amount');
+        }
 
-        $usaStats = Transaction::query()
-            ->join('accounts', 'transactions.account_id', '=', 'accounts.id')
-            ->where('accounts.account_type', 'usa')
-            ->where('transactions.created_at', '>=', now()->subHours(24))
-            ->select(
-                DB::raw('COUNT(*) as count'),
-                DB::raw('SUM(amount) as total_amount')
-            )
-            ->first();
-
-        return [
-            Stat::make('Global Transactions (24h)', $globalStats->count)
-                ->description('Total Amount: $' . number_format($globalStats->total_amount ?? 0, 2))
-                ->descriptionIcon('heroicon-m-arrow-trending-up')
-                ->color('warning'),
-
-            Stat::make('USA Transactions (24h)', $usaStats->count)
-                ->description('Total Amount: $' . number_format($usaStats->total_amount ?? 0, 2))
-                ->descriptionIcon('heroicon-m-arrow-trending-up')
-                ->color('success'),
-
-            Stat::make('Total Transactions (24h)', $globalStats->count + $usaStats->count)
-                ->description('Total Amount: $' . number_format(($globalStats->total_amount ?? 0) + ($usaStats->total_amount ?? 0), 2))
-                ->descriptionIcon('heroicon-m-arrow-trending-up')
-                ->color('info'),
-        ];
+        return view('filament.widgets.transaction-stats', [
+            'stats' => $stats,
+        ]);
     }
 }

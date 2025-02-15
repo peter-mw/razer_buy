@@ -64,10 +64,18 @@ class ProcessBuyJob implements ShouldQueue
                 ->where('is_active', true)
                 ->get();
         } else {
-            // Otherwise get active accounts with matching account type and positive daily limit
-            $accounts = Account::where('limit_amount_per_day', '>', 0)
-                ->where('account_type', $purchaseOrder->account_type)
-                ->where('is_active', true)
+            // Otherwise get active accounts with matching account type, region_id and positive daily limit
+            $accounts = Account::select('accounts.*')
+                ->join('account_types', 'accounts.account_type', '=', 'account_types.code')
+                ->where('accounts.limit_amount_per_day', '>', 0)
+                ->where('accounts.account_type', $purchaseOrder->account_type)
+                ->where('accounts.is_active', true)
+                ->where('account_types.region_id', function($query) use ($purchaseOrder) {
+                    $query->select('region_id')
+                        ->from('account_types')
+                        ->where('code', $purchaseOrder->account_type)
+                        ->first();
+                })
                 ->get();
         }
 

@@ -20,6 +20,7 @@ use App\Filament\Widgets\AccountBalancesWidget;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Jobs\ProcessBuyJob;
 use Illuminate\Validation\ValidationException;
+use App\Models\AccountType;
 
 class PurchaseOrderResource extends Resource
 {
@@ -79,10 +80,9 @@ class PurchaseOrderResource extends Resource
                 Forms\Components\Select::make('account_type')
                     ->native(true)
                     ->required()
-                    ->options([
-                        'global' => 'Global',
-                        'usa' => 'USA',
-                    ])
+                    ->options(fn() => AccountType::where('is_active', true)
+                        ->pluck('name', 'code')
+                        ->toArray())
                     ->live()
                     ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
                         // Clear product selection when account type changes

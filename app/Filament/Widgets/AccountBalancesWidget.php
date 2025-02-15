@@ -14,57 +14,32 @@ class AccountBalancesWidget extends Widget
 
     public function render(): View
     {
-        // Active accounts
-        $activeGlobalGold = Account::where('account_type', 'global')
-            ->where('is_active', true)
-            ->sum('ballance_gold');
-        $activeGlobalSilver = Account::where('account_type', 'global')
-            ->where('is_active', true)
-            ->sum('ballance_silver');
-        $activeUsaGold = Account::where('account_type', 'usa')
-            ->where('is_active', true)
-            ->sum('ballance_gold');
-        $activeUsaSilver = Account::where('account_type', 'usa')
-            ->where('is_active', true)
-            ->sum('ballance_silver');
+        $balances = [];
+        $accountTypes = \App\Models\AccountType::where('is_active', true)->pluck('code');
 
-        // Inactive accounts
-        $inactiveGlobalGold = Account::where('account_type', 'global')
-            ->where('is_active', false)
-            ->sum('ballance_gold');
-        $inactiveGlobalSilver = Account::where('account_type', 'global')
-            ->where('is_active', false)
-            ->sum('ballance_silver');
-        $inactiveUsaGold = Account::where('account_type', 'usa')
-            ->where('is_active', false)
-            ->sum('ballance_gold');
-        $inactiveUsaSilver = Account::where('account_type', 'usa')
-            ->where('is_active', false)
-            ->sum('ballance_silver');
+        foreach ($accountTypes as $type) {
+            $balances[$type] = [
+                'active' => [
+                    'gold' => Account::where('account_type', $type)
+                        ->where('is_active', true)
+                        ->sum('ballance_gold'),
+                    'silver' => Account::where('account_type', $type)
+                        ->where('is_active', true)
+                        ->sum('ballance_silver'),
+                ],
+                'inactive' => [
+                    'gold' => Account::where('account_type', $type)
+                        ->where('is_active', false)
+                        ->sum('ballance_gold'),
+                    'silver' => Account::where('account_type', $type)
+                        ->where('is_active', false)
+                        ->sum('ballance_silver'),
+                ],
+            ];
+        }
 
         return view('filament.widgets.account-balances', [
-            'balances' => [
-                'global' => [
-                    'active' => [
-                        'gold' => $activeGlobalGold,
-                        'silver' => $activeGlobalSilver,
-                    ],
-                    'inactive' => [
-                        'gold' => $inactiveGlobalGold,
-                        'silver' => $inactiveGlobalSilver,
-                    ],
-                ],
-                'usa' => [
-                    'active' => [
-                        'gold' => $activeUsaGold,
-                        'silver' => $activeUsaSilver,
-                    ],
-                    'inactive' => [
-                        'gold' => $inactiveUsaGold,
-                        'silver' => $inactiveUsaSilver,
-                    ],
-                ],
-            ],
+            'balances' => $balances,
         ]);
     }
 }

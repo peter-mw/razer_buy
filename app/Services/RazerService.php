@@ -179,10 +179,9 @@ class RazerService
             'count' => $quantity,
         ];
 
-        $region_id = 2;
-        if ($productToBuy->account_type == 'usa') {
-            $region_id = 12;
-        }
+        // Get region_id from account type
+        $region_id = \App\Models\AccountType::where('code', $productToBuy->account_type)
+            ->value('region_id') ?? 2; // Default to 2 if not found
 
         $cmd = sprintf(
             '"%s" -setupKey=%s -email=%s -password=%s -clientIDlogin=%s -serviceCode=%s -productId=%s -permalink=%s -regionId=%s -count=%s 2>&1',

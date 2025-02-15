@@ -57,10 +57,9 @@ class CreateMultipleOrders extends Page
                 ->schema([
                     Select::make('data.account_type')
                         ->label('Select Account Type')
-                        ->options([
-                            'global' => 'Global',
-                            'usa' => 'USA',
-                        ])
+                        ->options(fn() => \App\Models\AccountType::where('is_active', true)
+                            ->get()
+                            ->pluck('name', 'code'))
                         ->required()
                         ->reactive()
                         ->live()

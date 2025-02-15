@@ -37,6 +37,8 @@ class Account extends Model
         'failed_to_purchase_timestamp',
     ];
 
+    protected $accountTypes = ['global', 'usa'];
+
 
     protected $casts = [
         'ballance_gold' => 'decimal:2',
