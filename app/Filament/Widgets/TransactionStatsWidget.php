@@ -13,6 +13,7 @@ class TransactionStatsWidget extends BaseWidget
 
     protected function getStats(): array
     {
+
         $globalStats = Transaction::query()
             ->join('accounts', 'transactions.account_id', '=', 'accounts.id')
             ->where('accounts.account_type', 'global')

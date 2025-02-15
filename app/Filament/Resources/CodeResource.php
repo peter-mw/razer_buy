@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Actions\ExportBulkAction;
 use App\Filament\Exports\CodeExporter;
+use App\Filament\Exports\RemoteCrmExporter;
 
 class CodeResource extends Resource
 {
@@ -72,7 +73,26 @@ class CodeResource extends Resource
             ->paginated([100, 250, 500, 1000, 5000, 10000, 'all'])
             ->headerActions([
                 Tables\Actions\ExportAction::make()
-                    ->exporter(CodeExporter::class),
+                    ->form([
+                        Forms\Components\DatePicker::make('from_date')
+                            ->label('From Date')
+                            ->required(),
+                        Forms\Components\DatePicker::make('to_date')
+                            ->label('To Date')
+                            ->required(),
+                    ])
+                    ->exporter(CodeExporter::class)
+                ,
+                Tables\Actions\ExportAction::make('remoteCrmExport')
+                    ->label('Remote CRM Export')
+                    ->form([
+                        Forms\Components\TextInput::make('discount')
+                            ->label('discount')
+                          ,
+
+                    ])
+                    ->exporter(RemoteCrmExporter::class)
+                ,
             ])
             ->columns([
                 Tables\Columns\TextColumn::make('id')
@@ -154,17 +174,15 @@ class CodeResource extends Resource
                         Forms\Components\DatePicker::make('created_from'),
                         Forms\Components\DatePicker::make('created_until'),
                     ])
-                    ->query(function (Builder $query, array $data): Builder {
-                        return $query
-                            ->when(
-                                $data['created_from'],
-                                fn(Builder $query, $date): Builder => $query->whereDate('buy_date', '>=', $date),
-                            )
-                            ->when(
-                                $data['created_until'],
-                                fn(Builder $query, $date): Builder => $query->whereDate('buy_date', '<=', $date),
-                            );
-                    })
+                    ->modifyQueryUsing(fn(Builder $query, array $data) => $query
+                        ->when(
+                            $data['created_from'],
+                            fn(Builder $query, $date) => $query->whereDate('buy_date', '>=', $date),
+                        )
+                        ->when(
+                            $data['created_until'],
+                            fn(Builder $query, $date) => $query->whereDate('buy_date', '<=', $date),
+                        ))
 
             ])
             ->actions([
@@ -174,7 +192,14 @@ class CodeResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                     ExportBulkAction::make()
+
+                        ->exporter(RemoteCrmExporter::class)
+
+                    ,
+                    ExportBulkAction::make()
+
                         ->exporter(CodeExporter::class)
+
                 ]),
             ]);
     }

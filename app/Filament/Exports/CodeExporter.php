@@ -5,10 +5,32 @@ namespace App\Filament\Exports;
 use App\Models\Code;
 use Filament\Actions\Exports\ExportColumn;
 use Filament\Actions\Exports\Exporter;
+use Filament\Forms\Components\DatePicker;
 use Illuminate\Database\Eloquent\Builder;
 
 class CodeExporter extends Exporter
 {
+    /*    public static function getFormComponents(): array
+        {
+            return [
+                DatePicker::make('from_date')
+                    ->label('From Date')
+                    ->required(),
+                DatePicker::make('to_date')
+                    ->label('To Date')
+                    ->required(),
+            ];
+        }
+
+        public function getBuilder(): Builder
+        {
+            return parent::getBuilder()
+                ->whereBetween('buy_date', [
+                    $this->form->getRawState()['from_date'],
+                    $this->form->getRawState()['to_date'],
+                ]);
+        }
+    */
     protected static ?string $model = Code::class;
 
     public static function getCompletedNotificationBody(\Filament\Actions\Exports\Models\Export $export): string
