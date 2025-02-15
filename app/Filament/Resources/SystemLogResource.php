@@ -9,6 +9,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use ValentinMorice\FilamentJsonColumn\FilamentJsonColumn;
 
 class SystemLogResource extends Resource
 {
@@ -37,9 +38,9 @@ class SystemLogResource extends Resource
 
 
 
-                Forms\Components\Textarea::make('params')
-                    ->required(),
-                Forms\Components\Textarea::make('response')
+                FilamentJsonColumn::make('params')
+                   ,
+                FilamentJsonColumn::make('response')
                     ->nullable(),
             ]);
     }

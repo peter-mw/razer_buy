@@ -41,14 +41,6 @@ class FetchAccountCodesJob implements ShouldQueue
         $account = Account::findOrFail($this->accountId);
         $service = new RazerService($account);
 
-        // Create initial system log
-        SystemLog::create([
-            'source' => 'FetchAccountCodesJob',
-            'account_id' => $account->id,
-            'status' => 'processing',
-            'command' => 'fetch_codes',
-            'params' => ['account_id' => $account->id],
-        ]);
 
         // Fetch all codes for the account
         try {
@@ -78,38 +70,47 @@ class FetchAccountCodesJob implements ShouldQueue
                     }
                 }
 
-                // Only create order and process codes if we found new ones
-                if ($hasNewCodes && $firstNewCode) {
-                    $productName = $firstNewCode['Product'];
-                    $product = Product::where('product_name', 'LIKE', '%' . $productName . '%')->first();
 
-                    if (!$product) {
-                        $product = Product::create([
-                            'product_name' => $productName,
-                            'product_slug' => Str::slug($productName),
-                            'account_type' => 'unknown',
-                            'product_edition' => 'unknown',
-                            'product_buy_value' => 0,
-                            'product_face_value' => 0,
+
+                // Only process codes if we found new ones
+                if ($hasNewCodes) {
+                    // Group codes by product
+                    $codesByProduct = collect($processedCodes)->groupBy('Product');
+
+                    // Process each product group
+                    foreach ($codesByProduct as $productName => $productCodes) {
+                        // Find or create product
+                        $product = Product::where('product_name', 'LIKE', '%' . $productName . '%')->first();
+
+                        if (!$product) {
+                            $product = Product::create([
+                                'product_name' => $productName,
+                                'product_slug' => Str::slug($productName),
+                                'account_type' => 'unknown',
+                                'product_edition' => 'unknown',
+                                'product_buy_value' => 0,
+                                'product_face_value' => 0,
+                            ]);
+                            $product->save();
+                        }
+
+                        // Create order for this product group
+                        $newOrder = PurchaseOrders::create([
+                            'product_id' => $product->id,
+                            'product_name' => $product->product_name,
+                            'account_type' => $product->account_type,
+                            'product_edition' => $product->product_edition,
+                            'buy_value' => $product->product_buy_value,
+                            'product_face_value' => $product->product_face_value,
+                            'quantity' => count($productCodes),
+                            'order_status' => 'completed',
+                            'account_id' => $account->id
                         ]);
-                        $product->save();
-                    }
 
-                    $newOrder = PurchaseOrders::create([
-                        'product_id' => $product->id,
-                        'product_name' => $product->product_name,
-                        'account_type' => $product->account_type,
-                        'product_edition' => $product->product_edition,
-                        'buy_value' => $product->product_buy_value,
-                        'product_face_value' => $product->product_face_value,
-                        'quantity' =>0,
-                        'order_status' => 'completed',
-                        'account_id' => $account->id
-                    ]);
-
-                    // Process only the new codes
-                    foreach ($processedCodes as $codeData) {
-                        $this->processCode($account, $codeData, $newOrder);
+                        // Process codes for this product
+                        foreach ($productCodes as $codeData) {
+                            $this->processCode($account, $codeData, $newOrder);
+                        }
                     }
 
                     // Log successful code processing
@@ -121,7 +122,7 @@ class FetchAccountCodesJob implements ShouldQueue
                         'params' => [
                             'account_id' => $account->id,
                             'new_codes_count' => count($processedCodes),
-                            'product_name' => $product->product_name,
+                            'products' => $codesByProduct->keys()->toArray(),
                         ],
                     ]);
                 }

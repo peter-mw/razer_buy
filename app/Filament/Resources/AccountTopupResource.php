@@ -96,11 +96,16 @@ class AccountTopupResource extends Resource
                     ->importer(Imports\AccountTopupImporter::class),*/
                 Tables\Actions\ExportAction::make()
                     ->exporter(Exports\AccountTopupExporter::class),
+                Tables\Actions\Action::make('view_daily_topups')
+                    ->label('Daily Topups')
+                    ->icon('heroicon-o-calendar')
+                    ->url(fn(): string => static::getUrl('daily-topups')),
                 Tables\Actions\Action::make('sync_all_topups')
                     ->label('Sync All Topups')
                     ->icon('heroicon-o-credit-card')
                     ->action(function () {
                         try {
+
                             $accounts = \App\Models\Account::where('is_active', true)->get();
                             foreach ($accounts as $account) {
                                 dispatch(new \App\Jobs\SyncAccountTopupsJob($account->id));
@@ -187,6 +192,7 @@ class AccountTopupResource extends Resource
             'index' => Pages\ListAccountTopups::route('/'),
             'create' => Pages\CreateAccountTopup::route('/create'),
             'view' => Pages\ViewAccountTopup::route('/{record}'),
+            'daily-topups' => Pages\DailyTopups::route('/daily-topups'),
         ];
     }
 
