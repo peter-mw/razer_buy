@@ -29,10 +29,11 @@ class CodeExporter extends Exporter
                 ->label('Code'),
             ExportColumn::make('serial_number')
                 ->label('Serial Number'),
-            ExportColumn::make('product_name')
+            ExportColumn::make('product.product_name')
                 ->label('Product Name'),
-            ExportColumn::make('product_edition')
-                ->label('Product Edition'),
+            ExportColumn::make('product.remote_crm_product_name')
+                ->label('Remote CRM Product Name'),
+
             ExportColumn::make('buy_date')
                 ->label('Buy Date'),
             ExportColumn::make('buy_value')

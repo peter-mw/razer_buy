@@ -14,10 +14,12 @@ class ProductPurchaseActivity extends Page
 
     protected static string $view = 'filament.pages.product-purchase-activity';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     public function getHeaderWidgets(): array
     {
         return [
-            ProductPurchaseActivityWidget::class,
+           // ProductPurchaseActivityWidget::class,
         ];
     }
 

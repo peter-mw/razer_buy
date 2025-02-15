@@ -2,6 +2,9 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Widgets\AccountBalancesWidget;
+use App\Filament\Widgets\ProductPurchaseActivityWidget;
+use App\Filament\Widgets\TransactionStatsWidget;
 use Croustibat\FilamentJobsMonitor\FilamentJobsMonitorPlugin;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -43,10 +46,13 @@ class AdminPanelProvider extends PanelProvider
             ->pages([
                 Pages\Dashboard::class,
             ])
-            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
+          //  ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
-                Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
+              Widgets\AccountWidget::class,
+
+              AccountBalancesWidget::class,
+
+         //       Widgets\FilamentInfoWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
