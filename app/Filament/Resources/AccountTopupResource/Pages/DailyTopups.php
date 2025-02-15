@@ -18,11 +18,11 @@ class DailyTopups extends Page implements HasTable
 
     protected static string $resource = AccountTopupResource::class;
 
-    protected static string $view = 'filament.pages.table';
+   # protected static string $view = 'filament.pages.table';
 
     protected static ?string $title = 'Daily Topups Summary';
 
-    public function table(Table $table): Table
+    public function tabl111e(Table $table): Table
     {
         return $table
             ->query(

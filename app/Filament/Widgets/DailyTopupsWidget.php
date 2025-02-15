@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 
 class DailyTopupsWidget extends BaseWidget
 {
-    protected int|string|array $columnSpan = 'full';
+    protected int | string | array $columnSpan = 'full';
 
     protected static ?string $heading = 'Daily Topups Summary';
 
@@ -19,7 +19,14 @@ class DailyTopupsWidget extends BaseWidget
         return '4xl';
     }
 
-
+    protected function getIdentifier(): string
+    {
+        return 'daily-topups-widget';
+    }
+    public function getTableRecordKey(\Illuminate\Database\Eloquent\Model $record): string
+    {
+        return $record->id ?? '';
+    }
 
     public function table(Table $table): Table
     {
