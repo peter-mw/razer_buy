@@ -130,6 +130,32 @@ class AccountTopupResource extends Resource
                 Tables\Filters\SelectFilter::make('account')
                     ->relationship('account', 'id')
                     ->getOptionLabelFromRecordUsing(fn($record) => $record->name),
+                Tables\Filters\SelectFilter::make('date_range')
+                    ->options([
+                        'today' => 'Today',
+                        'yesterday' => 'Yesterday',
+                        'last_7_days' => 'Last 7 Days',
+                        'last_30_days' => 'Last 30 Days',
+                        'this_month' => 'This Month',
+                        'last_month' => 'Last Month',
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        if (empty($data['value'])) {
+                            return $query;
+                        }
+
+                        return match ($data['value']) {
+                            'today' => $query->whereDate('topup_time', now()),
+                            'yesterday' => $query->whereDate('topup_time', now()->subDay()),
+                            'last_7_days' => $query->whereDate('topup_time', '>=', now()->subDays(7)),
+                            'last_30_days' => $query->whereDate('topup_time', '>=', now()->subDays(30)),
+                            'this_month' => $query->whereMonth('topup_time', now()->month)
+                                ->whereYear('topup_time', now()->year),
+                            'last_month' => $query->whereMonth('topup_time', now()->subMonth()->month)
+                                ->whereYear('topup_time', now()->subMonth()->year),
+                            default => $query
+                        };
+                    }),
                 Tables\Filters\Filter::make('topup_time')
                     ->form([
                         Forms\Components\DatePicker::make('from'),
@@ -187,6 +213,11 @@ class AccountTopupResource extends Resource
             //
         ];
     }
+
+
+
+
+
 
     public static function getPages(): array
     {

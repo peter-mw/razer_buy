@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Phpsa\FilamentPasswordReveal\Password;
+use App\Services\OtpService;
 
 class AccountResource extends Resource
 {
@@ -65,8 +66,18 @@ class AccountResource extends Resource
 
                 ,
                 Forms\Components\TextInput::make('otp_seed')
+                    ->label('OTP Seed'),
 
-                ,
+                Forms\Components\TextInput::make('current_otp')
+                    ->label('Current OTP')
+                    ->dehydrated(false)
+                    ->disabled()
+                    ->formatStateUsing(function ($record) {
+                        if (!$record || !$record->otp_seed) {
+                            return null;
+                        }
+                        return OtpService::generateOtp($record->otp_seed);
+                    }),
 
 
                 Forms\Components\TextInput::make('vendor')
