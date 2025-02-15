@@ -85,11 +85,9 @@ class AccountResource extends Resource
                                     return null;
                                 }
                                 $otp = (OtpService::generateOtp($record->otp_seed));
-
-                                if($otp){
+                                if ($otp) {
                                     $set('current_otp', $otp);
                                 }
-
                             })
                     )
                     ->formatStateUsing(function ($record) {
@@ -98,7 +96,7 @@ class AccountResource extends Resource
                         }
                         return OtpService::generateOtp($record->otp_seed);
                     })
-                     ,
+                ,
 
 
                 Forms\Components\TextInput::make('vendor')
@@ -321,6 +319,18 @@ class AccountResource extends Resource
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('codes_count')
+                    ->label('Codes')
+                    ->counts('codes')
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('transactions_count')
+                    ->label('Transactions')
+                    ->counts('transactions')
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->sortable(),
             ])
             ->filters([
 

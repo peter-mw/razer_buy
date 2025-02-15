@@ -53,12 +53,17 @@ class FetchAccountCodesJob implements ShouldQueue
 
                 // First pass - check for new codes
                 foreach ($codes as $codeData) {
+                    if (!isset($codeData['Code']) || !isset($codeData['SN'])) {
+                        continue;
+                    }
+
+
                     $code = $codeData['Code'];
                     $serialNumber = $codeData['SN'];
 
                     // Check if code already exists
                     $existingCode = Code::where('code', $code)
-                        ->orWhere('serial_number', $serialNumber)
+                        ->where('serial_number', $serialNumber)
                         ->first();
 
                     if (!$existingCode) {
@@ -69,7 +74,6 @@ class FetchAccountCodesJob implements ShouldQueue
                         $processedCodes[] = $codeData;
                     }
                 }
-
 
 
                 // Only process codes if we found new ones
@@ -113,18 +117,7 @@ class FetchAccountCodesJob implements ShouldQueue
                         }
                     }
 
-                    // Log successful code processing
-                    SystemLog::create([
-                        'source' => 'FetchAccountCodesJob',
-                        'account_id' => $account->id,
-                        'status' => 'success',
-                        'command' => 'process_codes',
-                        'params' => [
-                            'account_id' => $account->id,
-                            'new_codes_count' => count($processedCodes),
-                            'products' => $codesByProduct->keys()->toArray(),
-                        ],
-                    ]);
+
                 }
 
 
@@ -132,21 +125,9 @@ class FetchAccountCodesJob implements ShouldQueue
                 $this->updateAccountBalance($account, $service);
             }
         } catch (\Exception $e) {
-            SystemLog::create([
-                'source' => 'FetchAccountCodesJob',
-                'account_id' => $account->id,
-                'status' => 'error',
-                'command' => 'fetch_codes',
-                'params' => [
-                    'account_id' => $account->id,
-                    'error' => $e->getMessage(),
-                ],
-            ]);
-            Log::error('Failed to fetch codes: ' . $e->getMessage());
+
             return;
         }
-
-
 
 
     }
@@ -158,6 +139,7 @@ class FetchAccountCodesJob implements ShouldQueue
         $serialNumber = $codeData['SN'];
         $productName = $codeData['Product'];
         $amount = floatval($codeData['Amount']);
+        $transaction_id = $codeData['ID'] ?? '';
         $buyDate = date('Y-m-d H:i:s', strtotime($codeData['TransactionDate']));
 
 
@@ -165,30 +147,46 @@ class FetchAccountCodesJob implements ShouldQueue
         $product = Product::where('product_name', 'LIKE', '%' . $productName . '%')->first();
 
         if (!$product) {
-            Log::warning("Product not found for code: {$code}, product name: {$productName}");
-            return;
+            $product = Product::create([
+                'product_name' => $productName,
+                'product_slug' => Str::slug($productName),
+                'account_type' => 'unknown',
+                'product_edition' => 'unknown',
+                'product_buy_value' => 0,
+                'product_face_value' => 0,
+            ]);
+            $product->save();
         }
 
-        // Create transaction and code records for the shared order
-        $transaction = Transaction::create([
-            'account_id' => $account->id,
-            'amount' => $amount,
-            'product_id' => $product->id,
-            'transaction_date' => $buyDate,
-            'transaction_id' => 'sync-' . $code,
-            'order_id' => $order->id
-        ]);
+        //check if exist
+        $codeExist = Code::where('code', $code)
+            ->where('serial_number', $serialNumber)
+            ->first();
 
-        Code::create([
-            'account_id' => $account->id,
-            'code' => $code,
-            'serial_number' => $serialNumber,
-            'product_id' => $product->id,
-            'product_name' => $productName,
-            'buy_date' => $buyDate,
-            'buy_value' => $amount,
-            'order_id' => $order->id
-        ]);
+        if (!$codeExist) {
+
+            // Create transaction and code records for the shared order
+            $transaction = Transaction::create([
+                'account_id' => $account->id,
+                'amount' => $amount,
+                'product_id' => $product->id,
+                'transaction_date' => $buyDate,
+                'transaction_id' => $transaction_id,
+                'order_id' => $order->id
+            ]);
+
+
+            Code::create([
+                'account_id' => $account->id,
+                'code' => $code,
+                'serial_number' => $serialNumber,
+                'product_id' => $product->id,
+                'product_name' => $productName,
+                'buy_date' => $buyDate,
+                'buy_value' => $amount,
+                'order_id' => $order->id
+            ]);
+        }
     }
 
     public function updateAccountBalance(Account $account, RazerService $service): void
