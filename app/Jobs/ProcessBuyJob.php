@@ -135,12 +135,19 @@ class ProcessBuyJob implements ShouldQueue
                 'order_status' => 'failed'
             ]);
 
+            // Increment failed attempts counter and set timestamp
+            $account->increment('failed_to_purchase_attempts');
+            $account->update([
+                'failed_to_purchase_timestamp' => now()
+            ]);
+
             $log->update([
                 'status' => 'error',
                 'command' => 'process_buy',
                 'params' => [
                     'purchase_order_id' => $purchaseOrder->id,
                     'error' => 'No orders completed',
+                    'failed_attempts' => $account->failed_to_purchase_attempts,
                 ],
             ]);
         }

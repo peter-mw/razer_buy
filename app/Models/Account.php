@@ -33,6 +33,8 @@ class Account extends Model
         'topup_balance',
         'transaction_balance',
         'balance_difference',
+        'failed_to_purchase_attempts',
+        'failed_to_purchase_timestamp',
     ];
 
 

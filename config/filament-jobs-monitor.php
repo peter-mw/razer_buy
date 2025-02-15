@@ -9,7 +9,7 @@ return [
         'navigation_icon' => 'heroicon-o-cpu-chip',
         'navigation_sort' => null,
         'navigation_count_badge' => false,
-        'resource' => Croustibat\FilamentJobsMonitor\Resources\QueueMonitorResource::class,
+        'resource' => \App\Filament\Resources\QueueMonitorResource::class,
         'cluster' => null,
     ],
     'pruning' => [

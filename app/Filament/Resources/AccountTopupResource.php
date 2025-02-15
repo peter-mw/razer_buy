@@ -230,7 +230,6 @@ class AccountTopupResource extends Resource
             'index' => Pages\ListAccountTopups::route('/'),
             'create' => Pages\CreateAccountTopup::route('/create'),
             'view' => Pages\ViewAccountTopup::route('/{record}'),
-            // 'daily-topups' => Pages\DailyTopups::route('/daily-topups'),
         ];
     }
 }

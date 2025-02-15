@@ -36,11 +36,14 @@ class AccountResource extends Resource
 
                 Forms\Components\TextInput::make('name')
                     ->required()
-                    ->maxLength(255),
+                    //  ->live(debounce: 1500)
+                    ->maxLength(255)
+                    ->unique(ignoreRecord: true),
 
 
                 Forms\Components\TextInput::make('email')
                     ->email()
+                    //  ->live(debounce: 1500)
                     ->required()
                     ->maxLength(255)
                     ->unique(ignoreRecord: true),
@@ -115,14 +118,38 @@ class AccountResource extends Resource
 
                 Forms\Components\TextInput::make('ballance_gold')
                     ->numeric()
+                    ->disabled()
                     ->default(0)
                     ->step('0.01')
                 ,
                 Forms\Components\TextInput::make('ballance_silver')
                     ->numeric()
+                    ->disabled()
                     ->default(0)
-                    ->step('0.01')
                 ,
+
+                Forms\Components\TextInput::make('topup_balance')
+                    ->numeric()
+                    ->disabled()
+                    ->default(0)
+                ,
+                Forms\Components\TextInput::make('transaction_balance')
+                    ->numeric()
+                    ->disabled()
+                    ->default(0),
+
+
+                Forms\Components\TextInput::make('failed_to_purchase_attempts')
+                    ->numeric()
+                    ->default(0)
+                    ->step(1),
+
+
+                Forms\Components\DateTimePicker::make('failed_to_purchase_timestamp')
+                    ->label('Last Failed Purchase')
+                    ->format('Y-m-d H:i:s'),
+
+
                 Forms\Components\Toggle::make('is_active')
                     ->default(true)
                     ->required(),
@@ -251,6 +278,7 @@ class AccountResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
 
+
                 Tables\Columns\TextColumn::make('transactions_count')
                     ->label('Transactions')
                     ->counts('transactions')
@@ -275,6 +303,12 @@ class AccountResource extends Resource
                     })
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('vendor')
+                    ->toggleable()
+                    ->label('Vendor')
+                    ->sortable(),
+
+
                 Tables\Columns\TextColumn::make('ballance_gold')
                     ->money()
                     ->sortable(),
@@ -309,9 +343,8 @@ class AccountResource extends Resource
 
                 Tables\Columns\TextColumn::make('last_topup_sync_at')
                     ->label('Last Topup Sync')
-                    ->dateTime()
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                ,
                 Tables\Columns\TextColumn::make('last_topup_sync_status')
                     ->label('Last Topup Sync Status')
                     ->badge()
@@ -322,7 +355,7 @@ class AccountResource extends Resource
                     })
                     ->searchable()
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -332,6 +365,14 @@ class AccountResource extends Resource
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('')
+                    ->label('Failed Purchase Attempts')
+                ,
+
+                Tables\Columns\TextColumn::make('failed_to_purchase_timestamp')
+                    ->label('Last Failed Purchase')
+                ,
 
 
             ])
