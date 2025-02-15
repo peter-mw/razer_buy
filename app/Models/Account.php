@@ -12,7 +12,6 @@ class Account extends Model
     use HasFactory;
 
     protected $fillable = [
-
         'name',
         'email',
         'password',
@@ -31,6 +30,9 @@ class Account extends Model
         'service_code',
         'client_id_login',
         'is_active',
+        'topup_balance',
+        'transaction_balance',
+        'balance_difference',
     ];
 
 
@@ -39,7 +41,10 @@ class Account extends Model
         'ballance_silver' => 'decimal:2',
         'limit_amount_per_day' => 'decimal:2',
         'last_ballance_update_at' => 'datetime',
-        'last_topup_sync_at' => 'datetime'
+        'last_topup_sync_at' => 'datetime',
+        'topup_balance' => 'decimal:2',
+        'transaction_balance' => 'decimal:2',
+        'balance_difference' => 'decimal:2'
     ];
 
     public function transactions(): HasMany

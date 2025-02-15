@@ -10,17 +10,25 @@ Route::get('/', function () {
 Route::get('/aaa', function () {
     $accountID = 8;
     $accountID = 57;
+    $accountID = 11;
+    $accountID = 5;
+   // $accountID = 23;
+   // $accountID = 20;
+    // $accountID = 43;
 
+   // $accountID = 11;
+
+    $topups = [];
     $account = \App\Models\Account::find($accountID);
-
+  //  $accountID = 11;
     $razerService = new RazerService($account);
  //   $topups = $razerService->fetchTopUps();
-    $topups = $razerService->fetchAllCodes();
+   // $topups = $razerService->fetchAllCodes();
 
     $job = new \App\Jobs\FetchAccountCodesJob($accountID);
 
     $job->handle();
-    dd($topups);
+    dump($topups);
 
 });
 

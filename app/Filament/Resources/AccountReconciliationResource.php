@@ -11,6 +11,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use App\Models\AccountTopup;
+use Filament\Notifications\Notification;
 
 class AccountReconciliationResource extends Resource
 {
@@ -30,6 +31,27 @@ class AccountReconciliationResource extends Resource
             ->headerActions([
                 Tables\Actions\ExportAction::make()
                     ->exporter(AccountReconciliationExporter::class),
+                Tables\Actions\Action::make('sync_all_topups')
+                    ->label('Sync All Topups')
+                    ->icon('heroicon-o-credit-card')
+                    ->action(function () {
+                        try {
+                            $accounts = Account::where('is_active', true)->get();
+                            foreach ($accounts as $account) {
+                                dispatch(new \App\Jobs\SyncAccountTopupsJob($account->id));
+                            }
+                            Notification::make()
+                                ->success()
+                                ->title('Topup sync jobs dispatched for all active accounts')
+                                ->send();
+                        } catch (\Exception $e) {
+                            Notification::make()
+                                ->danger()
+                                ->title('Failed to dispatch topup sync jobs')
+                                ->body($e->getMessage())
+                                ->send();
+                        }
+                    }),
             ])
             ->columns([
                 Tables\Columns\TextColumn::make('id')
@@ -55,7 +77,7 @@ class AccountReconciliationResource extends Resource
                     ->label('Balance Difference')
                     ->money('USD')
                     ->sortable()
-                    ->color(fn(string $state): string => $state < -0.1 ? 'danger' : 'success'),
+                    ->color(fn($state): string => $state < -0.1 ? 'danger' : 'success'),
                 Tables\Columns\TextColumn::make('codes_count')
                     ->label('Total Codes')
                     ->counts('codes')

@@ -72,6 +72,11 @@ class SyncAccountTopupsJob implements ShouldQueue
 
             }
 
+            // Update balance columns
+            $account->topup_balance = $account->accountTopups()->sum('topup_amount');
+            $account->transaction_balance = $account->transactions()->sum('amount');
+            $account->balance_difference = ($account->topup_balance - $account->transaction_balance) - $account->ballance_gold;
+            
             $account->last_topup_sync_at = now();
             $account->last_topup_sync_status = 'success';
             $account->save();
