@@ -75,7 +75,7 @@ class AccountBalancesWidget extends BaseWidget
                 ->descriptionIcon('heroicon-m-currency-dollar')
                 ->color('gray'),
 
-            /*
+
                         // Total Global
                         Stat::make('Total Global Gold', '$' . number_format($totalGlobalGold, 2))
                             ->description('Total global account gold balance')
@@ -97,7 +97,7 @@ class AccountBalancesWidget extends BaseWidget
                             ->description('Total USA account gold balance')
                             ->descriptionIcon('heroicon-m-currency-dollar')
                             ->color('success'),
-            */
+
 
 
         ];

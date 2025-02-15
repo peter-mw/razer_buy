@@ -366,11 +366,15 @@ class AccountResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                Tables\Columns\TextColumn::make('')
+                Tables\Columns\TextColumn::make('failed_to_purchase_attempts')
+                    ->sortable()
+                    ->searchable()
                     ->label('Failed Purchase Attempts')
                 ,
 
                 Tables\Columns\TextColumn::make('failed_to_purchase_timestamp')
+                    ->sortable()
+                    ->searchable()
                     ->label('Last Failed Purchase')
                 ,
 

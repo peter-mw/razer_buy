@@ -26,6 +26,8 @@ class AccountBalanceHistoryResource extends Resource
     public static function form(Form $form): Form
     {
         return $form
+            ->paginated([10, 25, 50, 100, 250, 1000, 'all'])
+
             ->schema([
                 Forms\Components\Select::make('account_id')
                     ->relationship('account', 'name')

@@ -64,7 +64,8 @@ class ProductResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->paginated(false)
+            ->paginated([10, 25, 50, 100, 250, 1000, 'all'])
+
             ->defaultSort('id', 'desc')
             ->actionsPosition(Tables\Enums\ActionsPosition::BeforeColumns)
             ->headerActions([

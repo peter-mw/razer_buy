@@ -61,6 +61,7 @@ class TransactionResource extends Resource
     {
         return $table
             ->defaultSort('created_at', 'desc')
+            ->paginated([10, 25, 50, 100, 250, 1000, 'all'])
 
             ->columns([
                 Tables\Columns\TextColumn::make('account.name')
