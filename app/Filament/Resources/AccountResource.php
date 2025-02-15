@@ -102,7 +102,7 @@ class AccountResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->paginated(false)
+            ->paginated([10, 25, 50, 100, 250,1000,'all'])
             ->defaultSort('ballance_gold', 'desc')
             ->actionsPosition(Tables\Enums\ActionsPosition::AfterCells)
             ->headerActions([
@@ -463,6 +463,48 @@ class AccountResource extends Resource
                                 Notification::make()
                                     ->danger()
                                     ->title('Failed to dispatch topup sync jobs')
+                                    ->body($e->getMessage())
+                                    ->send();
+                            }
+                        }),
+                    Tables\Actions\BulkAction::make('activate')
+                        ->label('Mark as Active')
+                        ->icon('heroicon-o-check-circle')
+                        ->color('success')
+                        ->action(function ($records): void {
+                            try {
+                                foreach ($records as $record) {
+                                    $record->update(['is_active' => true]);
+                                }
+                                Notification::make()
+                                    ->success()
+                                    ->title('Selected accounts marked as active')
+                                    ->send();
+                            } catch (\Exception $e) {
+                                Notification::make()
+                                    ->danger()
+                                    ->title('Failed to mark accounts as active')
+                                    ->body($e->getMessage())
+                                    ->send();
+                            }
+                        }),
+                    Tables\Actions\BulkAction::make('deactivate')
+                        ->label('Mark as Inactive')
+                        ->icon('heroicon-o-x-circle')
+                        ->color('danger')
+                        ->action(function ($records): void {
+                            try {
+                                foreach ($records as $record) {
+                                    $record->update(['is_active' => false]);
+                                }
+                                Notification::make()
+                                    ->success()
+                                    ->title('Selected accounts marked as inactive')
+                                    ->send();
+                            } catch (\Exception $e) {
+                                Notification::make()
+                                    ->danger()
+                                    ->title('Failed to mark accounts as inactive')
                                     ->body($e->getMessage())
                                     ->send();
                             }
