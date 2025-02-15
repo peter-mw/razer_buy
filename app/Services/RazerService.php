@@ -129,7 +129,8 @@ class RazerService
                 'response' => ['error' => 'Command execution failed'],
                 'status' => 'error'
             ]);
-            throw new \RuntimeException("Command execution failed");
+            return [];
+         //   throw new \RuntimeException("Command execution failed");
         }
 
         file_put_contents($workdir . '/transaction_log.txt', $output);
@@ -142,7 +143,7 @@ class RazerService
                 'response' => ['error' => 'Error unmarshalling response: invalid character'],
                 'status' => 'error'
             ]);
-            throw new \RuntimeException("Error unmarshalling response: invalid character");
+           // throw new \RuntimeException("Error unmarshalling response: invalid character");
         }
 
         $format = $this->formatOutput($output);
