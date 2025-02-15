@@ -16,6 +16,7 @@ class Account extends Model
         'name',
         'email',
         'password',
+        'account_password',
         'otp_seed',
         'account_type',
         'vendor',

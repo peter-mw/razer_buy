@@ -63,8 +63,13 @@ class AccountResource extends Resource
 
 
                 Forms\Components\TextInput::make('password')
-
+                    ->label('Encrypted Password')
                 ,
+
+                Forms\Components\TextInput::make('account_password')
+                    ->label('Account Password')
+                ,
+
                 Forms\Components\TextInput::make('otp_seed')
                     ->label('OTP Seed'),
 
@@ -72,12 +77,32 @@ class AccountResource extends Resource
                     ->label('Current OTP')
                     ->dehydrated(false)
                     ->disabled()
+                    ->suffixAction(
+                        Forms\Components\Actions\Action::make('refresh_otp')
+                            ->icon('heroicon-o-arrow-path')
+                            ->action(function ($record) {
+                                if (!$record || !$record->otp_seed) {
+                                    return null;
+                                }
+                                return OtpService::generateOtp($record->otp_seed);
+                            })
+                    )
                     ->formatStateUsing(function ($record) {
                         if (!$record || !$record->otp_seed) {
                             return null;
                         }
                         return OtpService::generateOtp($record->otp_seed);
-                    }),
+                    })
+                    ->extraAttributes([
+                        'x-data' => '{
+                            startAutoRefresh() {
+                                setInterval(() => {
+                                    $wire.dispatchFormEvent("refresh_otp")
+                                }, 30000)
+                            }
+                        }',
+                        'x-init' => 'startAutoRefresh()'
+                    ]),
 
 
                 Forms\Components\TextInput::make('vendor')
@@ -113,7 +138,7 @@ class AccountResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->paginated([10, 25, 50, 100, 250,1000,'all'])
+            ->paginated([10, 25, 50, 100, 250, 1000, 'all'])
             ->defaultSort('ballance_gold', 'desc')
             ->actionsPosition(Tables\Enums\ActionsPosition::AfterCells)
             ->headerActions([
