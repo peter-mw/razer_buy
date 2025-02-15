@@ -65,7 +65,6 @@ class AccountTopupResource extends Resource
                 Tables\Columns\TextColumn::make('account.id')
                     ->label('Account ID')
                     ->sortable()
-
                     ->searchable(),
                 Tables\Columns\TextColumn::make('account.name')
                     ->label('Account')
@@ -80,7 +79,16 @@ class AccountTopupResource extends Resource
                 Tables\Columns\TextColumn::make('topup_time')
                     ->label('Topup Date')
                     ->date('Y-m-d')
-                    ->sortable(),
+                    ->sortable()
+                    ->color(function ($record) {
+                        // Get the first record ID for this date
+                        $firstRecordId = AccountTopup::whereDate('topup_time', $record->topup_time->format('Y-m-d'))
+                            ->orderBy('topup_time', 'desc')
+                            ->value('id');
+
+                        // Return success color if this is the first record for the date
+                        return $record->id === $firstRecordId ? 'success' : null;
+                    }),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -207,6 +215,7 @@ class AccountTopupResource extends Resource
             ->defaultSort('topup_time', 'desc');
     }
 
+
     public static function getRelations(): array
     {
         return [
@@ -215,17 +224,13 @@ class AccountTopupResource extends Resource
     }
 
 
-
-
-
-
     public static function getPages(): array
     {
         return [
             'index' => Pages\ListAccountTopups::route('/'),
             'create' => Pages\CreateAccountTopup::route('/create'),
             'view' => Pages\ViewAccountTopup::route('/{record}'),
-           // 'daily-topups' => Pages\DailyTopups::route('/daily-topups'),
+            // 'daily-topups' => Pages\DailyTopups::route('/daily-topups'),
         ];
     }
 }
