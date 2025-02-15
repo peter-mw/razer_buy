@@ -245,6 +245,19 @@ class AccountResource extends Resource
                     ->boolean()
                     ->toggleable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('codes_count')
+                    ->label('Codes')
+                    ->counts('codes')
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('transactions_count')
+                    ->label('Transactions')
+                    ->counts('transactions')
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->sortable(),
+
+
                 Tables\Columns\TextColumn::make('service_code')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true)
@@ -320,17 +333,7 @@ class AccountResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                Tables\Columns\TextColumn::make('codes_count')
-                    ->label('Codes')
-                    ->counts('codes')
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->sortable(),
 
-                Tables\Columns\TextColumn::make('transactions_count')
-                    ->label('Transactions')
-                    ->counts('transactions')
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->sortable(),
             ])
             ->filters([
 

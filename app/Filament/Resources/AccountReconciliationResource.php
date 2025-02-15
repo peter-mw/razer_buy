@@ -26,7 +26,7 @@ class AccountReconciliationResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->paginated(false)
+            ->paginated([100, 250, 500, 1000, 2000, 5000, 'all'])
             ->headerActions([
                 Tables\Actions\ExportAction::make()
                     ->exporter(AccountReconciliationExporter::class),

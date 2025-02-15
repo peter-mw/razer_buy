@@ -44,7 +44,11 @@ class FetchAccountCodesJob implements ShouldQueue
 
         // Fetch all codes for the account
         try {
+            // $codes = $service->fetchAllCodesCached();
+
+            //@ todo remove this
             $codes = $service->fetchAllCodes();
+
             if (!empty($codes)) {
                 // Track if we found any new codes
                 $hasNewCodes = false;
@@ -72,12 +76,16 @@ class FetchAccountCodesJob implements ShouldQueue
                             $firstNewCode = $codeData;
                         }
                         $processedCodes[] = $codeData;
+                    } else {
+
                     }
                 }
 
 
                 // Only process codes if we found new ones
                 if ($hasNewCodes) {
+
+
                     // Group codes by product
                     $codesByProduct = collect($processedCodes)->groupBy('Product');
 
@@ -111,9 +119,11 @@ class FetchAccountCodesJob implements ShouldQueue
                             'account_id' => $account->id
                         ]);
 
+                        $productCodes = $productCodes->toArray();
+
                         // Process codes for this product
-                        foreach ($productCodes as $codeData) {
-                            $this->processCode($account, $codeData, $newOrder);
+                        foreach ($productCodes as $codeItem => $codeDataItem) {
+                            $this->processCode($account, $codeDataItem, $newOrder);
                         }
                     }
 
@@ -139,6 +149,7 @@ class FetchAccountCodesJob implements ShouldQueue
         $serialNumber = $codeData['SN'];
         $productName = $codeData['Product'];
         $amount = floatval($codeData['Amount']);
+        $amount = number_format($amount, 2, '.', '');
         $transaction_id = $codeData['ID'] ?? '';
         $buyDate = date('Y-m-d H:i:s', strtotime($codeData['TransactionDate']));
 
@@ -163,29 +174,63 @@ class FetchAccountCodesJob implements ShouldQueue
             ->where('serial_number', $serialNumber)
             ->first();
 
+
+        if ($codeExist) {
+            if ($codeExist->account_id != $order->account_id) {
+                $codeExist->update([
+                    'account_id' => $order->account_id,
+                    'order_id' => $order->id
+                ]);
+            }
+
+        }
+
         if (!$codeExist) {
 
-            // Create transaction and code records for the shared order
-            $transaction = Transaction::create([
-                'account_id' => $account->id,
-                'amount' => $amount,
-                'product_id' => $product->id,
-                'transaction_date' => $buyDate,
-                'transaction_id' => $transaction_id,
-                'order_id' => $order->id
-            ]);
 
-
-            Code::create([
+            $data = [
                 'account_id' => $account->id,
                 'code' => $code,
+                'transaction_id' => $transaction_id,
                 'serial_number' => $serialNumber,
                 'product_id' => $product->id,
                 'product_name' => $productName,
                 'buy_date' => $buyDate,
                 'buy_value' => $amount,
                 'order_id' => $order->id
-            ]);
+            ];
+
+            $code = Code::create($data);
+
+            $code->save();
+
+
+            $transaction = Transaction::where('transaction_id', $transaction_id)->first();
+
+
+            if ($transaction) {
+
+                $transaction->update([
+                    'order_id' => $order->id,
+                ]);
+
+            } else {
+
+                $transactionData = [
+                    'account_id' => $account->id,
+                    'amount' => $amount,
+                    'product_id' => $product->id,
+                    'transaction_date' => $buyDate,
+                    'transaction_id' => $transaction_id,
+                    'order_id' => $order->id,
+                    'transaction_ref' => $code->id
+                ];
+
+                $transaction = Transaction::create($transactionData);
+                $transaction->save();
+            }
+
+
         }
     }
 

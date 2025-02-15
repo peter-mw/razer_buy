@@ -6,6 +6,7 @@ use App\Models\Account;
 use App\Models\Product;
 use App\Models\PurchaseOrders;
 use App\Models\SystemLog;
+use Illuminate\Support\Facades\Cache;
 
 class RazerService
 {
@@ -323,6 +324,13 @@ class RazerService
         return $data_items;
     }
 
+    public function fetchAllCodesCached(): array
+    {
+        $cache = Cache::remember('razer_codes_' . $this->account->id, 60000, function () {
+            return $this->fetchAllCodes();
+        });
+        return $cache;
+    }
 
     public function fetchAllCodes(): array
     {
