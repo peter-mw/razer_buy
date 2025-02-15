@@ -86,6 +86,8 @@ class Account extends Model
 
     public function getBalanceDifferenceAttribute(): float
     {
-        return ($this->topup_balance - $this->transaction_balance) - $this->ballance_gold;
+
+        $val = ($this->topup_balance - $this->transaction_balance) - $this->ballance_gold;
+        return intval($val);
     }
 }
