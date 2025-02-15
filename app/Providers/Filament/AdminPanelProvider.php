@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Widgets\AccountBalancesWidget;
+use App\Filament\Widgets\DailyTopupsWidget;
 use App\Filament\Widgets\ProductPurchaseActivityWidget;
 use App\Filament\Widgets\TransactionStatsWidget;
 use Croustibat\FilamentJobsMonitor\FilamentJobsMonitorPlugin;
@@ -32,7 +33,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
-            ->databaseNotifications(isLazy: true)
+           ->databaseNotifications(isLazy: true)
             ->databaseNotificationsPolling(60)
             ->plugins([
                  FilamentJobsMonitorPlugin::make()
@@ -51,6 +52,7 @@ class AdminPanelProvider extends PanelProvider
               Widgets\AccountWidget::class,
 
               AccountBalancesWidget::class,
+              DailyTopupsWidget::class,
 
          //       Widgets\FilamentInfoWidget::class,
             ])

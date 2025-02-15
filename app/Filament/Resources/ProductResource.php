@@ -38,10 +38,11 @@ class ProductResource extends Resource
                     ->maxLength(255),
                 Forms\Components\Radio::make('account_type')
                     ->required()
-                    ->options([
-                        'global' => 'Global',
-                        'usa' => 'USA',
-                    ]),
+                    ->options(fn(): array => \App\Models\AccountType::query()
+                        ->where('is_active', true)
+                        ->pluck('name', 'code')
+                        ->toArray()
+                    ),
 
                 Forms\Components\TextInput::make('product_edition')
                     ->label('Product Edition (same as product name if not applicable)')
@@ -135,10 +136,11 @@ class ProductResource extends Resource
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('account_type')
-                    ->options([
-                        'global' => 'Global',
-                        'usa' => 'USA',
-                    ]),
+                    ->options(fn(): array => \App\Models\AccountType::query()
+                        ->where('is_active', true)
+                        ->pluck('name', 'code')
+                        ->toArray()
+                    ),
                 Tables\Filters\SelectFilter::make('product_slug')
                     ->options(fn(): array => Product::query()
                         ->whereNotNull('product_slug')

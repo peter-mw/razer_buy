@@ -1,0 +1,78 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Code;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Storage;
+use League\Csv\Writer;
+use SplTempFileObject;
+
+class ExportController extends Controller
+{
+    public function exportRemoteCrm(Request $request)
+    {
+        $discount = $request->get('discount', 0);
+        $fromDate = $request->get('from_date');
+        $toDate = $request->get('to_date');
+
+        $query = Code::with(['product', 'account']);
+
+        if ($fromDate && $toDate) {
+            $query->whereBetween('buy_date', [$fromDate, $toDate]);
+        }
+
+        $codes = $query->get();
+
+
+        /*  'account_id',
+        'code',
+        'serial_number',
+        'product_id',
+        'product_name',
+        'product_edition',
+        'buy_date',
+        'buy_value',
+        'order_id',
+        'transaction_ref',
+        'transaction_id'*/
+
+        $csv = Writer::createFromFileObject(new SplTempFileObject());
+
+        // Add headers
+        $csv->insertOne([
+            'Product Name',
+            'Cost',
+            'Source',
+            'Code',
+            'Serial',
+            'TransactionId',
+            'RazerProductId',
+            'RazerAccountId'
+
+        ]);
+
+        // Add data
+        foreach ($codes as $code) {
+            $csv->insertOne([
+                $code->product?->remote_crm_product_name ?? $code->product?->product_name ?? '',
+                $code->buy_value * (1 - $discount / 100), // Apply dynamic discount
+                $code->account?->name ?? '',
+                $code->code,
+                $code->serial_number,
+                $code->transaction_id,
+                $code->product_id,
+                $code->account_id
+
+            ]);
+        }
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="remote-crm-export-' . now() . '.csv"',
+        ];
+
+        return response($csv->getContent(), 200, $headers);
+    }
+}

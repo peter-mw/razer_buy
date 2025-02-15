@@ -100,6 +100,42 @@ class AccountResource extends Resource
                     })
                 ,
 
+                Forms\Components\Actions::make([
+                    Forms\Components\Actions\Action::make('validate_account')
+                        ->label('Validate Account')
+                        ->icon('heroicon-o-check-circle')
+                        ->color('success')
+                        ->action(function ($record, Forms\Set $set) {
+                            if (!$record) {
+                                $set('validation_result', 'No account found');
+                                $set('validation_status', 'error');
+                                return;
+                            }
+
+                            $razerService = new \App\Services\RazerService($record);
+                            $result = $razerService->validateAccount();
+
+                            $status = $result['status'] === 'success';
+                            $message = "Status: " . ($status ? 'Valid' : 'Invalid') . "\n";
+                            $message .= "Gold Balance: " . number_format($record->ballance_gold, 2) . "\n";
+                            $message .= "Silver Balance: " . number_format($record->ballance_silver, 2) . "\n";
+                            $message .= $result['message'];
+
+                            $set('validation_result', $message);
+                            $set('validation_status', $result['status']);
+                        })
+                        ->visible(fn ($record) => $record !== null)
+                ]),
+
+                Forms\Components\Placeholder::make('validation_result')
+                    ->content(fn ($state) => $state)
+                    ->columnSpanFull()
+                    ->hidden(fn ($state) => empty($state))
+                    ->extraAttributes(fn ($state, $get) => [
+                        'class' => 'whitespace-pre-line p-4 rounded-lg ' . 
+                            ($get('validation_status') === 'success' ? 'bg-success-500/10 text-success-700' : 'bg-danger-500/10 text-danger-700')
+                    ]),
+
 
                 Forms\Components\TextInput::make('vendor')
                     ->maxLength(255),

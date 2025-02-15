@@ -130,7 +130,7 @@ class RazerService
                 'status' => 'error'
             ]);
             return [];
-         //   throw new \RuntimeException("Command execution failed");
+            //   throw new \RuntimeException("Command execution failed");
         }
 
         file_put_contents($workdir . '/transaction_log.txt', $output);
@@ -143,7 +143,7 @@ class RazerService
                 'response' => ['error' => 'Error unmarshalling response: invalid character'],
                 'status' => 'error'
             ]);
-           // throw new \RuntimeException("Error unmarshalling response: invalid character");
+            // throw new \RuntimeException("Error unmarshalling response: invalid character");
         }
 
         $format = $this->formatOutput($output);
@@ -390,6 +390,30 @@ class RazerService
         return $return;
     }
 
+    public function validateAccount(): array
+    {
+        $isValid = true;
+
+        $checkBalance = $this->getAccountBallance();
+
+        if ($checkBalance['gold'] == 0 && $checkBalance['silver'] == 0) {
+            $isValid = false;
+        }
+
+        if ($isValid) {
+            return [
+                'status' => 'success',
+                'message' => 'Account is valid'
+            ];
+        } else {
+            return [
+                'status' => 'error',
+                'message' => 'Account is invalid'
+            ];
+        }
+
+
+    }
 
     public function getAccountBallance(): array
     {

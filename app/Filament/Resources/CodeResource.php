@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Actions\ExportBulkAction;
 use App\Filament\Exports\CodeExporter;
-use App\Filament\Exports\RemoteCrmExporter;
+use App\Filament\Exports\CustomRemoteCrmExporter;
 
 class CodeResource extends Resource
 {
@@ -83,15 +83,30 @@ class CodeResource extends Resource
                     ])
                     ->exporter(CodeExporter::class)
                 ,
-                Tables\Actions\ExportAction::make('remoteCrmExport')
+                Tables\Actions\Action::make('remoteCrmExport')
                     ->label('Remote CRM Export')
                     ->form([
+                        Forms\Components\DatePicker::make('from_date')
+                            ->label('From Date')
+                            ->default(now()->subDays(30)),
+                        Forms\Components\DatePicker::make('to_date')
+                            ->label('To Date')
+                            ->default(now()),
                         Forms\Components\TextInput::make('discount')
-                            ->label('discount')
-                          ,
-
+                            ->label('Discount (%)')
+                            ->numeric()
+                            ->minValue(0)
+                            ->maxValue(100),
                     ])
-                    ->exporter(RemoteCrmExporter::class)
+                    ->action(function (array $data): void {
+                        $params = http_build_query([
+                            'from_date' => $data['from_date'],
+                            'to_date' => $data['to_date'],
+                            'discount' => $data['discount'],
+                        ]);
+                        $url = route('export.remote-crm') . '?' . $params;
+                        redirect()->away($url);
+                    })
                 ,
             ])
             ->columns([
@@ -191,13 +206,34 @@ class CodeResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
-                    ExportBulkAction::make()
-
-                        ->exporter(RemoteCrmExporter::class)
+                    Tables\Actions\BulkAction::make('remoteCrmExportBulk')
+                        ->label('Remote CRM Export')
+                        ->form([
+                            Forms\Components\DatePicker::make('from_date')
+                                ->label('From Date')
+                                ->default(now()->subDays(30)),
+                            Forms\Components\DatePicker::make('to_date')
+                                ->label('To Date')
+                                ->default(now()),
+                            Forms\Components\TextInput::make('discount')
+                                ->label('Discount (%)')
+                                ->numeric()
+                                ->default(17)
+                                ->minValue(0)
+                                ->maxValue(100),
+                        ])
+                        ->action(function (array $data): void {
+                            $params = http_build_query([
+                                'from_date' => $data['from_date'],
+                                'to_date' => $data['to_date'],
+                                'discount' => $data['discount'],
+                            ]);
+                            $url = route('export.remote-crm') . '?' . $params;
+                            redirect()->away($url);
+                        })
 
                     ,
                     ExportBulkAction::make()
-
                         ->exporter(CodeExporter::class)
 
                 ]),
