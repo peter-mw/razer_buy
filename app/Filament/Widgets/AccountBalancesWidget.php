@@ -3,14 +3,16 @@
 namespace App\Filament\Widgets;
 
 use App\Models\Account;
-use Filament\Widgets\StatsOverviewWidget as BaseWidget;
-use Filament\Widgets\StatsOverviewWidget\Stat;
+use Filament\Widgets\Widget;
+use Illuminate\Contracts\View\View;
 
-class AccountBalancesWidget extends BaseWidget
+class AccountBalancesWidget extends Widget
 {
     protected static ?string $pollingInterval = '10s';
 
-    protected function getStats(): array
+    protected int|string|array $columnSpan = 'full';
+
+    public function render(): View
     {
         // Active accounts
         $activeGlobalGold = Account::where('account_type', 'global')
@@ -40,66 +42,29 @@ class AccountBalancesWidget extends BaseWidget
             ->where('is_active', false)
             ->sum('ballance_silver');
 
-        // Totals
-        $totalGlobalGold = $activeGlobalGold + $inactiveGlobalGold;
-        $totalGlobalSilver = $activeGlobalSilver + $inactiveGlobalSilver;
-        $totalUsaGold = $activeUsaGold + $inactiveUsaGold;
-        $totalUsaSilver = $activeUsaSilver + $inactiveUsaSilver;
-
-        return [
-            // Active Global
-            Stat::make('Active Global Gold', '$' . number_format($activeGlobalGold, 2))
-                ->description('Active global account gold balance')
-                ->descriptionIcon('heroicon-m-currency-dollar')
-                ->color('success'),
-
-            Stat::make('Active Global Silver', '$' . number_format($activeGlobalSilver, 2))
-                ->description('Active global account silver balance')
-                ->descriptionIcon('heroicon-m-currency-dollar')
-                ->color('gray'),
-
-            // Active USA
-            Stat::make('Active USA Gold', '$' . number_format($activeUsaGold, 2))
-                ->description('Active USA account gold balance')
-                ->descriptionIcon('heroicon-m-currency-dollar')
-                ->color('success'),
-
-            Stat::make('Active USA Silver', '$' . number_format($activeUsaSilver, 2))
-                ->description('Active USA account silver balance')
-                ->descriptionIcon('heroicon-m-currency-dollar')
-                ->color('gray'),
-
-            // Inactive Global
-            Stat::make('Inactive Global Gold', '$' . number_format($inactiveGlobalGold, 2))
-                ->description('Inactive global account gold balance')
-                ->descriptionIcon('heroicon-m-currency-dollar')
-                ->color('gray'),
-
-
-                        // Total Global
-                        Stat::make('Total Global Gold', '$' . number_format($totalGlobalGold, 2))
-                            ->description('Total global account gold balance')
-                            ->descriptionIcon('heroicon-m-currency-dollar')
-                            ->color('warning'),
-
-                        Stat::make('Total Global Silver', '$' . number_format($totalGlobalSilver, 2))
-                            ->description('Total global account silver balance')
-                            ->descriptionIcon('heroicon-m-currency-dollar')
-                            ->color('gray'),
-
-             Stat::make('Total USA Silver', '$' . number_format($totalUsaSilver, 2))
-                            ->description('Total USA account silver balance')
-                            ->descriptionIcon('heroicon-m-currency-dollar')
-                            ->color('gray'),
-
-                        // Total USA
-                        Stat::make('Total USA Gold', '$' . number_format($totalUsaGold, 2))
-                            ->description('Total USA account gold balance')
-                            ->descriptionIcon('heroicon-m-currency-dollar')
-                            ->color('success'),
-
-
-
-        ];
+        return view('filament.widgets.account-balances', [
+            'balances' => [
+                'global' => [
+                    'active' => [
+                        'gold' => $activeGlobalGold,
+                        'silver' => $activeGlobalSilver,
+                    ],
+                    'inactive' => [
+                        'gold' => $inactiveGlobalGold,
+                        'silver' => $inactiveGlobalSilver,
+                    ],
+                ],
+                'usa' => [
+                    'active' => [
+                        'gold' => $activeUsaGold,
+                        'silver' => $activeUsaSilver,
+                    ],
+                    'inactive' => [
+                        'gold' => $inactiveUsaGold,
+                        'silver' => $inactiveUsaSilver,
+                    ],
+                ],
+            ],
+        ]);
     }
 }

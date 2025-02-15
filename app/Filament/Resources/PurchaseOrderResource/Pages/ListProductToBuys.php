@@ -21,7 +21,7 @@ class ListProductToBuys extends ListRecords
     protected function getHeaderWidgets(): array
     {
         return [
-            AccountBalancesWidget::class,
+            //AccountBalancesWidget::class,
         ];
     }
 }
