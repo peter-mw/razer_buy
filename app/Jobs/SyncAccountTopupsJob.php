@@ -41,7 +41,7 @@ class SyncAccountTopupsJob implements ShouldQueue
             $account = Account::findOrFail($this->accountId);
 
             // Create initial system log
-            SystemLog::create([
+            $log = SystemLog::create([
                 'source' => 'SyncAccountTopupsJob',
                 'account_id' => $account->id,
                 'status' => 'processing',
@@ -76,44 +76,25 @@ class SyncAccountTopupsJob implements ShouldQueue
             $account->topup_balance = $account->accountTopups()->sum('topup_amount');
             $account->transaction_balance = $account->transactions()->sum('amount');
             $account->balance_difference = ($account->topup_balance - $account->transaction_balance) - $account->ballance_gold;
-            
+
             $account->last_topup_sync_at = now();
             $account->last_topup_sync_status = 'success';
             $account->save();
 
-            SystemLog::create([
-                'source' => 'SyncAccountTopupsJob',
-                'account_id' => $account->id,
-                'status' => 'success',
-                'command' => 'sync_topups',
-                'params' => [
-                    'account_id' => $account->id,
-                    'topups_processed' => count($topups),
-                ],
-            ]);
+            $log->status = 'success';
+            $log->save();
 
         } catch (\Exception $e) {
-            SystemLog::create([
-                'source' => 'SyncAccountTopupsJob',
-                'account_id' => isset($account) ? $account->id : $this->accountId,
-                'status' => 'error',
-                'command' => 'sync_topups',
-                'params' => [
-                    'account_id' => isset($account) ? $account->id : $this->accountId,
-                    'error' => $e->getMessage(),
-                ],
-            ]);
-
-            Log::error('SyncAccountTopupsJob failed', [
-                'account_id' => $this->accountId,
-                'error' => $e->getMessage()
-            ]);
+            $log->status = 'error';
+            $log->response = [
+                'message' => $e->getMessage(),
+            ];
+            $log->save();
 
             if (isset($account)) {
                 $account->last_topup_sync_status = 'error';
                 $account->save();
             }
-
 
         }
     }

@@ -21,10 +21,12 @@ class SyncAccountBalancesJob implements ShouldQueue
     )
     {
     }
+
     public function middleware()
     {
-        return [(new WithoutOverlapping('SyncAccountBalancesJob'.$this->accountId))->dontRelease()];
+        return [(new WithoutOverlapping('SyncAccountBalancesJob' . $this->accountId))->dontRelease()];
     }
+
     public function handle(): void
     {
         if ($this->accountId) {
@@ -106,10 +108,16 @@ class SyncAccountBalancesJob implements ShouldQueue
                 'last_ballance_update_status' => 'success',
             ]);
 
+            $isOk = true;
+
+            if ($response['gold'] == 0 && $response['silver'] == 0) {
+                $isOk = false;
+            }
+
             SystemLog::create([
                 'source' => 'SyncAccountBalancesJob',
                 'account_id' => $account->id,
-                'status' => 'success',
+                'status' => $isOk ? 'success' : 'error',
                 'command' => 'sync_balance',
                 'params' => [
                     'account_id' => $account->id,
@@ -135,7 +143,7 @@ class SyncAccountBalancesJob implements ShouldQueue
                 'last_ballance_update_status' => 'error',
             ]);
 
-            throw $e;
+
         }
     }
 }

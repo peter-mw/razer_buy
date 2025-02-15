@@ -15,6 +15,7 @@ class SystemLogResource extends Resource
 {
     protected static ?string $model = SystemLog::class;
     protected static ?int $navigationSort = 999;
+    protected static ?string $navigationGroup = 'Settings';
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
