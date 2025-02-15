@@ -80,11 +80,16 @@ class AccountResource extends Resource
                     ->suffixAction(
                         Forms\Components\Actions\Action::make('refresh_otp')
                             ->icon('heroicon-o-arrow-path')
-                            ->action(function ($record) {
+                            ->action(function ($record, Forms\Set $set, Forms\Get $get) {
                                 if (!$record || !$record->otp_seed) {
                                     return null;
                                 }
-                                return OtpService::generateOtp($record->otp_seed);
+                                $otp = (OtpService::generateOtp($record->otp_seed));
+
+                                if($otp){
+                                    $set('current_otp', $otp);
+                                }
+
                             })
                     )
                     ->formatStateUsing(function ($record) {
@@ -93,16 +98,7 @@ class AccountResource extends Resource
                         }
                         return OtpService::generateOtp($record->otp_seed);
                     })
-                    ->extraAttributes([
-                        'x-data' => '{
-                            startAutoRefresh() {
-                                setInterval(() => {
-                                    $wire.dispatchFormEvent("refresh_otp")
-                                }, 30000)
-                            }
-                        }',
-                        'x-init' => 'startAutoRefresh()'
-                    ]),
+                     ,
 
 
                 Forms\Components\TextInput::make('vendor')
