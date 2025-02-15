@@ -65,6 +65,7 @@ class AccountTopupResource extends Resource
                 Tables\Columns\TextColumn::make('account.id')
                     ->label('Account ID')
                     ->sortable()
+
                     ->searchable(),
                 Tables\Columns\TextColumn::make('account.name')
                     ->label('Account')
@@ -75,6 +76,10 @@ class AccountTopupResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('topup_time')
                     ->date(format: 'Y-m-d H:i:s')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('topup_time')
+                    ->label('Topup Date')
+                    ->date('Y-m-d')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -96,10 +101,7 @@ class AccountTopupResource extends Resource
                     ->importer(Imports\AccountTopupImporter::class),*/
                 Tables\Actions\ExportAction::make()
                     ->exporter(Exports\AccountTopupExporter::class),
-                Tables\Actions\Action::make('view_daily_topups')
-                    ->label('Daily Topups')
-                    ->icon('heroicon-o-calendar')
-                    ->url(fn(): string => static::getUrl('daily-topups')),
+
                 Tables\Actions\Action::make('sync_all_topups')
                     ->label('Sync All Topups')
                     ->icon('heroicon-o-credit-card')
@@ -192,12 +194,7 @@ class AccountTopupResource extends Resource
             'index' => Pages\ListAccountTopups::route('/'),
             'create' => Pages\CreateAccountTopup::route('/create'),
             'view' => Pages\ViewAccountTopup::route('/{record}'),
-            'daily-topups' => Pages\DailyTopups::route('/daily-topups'),
+           // 'daily-topups' => Pages\DailyTopups::route('/daily-topups'),
         ];
     }
-
-    /* public static function getNavigationBadge(): ?string
-     {
-         return static::getModel()::whereDate('created_at', today())->count();
-     }*/
 }

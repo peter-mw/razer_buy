@@ -11,6 +11,7 @@ use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use Filament\Forms;
 
 class DailyTopups extends Page implements HasTable
 {
@@ -18,23 +19,30 @@ class DailyTopups extends Page implements HasTable
 
     protected static string $resource = AccountTopupResource::class;
 
-   # protected static string $view = 'filament.pages.table';
+    protected static ?string $navigationIcon = 'heroicon-o-calendar';
 
     protected static ?string $title = 'Daily Topups Summary';
 
-    public function tabl111e(Table $table): Table
+    protected static string $view = 'filament::pages.table';
+
+    protected static bool $shouldRegisterNavigation = false;
+
+    public function getTableQuery(): Builder
+    {
+
+        return AccountTopup::query()
+            ->select([
+                DB::raw('DATE(topup_time) as date'),
+                DB::raw('COUNT(*) as total_topups'),
+                DB::raw('SUM(topup_amount) as total_amount'),
+                DB::raw('COUNT(DISTINCT account_id) as unique_accounts')
+            ])
+            ->groupBy('date');
+    }
+
+    public function table(Table $table): Table
     {
         return $table
-            ->query(
-                AccountTopup::query()
-                    ->select([
-                        DB::raw('DATE(topup_time) as date'),
-                        DB::raw('COUNT(*) as total_topups'),
-                        DB::raw('SUM(topup_amount) as total_amount'),
-                        DB::raw('COUNT(DISTINCT account_id) as unique_accounts')
-                    ])
-                    ->groupBy('date')
-            )
             ->defaultSort('date', 'desc')
             ->columns([
                 Tables\Columns\TextColumn::make('date')
@@ -51,6 +59,26 @@ class DailyTopups extends Page implements HasTable
                 Tables\Columns\TextColumn::make('unique_accounts')
                     ->label('Unique Accounts')
                     ->sortable(),
+            ])
+            ->filters([
+                Tables\Filters\Filter::make('date')
+                    ->form([
+                        Forms\Components\DatePicker::make('from')
+                            ->label('From Date'),
+                        Forms\Components\DatePicker::make('to')
+                            ->label('To Date'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['from'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('topup_time', '>=', $date),
+                            )
+                            ->when(
+                                $data['to'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('topup_time', '<=', $date),
+                            );
+                    })
             ]);
     }
 }
