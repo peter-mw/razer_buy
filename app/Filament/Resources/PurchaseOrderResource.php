@@ -27,6 +27,7 @@ class PurchaseOrderResource extends Resource
     protected static ?string $model = PurchaseOrders::class;
     protected static ?string $label = 'Purchase order';
 
+    
     protected static ?string $navigationIcon = 'heroicon-o-shopping-cart';
     protected static ?int $navigationSort = 2;
 
@@ -134,8 +135,14 @@ class PurchaseOrderResource extends Resource
                     //  ->default(fn() => request()->get('product_id'))
                     ->relationship(
                         'product',
+
                         'product_name',
-                        fn($query, Forms\Get $get) => $query->where('account_type', $get('account_type'))
+                        fn($query, Forms\Get $get) => $query->where(function ($query) use ($get) {
+                            $accountType = $get('account_type');
+                            if ($accountType) {
+                                $query->whereJsonContains('account_type', $accountType);
+                            }
+                        })
                     )
                     ->label('Product')
                     ->required()
@@ -154,7 +161,9 @@ class PurchaseOrderResource extends Resource
                                 $set('product_edition', $product->product_edition);
                                 $set('buy_value', $product->product_buy_value);
                                 $set('product_face_value', $product->product_face_value);
-                                $set('account_type', $product->account_type);
+                                // If product's account_type is an array, get the first value
+                                //    $accountType = is_array($product->account_type) ? $product->account_type[0] : $product->account_type;
+                                //   $set('account_type', $accountType);
                             }
                         }
 
@@ -169,7 +178,6 @@ class PurchaseOrderResource extends Resource
                     ->required()
                     ->numeric()
                     ->reactive()
-
                     ->live(debounce: 1500)
                     ->afterStateUpdated(function ($state, Forms\Get $get, Forms\Set $set) {
                         // Validate after quantity change
@@ -219,7 +227,7 @@ class PurchaseOrderResource extends Resource
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
-                 ,
+                ,
 
                 Tables\Columns\TextColumn::make('product_id')
                     ->sortable()

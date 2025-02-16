@@ -75,7 +75,7 @@ class CreateMultipleOrders extends Page
                 ->schema([
                     CheckboxList::make('data.product_ids')
                         ->label('Select Products')
-                        ->options(fn() => Product::where('account_type', $this->data['account_type'] ?? null)
+                        ->options(fn() => Product::whereJsonContains('account_type', $this->data['account_type'] ?? null)
                             ->get()
                             ->mapWithKeys(function ($product) {
                                 return [

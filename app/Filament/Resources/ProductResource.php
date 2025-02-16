@@ -36,13 +36,15 @@ class ProductResource extends Resource
                 Forms\Components\TextInput::make('product_slug')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\Radio::make('account_type')
+                Forms\Components\CheckboxList::make('account_type')
                     ->required()
                     ->options(fn(): array => \App\Models\AccountType::query()
                         ->where('is_active', true)
                         ->pluck('name', 'code')
                         ->toArray()
-                    ),
+                    )
+                    ->columns(2)
+                    ->gridDirection('row'),
 
                 Forms\Components\TextInput::make('product_edition')
                     ->label('Product Edition (same as product name if not applicable)')
@@ -66,7 +68,6 @@ class ProductResource extends Resource
     {
         return $table
             ->paginated([10, 25, 50, 100, 250, 1000, 'all'])
-
             ->defaultSort('id', 'desc')
             ->actionsPosition(Tables\Enums\ActionsPosition::BeforeColumns)
             ->headerActions([
@@ -104,7 +105,9 @@ class ProductResource extends Resource
 
 
                 Tables\Columns\TextColumn::make('account_type')
-                    ->sortable()
+                    ->formatStateUsing(fn($state) => is_array($state) ? implode(', ', $state) : $state)
+                    ->badge()
+                    ->color('primary')
                     ->searchable(),
 
                 Tables\Columns\TextColumn::make('codes_count')
@@ -113,8 +116,6 @@ class ProductResource extends Resource
                 Tables\Columns\TextColumn::make('transactions_count')
                     ->counts('transactions')
                     ->label('Total Transactions'),
-
-
 
 
                 Tables\Columns\TextColumn::make('product_edition')
@@ -140,7 +141,13 @@ class ProductResource extends Resource
                         ->where('is_active', true)
                         ->pluck('name', 'code')
                         ->toArray()
-                    ),
+                    )
+                    ->query(function ($query, $data) {
+                        if ($data['value']) {
+                            return $query->whereJsonContains('account_type', $data['value']);
+                        }
+                        return $query;
+                    }),
                 Tables\Filters\SelectFilter::make('product_slug')
                     ->options(fn(): array => Product::query()
                         ->whereNotNull('product_slug')

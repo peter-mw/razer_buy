@@ -7,6 +7,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends Model
 {
+    protected $casts = [
+        'account_type' => 'array'
+    ];
+    
     protected $fillable = [
         'id',
         'product_name',
