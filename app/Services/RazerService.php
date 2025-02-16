@@ -366,7 +366,11 @@ class RazerService
         //filter only status = 1
 
         $data_items = array_filter($data_items, function ($item) {
-            return $item['status'] == 1;
+            return intval($item['status']) == 1;
+        });
+        // filter only whn product name does not coninain Refund:
+        $data_items = array_filter($data_items, function ($item) {
+            return strpos($item['product'], 'Refund:') === false;
         });
 
         SystemLog::create([
@@ -454,6 +458,16 @@ class RazerService
     public function validateAccount(): array
     {
         $isValid = true;
+        $workdir = $this->getWorkdir();
+        $account = $this->account;
+        $this->getAccountBallance();
+        $creds = $workdir . '/balance_credentials.txt';
+
+        if (!is_file($creds)) {
+            return [];
+        }
+
+        copy($creds, $workdir . '/credentials.txt');
 
         $checkBalance = $this->getAccountBallance();
         $topups = $this->fetchTopUps();
