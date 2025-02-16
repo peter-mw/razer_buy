@@ -19,6 +19,7 @@ class CodesWithMissingProductResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-exclamation-triangle';
 
+
     protected static ?string $navigationLabel = 'Codes Without Products';
 
     protected static ?int $navigationSort = 5;
@@ -28,8 +29,15 @@ class CodesWithMissingProductResource extends Resource
         return $form
             ->schema([
                 Forms\Components\TextInput::make('account_id')
-
-                    ->disabled(),
+                    ->readOnly(),
+                Forms\Components\TextInput::make('account.name')
+                    ->label('Account Name')
+                    ->formatStateUsing(fn (Forms\Get $get): string => \App\Models\Account::find($get('account_id'))?->name ?? '')
+                    ->readOnly(),
+                Forms\Components\TextInput::make('account.email')
+                    ->label('Account Email')
+                    ->formatStateUsing(fn (Forms\Get $get): string => \App\Models\Account::find($get('account_id'))?->email ?? '')
+                    ->readOnly(),
                 Forms\Components\TextInput::make('code')
                     ->required()
                     ->maxLength(255),

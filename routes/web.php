@@ -29,10 +29,10 @@ Route::get('/aaa', function () {
 
     //  $accountID = 11;
     $razerService = new \App\Services\RazerService($account);
-
-    $codes = $razerService->fetchAllCodes();
-    $detail = $razerService->getAllAccountDetails();
-    dd($detail,$codes);
+    $topups = $razerService->getAccountBallance();
+    //$codes = $razerService->fetchAllCodes();
+   // $detail = $razerService->getAllAccountDetails();
+    dd($topups);
 
  //  $topups = $razerService->fetchTopUps();
 //dd($topups);

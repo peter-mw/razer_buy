@@ -366,7 +366,7 @@ class RazerService
         //filter only status = 1
 
         $data_items = array_filter($data_items, function ($item) {
-            return intval($item['status']) == 1;
+            return isset($item['status']) and intval($item['status']) == 1;
         });
         // filter only whn product name does not coninain Refund:
         $data_items = array_filter($data_items, function ($item) {
@@ -480,6 +480,10 @@ class RazerService
             $isValid = false;
         }
 
+        $regionId = $checkBalance['region_id'] ?? 0;
+        $limit = $checkBalance['limit'] ?? 0;
+        $tier = $checkBalance['tier'] ?? 0;
+
         if ($topups == null) {
             $isValid = false;
         }
@@ -489,7 +493,14 @@ class RazerService
         if ($isValid) {
             return [
                 'status' => 'success',
-                'message' => 'Account is valid, balance: ' . $checkBalance['gold'] . ' gold, ' . $checkBalance['silver'] . ' silver, ' . $topupsCount . ' topups'
+                'isValid' => true,
+                'gold' => $checkBalance['gold'],
+                'silver' => $checkBalance['silver'],
+                'topups' => $topupsCount,
+                'region_id' => $regionId,
+                'limit' => $limit,
+                'tier' => $tier,
+                'message' => 'Account is valid, balance: ' . $checkBalance['gold'] . ' gold, ' . $checkBalance['silver'] . ' silver, ' . $topupsCount . ' topups' . ' region_id: ' . $regionId . ' limit: ' . $limit . ' tier: ' . $tier
             ];
         } else {
             return [
@@ -543,6 +554,9 @@ class RazerService
         $data_items = $this->formatOutput($output);
         $gold = 0;
         $silver = 0;
+        $limit = 0;
+        $region_id = 0;
+        $tier = 0;
         if ($data_items) {
             foreach ($data_items as $data_item) {
                 if (isset($data_item['Total Gold'])) {
@@ -551,12 +565,30 @@ class RazerService
                 if (isset($data_item['Silver Balance'])) {
                     $silver = $data_item['Silver Balance'];
                 }
+
+                if (isset($data_item['Limit'])) {
+                    $limit = $data_item['Limit'];
+                }
+                if (isset($data_item['Region ID'])) {
+                    $region_id = $data_item['Region ID'];
+                }
+                if (isset($data_item['Tier'])) {
+                    $tier = $data_item['Tier'];
+                }
+
+
+                /*"""
+Premium Gold: 0.050000, Bonus Gold: 0, Total Gold: 0.050000, Limit: 600, Currency Code: USD, Tier: 2, Region ID: 12
+Silver Balance: 1500000, Next Expiring Bonus Silver: 15245, Next Expiring Bonus Silver DateTime: 2026-02-28 23:59:59.997 +0000 UTC, Silver Balance: 1524*/
             }
         }
 
         $return = [
             'gold' => $gold,
             'silver' => $silver,
+            'limit' => $limit,
+            'region_id' => $region_id,
+            'tier' => $tier,
         ];
 
         SystemLog::create([

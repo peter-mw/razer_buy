@@ -120,6 +120,16 @@ class AccountResource extends Resource
 
                             $message = $result['message'] ?? 'Account validation failed';
 
+                            // Extract region ID and limit from the message
+                            if (isset($result['region_id'])) {
+                                $accountyTypeValue = AccountType::where('region_id', $result['region_id'])->value('code');
+                                $set('account_type',$accountyTypeValue);
+                            }
+
+                            if (isset($result['limit'])) {
+                                $set('limit_amount_per_day', $result['limit']);
+                            }
+
                             $set('validation_result', $message);
                         })
                         ->visible(fn($record) => $record !== null),
@@ -325,12 +335,7 @@ class AccountResource extends Resource
                     }),
             ])
             ->columns([
-                \LaraZeus\InlineChart\Tables\Columns\InlineChart::make('activity')
-                    ->chart(AccountCodesInlineChartWidget::class)
-                    ->maxWidth(200)
-                    ->maxHeight(90)
-                    ->description('Last 7 days activity')
-                    ->toggleable(isToggledHiddenByDefault: true),
+
                 Tables\Columns\TextColumn::make('id')
                     ->sortable()
                     ->searchable()
@@ -688,7 +693,7 @@ class AccountResource extends Resource
             RelationManagers\AccountTopupsRelationManager::class,
             RelationManagers\SystemLogsRelationManager::class,
             RelationManagers\CodesWithMissingProductRelationManager::class,
-         ];
+        ];
     }
 
     public static function getPages(): array
