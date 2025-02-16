@@ -44,12 +44,17 @@ class ExportController extends Controller
         $csv->insertOne([
             'Product Name',
             'Cost',
+            'Currency',
             'Source',
-            'Code',
+
             'Serial',
-            'TransactionId',
-            'RazerProductId',
-            'RazerAccountId'
+            'Number',
+            'CVV',
+
+            'Code',
+         //   'TransactionId',
+         //   'RazerProductId',
+         //   'RazerAccountId'
 
         ]);
 
@@ -58,12 +63,17 @@ class ExportController extends Controller
             $csv->insertOne([
                 $code->product?->remote_crm_product_name ?? $code->product?->product_name ?? '',
                 $code->buy_value * (1 - $discount / 100), // Apply dynamic discount
+                'USD',
                 $code->account?->name ?? '',
-                $code->code,
+
                 $code->serial_number,
-                $code->transaction_id,
-                $code->product_id,
-                $code->account_id
+                '',
+                '',
+
+                $code->code,
+               // $code->transaction_id,
+               // $code->product_id,
+               // $code->account_id
 
             ]);
         }
