@@ -23,6 +23,17 @@ class ExportController extends Controller
             $query->whereBetween('buy_date', [$fromDate, $toDate]);
         }
 
+        if ($request->has('account_id')) {
+            $query->where('account_id', $request->get('account_id'));
+        }
+
+        if ($request->has('product_name')) {
+            $query->where('product_name', $request->get('product_name'));
+        }
+
+        if ($request->has('serial_number')) {
+            $query->where('serial_number', $request->get('serial_number'));
+        }
         $query->orderBy('product_name', 'asc');
         $codes = $query->get();
 
@@ -52,8 +63,9 @@ class ExportController extends Controller
             'Number',
             'CVV',
 
-            'Code',
-            //   'TransactionId',
+            'Pin',
+            'Expiration',
+            //'TransactionId',
             //   'RazerProductId',
             //   'RazerAccountId'
 
@@ -76,7 +88,9 @@ class ExportController extends Controller
                 '',
                 '',
 
+
                 $code->code,
+                '',
                 // $code->transaction_id,
                 // $code->product_id,
                 // $code->account_id

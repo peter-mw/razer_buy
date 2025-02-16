@@ -24,11 +24,11 @@ class CodeResource extends Resource
 
     protected static ?int $navigationSort = 4;
 
+
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-
                 Forms\Components\Select::make('account_id')
                     ->relationship('account', 'name')
                     ->required()
@@ -70,7 +70,7 @@ class CodeResource extends Resource
     {
         return $table
             ->defaultSort('created_at', 'desc')
-            ->paginated([100, 250, 500, 1000, 5000, 10000, 'all'])
+            ->paginated([10,20,25,50,100, 250, 500, 1000, 2000, 5000, 'all'])
             ->headerActions([
                 Tables\Actions\ExportAction::make()
                     ->form([
@@ -92,6 +92,14 @@ class CodeResource extends Resource
                         Forms\Components\DatePicker::make('to_date')
                             ->label('To Date')
                             ->default(now()),
+                        Forms\Components\Select::make('account_id')
+                            ->label('Account')
+                            ->options(fn(): array => \App\Models\Account::pluck('name', 'id')->toArray())
+                            ->searchable(),
+                        Forms\Components\Select::make('product_name')
+                            ->label('Product Name')
+                            ->options(fn(): array => Code::whereNotNull('product_name')->distinct()->pluck('product_name', 'product_name')->toArray())
+                            ->searchable(),
                         Forms\Components\TextInput::make('discount')
                             ->label('Discount (%)')
                             ->numeric()
@@ -102,6 +110,8 @@ class CodeResource extends Resource
                         $params = http_build_query([
                             'from_date' => $data['from_date'],
                             'to_date' => $data['to_date'],
+                            'account_id' => $data['account_id'],
+                            'product_name' => $data['product_name'],
                             'discount' => $data['discount'],
                         ]);
                         $url = route('export.remote-crm') . '?' . $params;
@@ -114,8 +124,6 @@ class CodeResource extends Resource
                     ->sortable()
                     ->numeric()
                     ->searchable(),
-
-
                 Tables\Columns\TextColumn::make('account.name')
                     ->sortable()
                     ->searchable(),
@@ -126,11 +134,9 @@ class CodeResource extends Resource
                 Tables\Columns\TextColumn::make('code')
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(),
-
                 Tables\Columns\TextColumn::make('serial_number')
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(),
-
                 Tables\Columns\TextColumn::make('product.id')
                     ->label('Product ID')
                     ->sortable()
@@ -142,7 +148,6 @@ class CodeResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('product_name')
                     ->sortable()
-                    ->searchable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('product_edition')
                     ->toggleable(isToggledHiddenByDefault: true)
@@ -153,7 +158,11 @@ class CodeResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('buy_value')
                     ->money()
-                    ->sortable(),
+                    ->sortable()
+                    ->summarize([
+                        Tables\Columns\Summarizers\Sum::make()
+                            ->money()
+                    ]),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -170,13 +179,10 @@ class CodeResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-
-
                 Tables\Filters\SelectFilter::make('account_id')
                     ->label('Account')
                     ->searchable()
                     ->options(fn(): array => \App\Models\Account::pluck('name', 'id')->toArray()),
-
                 Tables\Filters\SelectFilter::make('product_name')
                     ->label('Product Name')
                     ->searchable()
@@ -185,8 +191,6 @@ class CodeResource extends Resource
                     ->label('Product Edition')
                     ->searchable()
                     ->options(fn(): array => Code::whereNotNull('product_edition')->distinct()->pluck('product_edition', 'product_edition')->toArray()),
-
-
                 Tables\Filters\Filter::make('buy_date')
                     ->form([
                         Forms\Components\DatePicker::make('created_from'),
@@ -201,7 +205,6 @@ class CodeResource extends Resource
                             $data['created_until'],
                             fn(Builder $query, $date) => $query->whereDate('buy_date', '<=', $date),
                         ))
-
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -218,6 +221,14 @@ class CodeResource extends Resource
                             Forms\Components\DatePicker::make('to_date')
                                 ->label('To Date')
                                 ->default(now()),
+                            Forms\Components\Select::make('account_id')
+                                ->label('Account')
+                                ->options(fn(): array => \App\Models\Account::pluck('name', 'id')->toArray())
+                                ->searchable(),
+                            Forms\Components\Select::make('product_name')
+                                ->label('Product Name')
+                                ->options(fn(): array => Code::whereNotNull('product_name')->distinct()->pluck('product_name', 'product_name')->toArray())
+                                ->searchable(),
                             Forms\Components\TextInput::make('discount')
                                 ->label('Discount (%)')
                                 ->numeric()
@@ -229,16 +240,16 @@ class CodeResource extends Resource
                             $params = http_build_query([
                                 'from_date' => $data['from_date'],
                                 'to_date' => $data['to_date'],
+                                'account_id' => $data['account_id'],
+                                'product_name' => $data['product_name'],
                                 'discount' => $data['discount'],
                             ]);
                             $url = route('export.remote-crm') . '?' . $params;
                             redirect()->away($url);
                         })
-
                     ,
                     ExportBulkAction::make()
                         ->exporter(CodeExporter::class)
-
                 ]),
             ]);
     }

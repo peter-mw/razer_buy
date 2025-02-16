@@ -26,8 +26,7 @@ class AccountBalanceHistoryResource extends Resource
     public static function form(Form $form): Form
     {
         return $form
-            ->paginated([10, 25, 50, 100, 250, 1000, 'all'])
-
+            ->paginated([10,20,25,50,100, 250, 500, 1000, 2000, 5000, 'all'])
             ->schema([
                 Forms\Components\Select::make('account_id')
                     ->relationship('account', 'name')
@@ -51,7 +50,7 @@ class AccountBalanceHistoryResource extends Resource
     {
         return $table
             ->defaultSort('balance_update_time', 'desc')
-            ->paginated([100, 200, 500, 'all'])
+            ->paginated([10,20,25,50,100, 250, 500, 1000, 2000, 5000, 'all'])
             ->columns([
                 Tables\Columns\TextColumn::make('account.id')
                     ->label('Id')

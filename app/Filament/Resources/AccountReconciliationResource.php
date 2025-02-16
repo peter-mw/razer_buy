@@ -27,6 +27,7 @@ class AccountReconciliationResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+
             ->paginated([10,20,25,50,100, 250, 500, 1000, 2000, 5000, 'all'])
             ->headerActions([
                 Tables\Actions\ExportAction::make()
@@ -57,6 +58,11 @@ class AccountReconciliationResource extends Resource
                 Tables\Columns\TextColumn::make('id')
                     ->label('ID')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('vendor')
+                    ->label('Provider')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('name')
                     ->label('Name')
                     ->sortable()

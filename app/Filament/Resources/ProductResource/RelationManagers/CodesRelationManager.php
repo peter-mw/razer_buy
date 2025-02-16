@@ -22,7 +22,7 @@ class CodesRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->paginated([100, 250, 500, 1000, 2000, 5000, 'all'])
+            ->paginated([10,20,25,50,100, 250, 500, 1000, 2000, 5000, 'all'])
             ->columns([
                 TextColumn::make('code')
                     ->searchable()
