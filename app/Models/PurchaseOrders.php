@@ -53,4 +53,9 @@ class PurchaseOrders extends Model
     {
         return $this->hasMany(Code::class, 'order_id');
     }
+
+    public function systemLogs(): HasMany
+    {
+        return $this->hasMany(SystemLog::class, 'order_id');
+    }
 }

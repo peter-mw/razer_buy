@@ -376,6 +376,7 @@ class PurchaseOrderResource extends Resource
         return [
             RelationManagers\CodesRelationManager::class,
             RelationManagers\TransactionsRelationManager::class,
+            RelationManagers\SystemLogsRelationManager::class,
         ];
     }
 

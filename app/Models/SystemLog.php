@@ -7,12 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 class SystemLog extends Model
 {
     protected $fillable = [
+        'account_id',
         'source',
+        'status',
         'command',
         'params',
         'response',
-        'status',
-        'account_id',
+        'order_id',
     ];
 
     public function account()

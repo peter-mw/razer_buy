@@ -28,6 +28,9 @@ class SystemLogResource extends Resource
                     ->searchable()
                     ->preload()
                     ->nullable(),
+                Forms\Components\TextInput::make('order_id')
+                    ->numeric()
+                    ->nullable(),
                 Forms\Components\TextInput::make('source')
                     ->required()
                     ->maxLength(255),
@@ -56,6 +59,10 @@ class SystemLogResource extends Resource
                 Tables\Columns\TextColumn::make('account.name')
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('order_id')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('status')
                     ->searchable()
                     ->color(fn (string $state): string => match ($state) {

@@ -16,4 +16,5 @@ class EditProductToBuy extends EditRecord
             Actions\DeleteAction::make(),
         ];
     }
+ 
 }
