@@ -124,6 +124,8 @@ class RazerService
         if ($output === null) {
             SystemLog::create([
                 'source' => 'RazerService::getTransactionDetails',
+                'account_id' => $account->id ?? null,
+
                 'command' => $cmd,
                 'params' => $params,
                 'response' => ['error' => 'Command execution failed'],
@@ -138,6 +140,7 @@ class RazerService
         if (str_contains($output, 'Error unmarshalling response: invalid character')) {
             SystemLog::create([
                 'source' => 'RazerService::getTransactionDetails',
+                'account_id' => $account->id ?? null,
                 'command' => $cmd,
                 'params' => $params,
                 'response' => ['error' => 'Error unmarshalling response: invalid character'],
@@ -150,6 +153,7 @@ class RazerService
 
         SystemLog::create([
             'source' => 'RazerService::getTransactionDetails',
+            'account_id' => $account->id ?? null,
             'command' => $cmd,
             'params' => $params,
             'response' => $format,
@@ -207,6 +211,7 @@ class RazerService
         if ($output === null) {
             SystemLog::create([
                 'source' => 'RazerService::buyProduct',
+                'account_id' => $account->id ?? null,
                 'command' => $cmd,
                 'params' => $params,
                 'response' => ['error' => 'Command execution failed'],
@@ -233,6 +238,7 @@ class RazerService
         if (isset($format['orders'])) {
             SystemLog::create([
                 'source' => 'RazerService::buyProduct',
+                'account_id' => $account->id ?? null,
                 'command' => $cmd,
                 'params' => $params,
                 'response' => $format,
@@ -243,6 +249,7 @@ class RazerService
         } else {
             SystemLog::create([
                 'source' => 'RazerService::buyProduct',
+                'account_id' => $account->id ?? null,
                 'command' => $cmd,
                 'params' => $params,
                 'response' => $output,
@@ -306,6 +313,7 @@ class RazerService
         if ($output === null) {
             SystemLog::create([
                 'source' => 'RazerService::fetchTopUps',
+                'account_id' => $account->id ?? null,
                 'command' => $cmd,
                 'params' => $params,
                 'response' => ['error' => 'Command execution failed'],
@@ -320,6 +328,7 @@ class RazerService
 
         SystemLog::create([
             'source' => 'RazerService::fetchTopUps',
+            'account_id' => $account->id ?? null,
             'command' => $cmd,
             'params' => $params,
             'response' => $data_items,
@@ -389,6 +398,7 @@ class RazerService
 
         SystemLog::create([
             'source' => 'RazerService::fetchAllCodes',
+            'account_id' => $account->id ?? null,
             'command' => $cmd,
             'params' => $params,
             'response' => $return,
@@ -462,6 +472,7 @@ class RazerService
         if ($output === null) {
             SystemLog::create([
                 'source' => 'RazerService::getAccountBallance',
+                'account_id' => $account->id ?? null,
                 'command' => $cmd,
                 'params' => $params,
                 'response' => ['error' => 'Command execution failed'],
@@ -493,6 +504,7 @@ class RazerService
 
         SystemLog::create([
             'source' => 'RazerService::getAccountBallance',
+            'account_id' => $account->id ?? null,
             'command' => $cmd,
             'params' => $params,
             'response' => $return,
