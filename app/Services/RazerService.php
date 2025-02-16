@@ -159,11 +159,11 @@ class RazerService
         return $format;
     }
 
-    public function buyProduct(PurchaseOrders $productToBuy, $quantity = 1)
+    public function buyProduct(PurchaseOrders $purchaseOrder, $quantity = 1)
     {
         $workdir = $this->getWorkdir();
         $account = $this->account;
-        $productData = Product::where('id', $productToBuy->product_id)->first();
+        $productData = Product::where('id', $purchaseOrder->product_id)->first();
 
         $slug = $productData->product_slug;
 
@@ -180,7 +180,7 @@ class RazerService
         ];
 
         // Get region_id from account type
-        $region_id = \App\Models\AccountType::where('code', $productToBuy->account_type)
+        $region_id = \App\Models\AccountType::where('code', $purchaseOrder->account_type)
             ->value('region_id') ?? 2; // Default to 2 if not found
 
         $cmd = sprintf(
@@ -191,7 +191,7 @@ class RazerService
             escapeshellarg($account->password),
             escapeshellarg($account->client_id_login),
             escapeshellarg($account->service_code),
-            escapeshellarg($productToBuy->product_id),
+            escapeshellarg($purchaseOrder->product_id),
             escapeshellarg($slug),
             escapeshellarg($region_id),
             escapeshellarg($quantity)
@@ -261,6 +261,11 @@ class RazerService
 
         $this->getAccountBallance();
         $creds = $workdir . '/balance_credentials.txt';
+
+        if(!file_exists($creds)){
+           return [];
+        }
+
         copy($creds, $workdir . '/credentials.txt');
 
 
@@ -379,11 +384,7 @@ class RazerService
         $data_items = $this->formatOutput($output);
 
 
-
-
-
         $return = $data_items;
-
 
 
         SystemLog::create([
@@ -402,24 +403,31 @@ class RazerService
         $isValid = true;
 
         $checkBalance = $this->getAccountBallance();
-        //$topups = $this->fetchTopUps();
-        //$codes = $this->fetchAllCodes();
+        $topups = $this->fetchTopUps();
 
+        //  $codes = $this->fetchAllCodes();
 
+        //  dd($codes);
 
         if ($checkBalance['gold'] == 0 && $checkBalance['silver'] == 0) {
             $isValid = false;
         }
 
+        if ($topups == null) {
+            $isValid = false;
+        }
+
+        $topupsCount = count($topups);
+
         if ($isValid) {
             return [
                 'status' => 'success',
-                'message' => 'Account is valid'
+                'message' => 'Account is valid, balance: ' . $checkBalance['gold'] . ' gold, ' . $checkBalance['silver'] . ' silver, ' . $topupsCount . ' topups'
             ];
         } else {
             return [
                 'status' => 'error',
-                'message' => 'Account is invalid'
+                'message' => 'Account is invalid, balance: ' . $checkBalance['gold'] . ' gold, ' . $checkBalance['silver'] . ' silver, ' . $topupsCount . ' topups'
             ];
         }
 
@@ -513,7 +521,8 @@ class RazerService
 
     public function formatOutputTopUps($output)
     {
-        $pattern = '/Product:\s+(.*?)\s+Transaction:\s+(\S+)\s+Amount:\s+(\d+)\s+Timestamp:\s+([\d\-:\. ]+)\s+\+\d+\s+\w+\s+TransactionDate:\s+([\d\-:\. ]+)\s+\+\d+\s+\w+/';
+
+        $pattern = '/Product:\s+(.*?)\s+Transaction:\s+(\S+)\s+Amount:\s+(\d+)\s+Timestamp:\s+([\d\-:\. ]+\d{7})\s+\+\d{4}\s+\+\d{4}\s+TransactionDate:\s+([\d\-:\. ]+\d{7})\s+\+\d{4}\s+\+\d{4}/';
         preg_match_all($pattern, $output, $matches, PREG_SET_ORDER);
 
 

@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Phpsa\FilamentPasswordReveal\Password;
 use App\Services\OtpService;
 use App\Models\AccountType;
+
 class AccountResource extends Resource
 {
     protected static ?string $model = Account::class;
@@ -116,23 +117,23 @@ class AccountResource extends Resource
                             $result = $razerService->validateAccount();
 
                             $status = $result['status'] === 'success';
-                            $message = "Status: " . ($status ? 'Valid' : 'Invalid') . "\n";
-                            $message .= "Gold Balance: " . number_format($record->ballance_gold, 2) . "\n";
-                            $message .= "Silver Balance: " . number_format($record->ballance_silver, 2) . "\n";
-                            $message .= $result['message'];
+                            // $message = "Status: " . ($status ? 'Valid' : 'Invalid') . "\n";
+                            //$message .= "Gold Balance: " . number_format($record->ballance_gold, 2) . "\n";
+                            //    $message .= "Silver Balance: " . number_format($record->ballance_silver, 2) . "\n";
+                            $message = $result['message'];
 
                             $set('validation_result', $message);
                             $set('validation_status', $result['status']);
                         })
-                        ->visible(fn ($record) => $record !== null)
+                        ->visible(fn($record) => $record !== null)
                 ]),
 
                 Forms\Components\Placeholder::make('validation_result')
-                    ->content(fn ($state) => $state)
+                    ->content(fn($state) => $state)
                     ->columnSpanFull()
-                    ->hidden(fn ($state) => empty($state))
-                    ->extraAttributes(fn ($state, $get) => [
-                        'class' => 'whitespace-pre-line p-4 rounded-lg ' . 
+                    ->hidden(fn($state) => empty($state))
+                    ->extraAttributes(fn($state, $get) => [
+                        'class' => 'whitespace-pre-line p-4 rounded-lg ' .
                             ($get('validation_status') === 'success' ? 'bg-success-500/10 text-success-700' : 'bg-danger-500/10 text-danger-700')
                     ]),
 
@@ -331,7 +332,7 @@ class AccountResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('account_type')
                     ->badge()
-                    ->formatStateUsing(fn (string $state) => AccountType::where('code', $state)->value('name') ?? $state)
+                    ->formatStateUsing(fn(string $state) => AccountType::where('code', $state)->value('name') ?? $state)
                     ->color('primary')
                     ->searchable()
                     ->sortable(),
