@@ -61,7 +61,7 @@ class ExportController extends Controller
 
             'Serial',
             'Number',
-            'CVV',
+            'Cvv',
 
             'Pin',
             'Expiration',

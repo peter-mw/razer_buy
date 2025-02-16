@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Account;
 use App\Models\Code;
+use App\Models\CodesWithMissingProduct;
 use App\Models\PendingTransaction;
 use App\Models\Product;
 use App\Models\PurchaseOrders;
@@ -167,18 +168,45 @@ class FetchAccountCodesJob implements ShouldQueue
                     // Process each product group
                     foreach ($codesByProduct as $productName => $productCodes) {
                         // Find or create product
-                        $product = Product::where('product_name', 'LIKE', '%' . $productName . '%')->first();
+                        $product = Product::where('product_name', $productName)->first();
 
                         if (!$product) {
-                            $product = Product::create([
-                                'product_name' => $productName,
-                                'product_slug' => Str::slug($productName),
-                                'account_type' => 'unknown',
-                                'product_edition' => 'unknown',
-                                'product_buy_value' => 0,
-                                'product_face_value' => 0,
-                            ]);
-                            $product->save();
+                            // Create entry in codes with missing products table
+                            foreach ($productCodes as $codeData) {
+                                $checkIfCodesWithMissingProductExist = CodesWithMissingProduct::where('code', $codeData['Code'])
+                                    ->where('serial_number', $codeData['SN'])
+                                    ->first();
+
+                                if ($checkIfCodesWithMissingProductExist) {
+                                    continue;
+                                }
+
+
+                                $code = $codeData['Code'];
+                                $serialNumber = $codeData['SN'];
+                                $amount = floatval($codeData['Amount']);
+                                $amount = number_format($amount, 2, '.', '');
+                                $transaction_id = $codeData['ID'] ?? '';
+                                $buyDate = date('Y-m-d H:i:s', strtotime($codeData['TransactionDate']));
+
+                                CodesWithMissingProduct::create([
+                                    'account_id' => $account->id,
+                                    'code' => $code,
+                                    'serial_number' => $serialNumber,
+                                    'product_id' => null,
+                                    'product_name' => $productName,
+                                    'product_slug' => Str::slug($productName),
+                                    'account_type' => 'unknown',
+                                    'product_edition' => 'unknown',
+                                    'product_buy_value' => 0,
+                                    'product_face_value' => 0,
+                                    'buy_date' => $buyDate,
+                                    'buy_value' => $amount,
+                                    'transaction_ref' => null,
+                                    'transaction_id' => $transaction_id
+                                ]);
+                            }
+                            continue;
                         }
 
                         // Create order for this product group

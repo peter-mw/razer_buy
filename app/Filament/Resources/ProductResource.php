@@ -46,9 +46,9 @@ class ProductResource extends Resource
                     ->columns(2)
                     ->gridDirection('row'),
 
-                Forms\Components\TextInput::make('product_edition')
+                Forms\Components\Hidden::make('product_edition')
                     ->label('Product Edition (same as product name if not applicable)')
-                    ->maxLength(255),
+                    ,
                 Forms\Components\TextInput::make('product_buy_value')
                     ->required()
                     ->numeric()
@@ -77,12 +77,7 @@ class ProductResource extends Resource
                     ->exporter(ProductExporter::class),
             ])
             ->columns([
-                \LaraZeus\InlineChart\Tables\Columns\InlineChart::make('activity')
-                    ->chart(ProductActivityInlineChartWidget::class)
-                    ->maxWidth(350)
-                    ->maxHeight(90)
-                    ->description('Last 7 days activity')
-                    ->toggleable(isToggledHiddenByDefault: true),
+
                 Tables\Columns\TextColumn::make('id')
                     ->label('Product ID')
                     ->sortable()
@@ -111,10 +106,14 @@ class ProductResource extends Resource
                     ->searchable(),
 
                 Tables\Columns\TextColumn::make('codes_count')
+                    ->sortable()
+                    ->toggleable()
                     ->counts('codes')
                     ->label('Total Codes'),
                 Tables\Columns\TextColumn::make('transactions_count')
                     ->counts('transactions')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->label('Total Transactions'),
 
 
