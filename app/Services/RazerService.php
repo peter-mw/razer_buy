@@ -261,6 +261,15 @@ class RazerService
         return $format;
     }
 
+    public function fetchTopUpsCached(): array
+    {
+
+        $cache = Cache::remember('razer_topups_cache_1' . $this->account->id, 60000, function () {
+            return $this->fetchTopUps();
+        });
+        return $cache;
+    }
+
     public function fetchTopUps(): array
     {
         $workdir = $this->getWorkdir();
@@ -533,27 +542,44 @@ class RazerService
 
     public function formatOutputTopUps($output)
     {
-
-        $pattern = '/Product:\s+(.*?)\s+Transaction:\s+(\S+)\s+Amount:\s+(\d+)\s+Timestamp:\s+([\d\-:\. ]+\d{7})\s+\+\d{4}\s+\+\d{4}\s+TransactionDate:\s+([\d\-:\. ]+\d{7})\s+\+\d{4}\s+\+\d{4}/';
-        preg_match_all($pattern, $output, $matches, PREG_SET_ORDER);
-
-
+        $lines = explode("\n", $output);
         $result = [];
-        foreach ($matches as $match) {
-            $item = [
-                'product' => $match[1] ?? '',
-                'transaction' => $match[2] ?? '',
-                'amount' => $match[3] ?? '',
-                'timestamp' => $match[4] ?? '',
-                'transaction_date' => $match[5] ?? '',
-            ];
-            if ($item['transaction_date']) {
-                $str = explode('.', $item['transaction_date']);
-                $item['transaction_date'] = $str[0];
+
+        foreach ($lines as $line) {
+            if (empty(trim($line))) continue;
+
+            $item = [];
+
+            // Extract Product
+            if (preg_match('/Product:\s+(.*?)\s+(?:Refund:|Transaction:)/', $line, $match)) {
+                $item['product'] = trim($match[1]);
             }
 
-            $result[] = $item;
+            // Extract Transaction
+            if (preg_match('/Transaction:\s+(\S+)/', $line, $match)) {
+                $item['transaction'] = $match[1];
+            }
 
+            // Extract Amount
+            if (preg_match('/Amount:\s+([\d\.]+)/', $line, $match)) {
+                $item['amount'] = $match[1];
+            }
+
+            // Extract Timestamp
+            if (preg_match('/Timestamp:\s+([\d\-:\. ]+)/', $line, $match)) {
+                $timestamp = explode('.', $match[1])[0];
+                $item['timestamp'] = trim($timestamp);
+            }
+
+            // Extract TransactionDate
+            if (preg_match('/TransactionDate:\s+([\d\-:\. ]+)/', $line, $match)) {
+                $transactionDate = explode('.', $match[1])[0];
+                $item['transaction_date'] = trim($transactionDate);
+            }
+
+            if (!empty($item)) {
+                $result[] = $item;
+            }
         }
 
         return $result;

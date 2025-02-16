@@ -44,11 +44,11 @@ class FetchAccountCodesJob implements ShouldQueue
 
         // Fetch all codes for the account
         try {
-            // $codes = $service->fetchAllCodesCached();
-
-            //@ todo remove this
             $codes = $service->fetchAllCodes();
 
+            //@ todo remove this
+            //   $codes = $service->fetchAllCodes();
+            $foundCodes = [];
             if (!empty($codes)) {
                 // Track if we found any new codes
                 $hasNewCodes = false;
@@ -77,7 +77,58 @@ class FetchAccountCodesJob implements ShouldQueue
                         }
                         $processedCodes[] = $codeData;
                     } else {
+                        $foundCodes[] = $existingCode;
+                    }
+                }
 
+                if ($foundCodes) {
+                    foreach ($foundCodes as $existingCode) {
+
+
+                        // Check if transaction exists for this code
+                        $transaction = Transaction::where('account_id', $existingCode->account_id)
+                            ->where('product_id', $existingCode->product_id)
+                            ->where('order_id', $existingCode->order_id)
+                            ->first();
+
+                        if (!$transaction) {
+                            // Find matching code data from fetched codes
+                            $codeData = $existingCode->toArray();
+
+
+                            /*$codeData = rray:14 [▼ // app/Jobs/FetchAccountCodesJob.php:97
+  "id" => 1875
+  "account_id" => 11
+  "order_id" => 137
+  "product_id" => 14486
+  "code" => "MGG1NJ65K4JN"
+  "serial_number" => "M001111051739107801907314011609"
+  "product_name" => "Yalla Ludo - USD 2 Diamonds"
+  "product_edition" => null
+  "buy_date" => "2025-02-10T07:48:06.000000Z"
+  "buy_value" => "2.07"
+  "created_at" => "2025-02-15T12:37:01.000000Z"
+  "updated_at" => "2025-02-15T12:37:01.000000Z"
+  "transaction_ref" => null
+  "transaction_id" => "122GOWX6B249861538E13"
+]*/
+
+                            if ($codeData) {
+                                // Create transaction for existing code
+                                $transactionData = [
+                                    'account_id' => $existingCode->account_id,
+                                    'amount' => $codeData['buy_value'],
+                                    'product_id' => $existingCode->product_id,
+                                    'transaction_date' => $codeData['buy_date'],
+                                    'transaction_id' => $codeData['transaction_id'],
+                                    'order_id' => $existingCode->order_id,
+                                    'transaction_ref' =>$codeData['product_name']
+                                ];
+
+                                $transaction = Transaction::create($transactionData);
+                                $transaction->save();
+                            }
+                        }
                     }
                 }
 
