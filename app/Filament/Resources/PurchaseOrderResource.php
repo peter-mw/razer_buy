@@ -157,7 +157,19 @@ class PurchaseOrderResource extends Resource
                             $product = Product::find($state);
 
                             if ($product) {
-                                $set('product_name', $product->product_name);
+                                // Get the account type specific slug if it exists
+                                $accountType = $get('account_type');
+                                $productName = $product->product_name;
+                                
+                                if ($accountType && isset($product->product_slugs)) {
+                                    $slugs = collect($product->product_slugs);
+                                    $regionSlug = $slugs->firstWhere('account_type', $accountType);
+                                    if ($regionSlug && isset($regionSlug['slug'])) {
+                                        $productName = $regionSlug['slug'];
+                                    }
+                                }
+                                
+                                $set('product_name', $productName);
                                 $set('product_edition', $product->product_edition);
                                 $set('buy_value', $product->product_buy_value);
                                 $set('product_face_value', $product->product_face_value);

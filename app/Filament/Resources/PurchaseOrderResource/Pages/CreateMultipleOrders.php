@@ -502,12 +502,24 @@ class CreateMultipleOrders extends Page
                     $quantity = $quantities[$accountId][$product->id] ?? 0;
 
                     if ($quantity > 0) {
+                        // Get the account type specific slug if it exists
+                        $productName = $product->product_name;
+                        $accountType = $data['data']['account_type'];
+                        
+                        if ($accountType && isset($product->product_slugs)) {
+                            $slugs = collect($product->product_slugs);
+                            $regionSlug = $slugs->firstWhere('account_type', $accountType);
+                            if ($regionSlug && isset($regionSlug['slug'])) {
+                                $productName = $regionSlug['slug'];
+                            }
+                        }
+
                         /** @var PurchaseOrders $order */
                         $order = PurchaseOrders::create([
                             'product_id' => $product->id,
-                            'product_name' => $product->product_name,
+                            'product_name' => $productName,
                             'product_edition' => $product->product_edition,
-                            'account_type' => $data['data']['account_type'],
+                            'account_type' => $accountType,
                             'quantity' => $quantity,
                             'buy_value' => $product->product_buy_value,
                             'product_face_value' => $product->product_face_value,

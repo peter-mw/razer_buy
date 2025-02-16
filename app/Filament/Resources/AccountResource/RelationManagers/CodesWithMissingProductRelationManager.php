@@ -1,35 +1,25 @@
 <?php
 
-namespace App\Filament\Resources;
+namespace App\Filament\Resources\AccountResource\RelationManagers;
 
-use App\Filament\Resources\CodesWithMissingProductResource\Pages;
-use App\Models\CodesWithMissingProduct;
 use Filament\Forms;
 use Filament\Forms\Form;
-use Filament\Resources\Resource;
+use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
-
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 
-class CodesWithMissingProductResource extends Resource
+class CodesWithMissingProductRelationManager extends RelationManager
 {
-    protected static ?string $model = CodesWithMissingProduct::class;
+    protected static string $relationship = 'codesWithMissingProduct';
 
-    protected static ?string $navigationIcon = 'heroicon-o-exclamation-triangle';
+    protected static ?string $recordTitleAttribute = 'code';
 
-    protected static ?string $navigationLabel = 'Codes Without Products';
-
-    protected static ?int $navigationSort = 5;
-
-    public static function form(Form $form): Form
+    public function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('account_id')
-
-                    ->disabled(),
                 Forms\Components\TextInput::make('code')
                     ->required()
                     ->maxLength(255),
@@ -74,18 +64,12 @@ class CodesWithMissingProductResource extends Resource
             ]);
     }
 
-    public static function table(Table $table): Table
+    public function table(Table $table): Table
     {
         return $table
+            ->recordTitleAttribute('code')
             ->defaultSort('created_at', 'desc')
-            ->paginated([10,20,25,50,100, 250, 500, 1000, 2000, 5000, 'all'])
             ->columns([
-                Tables\Columns\TextColumn::make('id')
-                    ->sortable()
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('account.name')
-                    ->sortable()
-                    ->searchable(),
                 Tables\Columns\TextColumn::make('code')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('serial_number')
@@ -135,23 +119,10 @@ class CodesWithMissingProductResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('account_id')
-                    ->label('Account')
-                    ->searchable()
-                    ->relationship('account', 'name'),
                 Tables\Filters\SelectFilter::make('product_name')
                     ->label('Product Name')
                     ->searchable()
-                    ->options(fn(): array => CodesWithMissingProduct::whereNotNull('product_name')->distinct()->pluck('product_name', 'product_name')->toArray()),
-     /*
-
-                Tables\Filters\SelectFilter::make('product_edition')
-                    ->label('Product Edition')
-                    ->searchable()
-                    ->options(fn(): array => CodesWithMissingProduct::whereNotNull('product_edition')->distinct()->pluck('product_edition', 'product_edition')->toArray()),
-
-
-                */
+                    ->options(fn(): array => $this->ownerRecord->codesWithMissingProduct()->whereNotNull('product_name')->distinct()->pluck('product_name', 'product_name')->toArray()),
                 Tables\Filters\Filter::make('buy_date')
                     ->form([
                         Forms\Components\DatePicker::make('created_from'),
@@ -171,42 +142,12 @@ class CodesWithMissingProductResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-            ])
-            ->headerActions([
-                Tables\Actions\Action::make('purgeAll')
-                    ->label('Purge All')
-                    ->color('danger')
-                    ->icon('heroicon-o-trash')
-                    ->requiresConfirmation()
-                    ->action(fn () => CodesWithMissingProduct::truncate()),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\BulkAction::make('purgeAll')
-                        ->label('Purge All')
-                        ->color('danger')
-                        ->icon('heroicon-o-trash')
-                        ->requiresConfirmation()
-                        ->action(fn () => CodesWithMissingProduct::truncate())
-                        ->deselectRecordsAfterCompletion(),
                 ]),
             ]);
-    }
-
-    public static function getRelations(): array
-    {
-        return [
-            //
-        ];
-    }
-
-    public static function getPages(): array
-    {
-        return [
-            'index' => Pages\ListCodesWithMissingProducts::route('/'),
-            'create' => Pages\CreateCodesWithMissingProduct::route('/create'),
-            'edit' => Pages\EditCodesWithMissingProduct::route('/{record}/edit'),
-        ];
     }
 }

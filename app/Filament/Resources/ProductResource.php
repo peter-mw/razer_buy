@@ -36,6 +36,21 @@ class ProductResource extends Resource
                 Forms\Components\TextInput::make('product_slug')
                     ->required()
                     ->maxLength(255),
+                Forms\Components\Repeater::make('product_slugs')
+                    ->schema([
+                        Forms\Components\Select::make('account_type')
+                            ->required()
+                            ->options(fn(): array => \App\Models\AccountType::query()
+                                ->where('is_active', true)
+                                ->pluck('name', 'code')
+                                ->toArray()
+                            ),
+                        Forms\Components\TextInput::make('slug')
+                            ->required()
+                            ->maxLength(255),
+                    ])
+                    ->columns(2)
+                    ->label('Region-specific Slugs'),
                 Forms\Components\CheckboxList::make('account_type')
                     ->required()
                     ->options(fn(): array => \App\Models\AccountType::query()

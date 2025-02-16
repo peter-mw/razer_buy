@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\CodesWithMissingProduct;
 use Illuminate\Support\Facades\DB;
 
 class Account extends Model
@@ -35,6 +36,7 @@ class Account extends Model
         'balance_difference',
         'failed_to_purchase_attempts',
         'failed_to_purchase_timestamp',
+        'notes',
     ];
 
     protected $accountTypes = ['global', 'usa'];
@@ -81,6 +83,11 @@ class Account extends Model
     public function systemLogs(): HasMany
     {
         return $this->hasMany(SystemLog::class);
+    }
+
+    public function codesWithMissingProduct(): HasMany
+    {
+        return $this->hasMany(CodesWithMissingProduct::class);
     }
 
     public function getTopupBalanceAttribute(): float

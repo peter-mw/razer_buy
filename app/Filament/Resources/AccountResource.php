@@ -118,11 +118,9 @@ class AccountResource extends Resource
                             $razerService = new \App\Services\RazerService($record);
                             $result = $razerService->validateAccount();
 
-                            $status = $result['status'] === 'success';
-                            $message = $result['message'];
+                            $message = $result['message'] ?? 'Account validation failed';
 
                             $set('validation_result', $message);
-                            $set('validation_status', $result['status']);
                         })
                         ->visible(fn($record) => $record !== null),
 
@@ -225,13 +223,16 @@ class AccountResource extends Resource
                 Forms\Components\Toggle::make('is_active')
                     ->default(true)
                     ->required(),
+
+                Forms\Components\Textarea::make('notes')
+                    ->columnSpanFull(),
             ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
-            ->paginated([10,20,25,50,100, 250, 500, 1000, 2000, 5000, 'all'])
+            ->paginated([10, 20, 25, 50, 100, 250, 500, 1000, 2000, 5000, 'all'])
             ->defaultSort('ballance_gold', 'desc')
             ->actionsPosition(Tables\Enums\ActionsPosition::AfterCells)
             ->headerActions([
@@ -242,7 +243,6 @@ class AccountResource extends Resource
                 Tables\Actions\Action::make('sync_all')
                     ->label('Sync All Balances')
                     ->icon('heroicon-o-arrow-path')
-
                     ->action(function () {
                         try {
                             Artisan::call('accounts:sync-balances');
@@ -304,25 +304,25 @@ class AccountResource extends Resource
                     }),
 
 
-                 Tables\Actions\Action::make('sync_all_data')
-                     ->label('Sync All Data')
-                     ->icon('heroicon-o-arrow-path')
-                     ->color('success')
-                     ->action(function () {
-                         try {
-                             dispatch(new \App\Jobs\SyncAllAccountData());
-                             Notification::make()
-                                 ->success()
-                                 ->title('All sync jobs dispatched successfully')
-                                 ->send();
-                         } catch (\Exception $e) {
-                             Notification::make()
-                                 ->danger()
-                                 ->title('Failed to dispatch sync jobs')
-                                 ->body($e->getMessage())
-                                 ->send();
-                         }
-                     }),
+                Tables\Actions\Action::make('sync_all_data')
+                    ->label('Sync All Data')
+                    ->icon('heroicon-o-arrow-path')
+                    ->color('success')
+                    ->action(function () {
+                        try {
+                            dispatch(new \App\Jobs\SyncAllAccountData());
+                            Notification::make()
+                                ->success()
+                                ->title('All sync jobs dispatched successfully')
+                                ->send();
+                        } catch (\Exception $e) {
+                            Notification::make()
+                                ->danger()
+                                ->title('Failed to dispatch sync jobs')
+                                ->body($e->getMessage())
+                                ->send();
+                        }
+                    }),
             ])
             ->columns([
                 \LaraZeus\InlineChart\Tables\Columns\InlineChart::make('activity')
@@ -687,7 +687,8 @@ class AccountResource extends Resource
             RelationManagers\TransactionsRelationManager::class,
             RelationManagers\AccountTopupsRelationManager::class,
             RelationManagers\SystemLogsRelationManager::class,
-        ];
+            RelationManagers\CodesWithMissingProductRelationManager::class,
+         ];
     }
 
     public static function getPages(): array

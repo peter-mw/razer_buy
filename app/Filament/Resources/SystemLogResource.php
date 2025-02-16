@@ -41,9 +41,8 @@ class SystemLogResource extends Resource
                     ->columnSpanFull(),
 
 
-
                 FilamentJsonColumn::make('params')
-                   ,
+                ,
                 FilamentJsonColumn::make('response')
                     ->nullable(),
             ]);
@@ -52,7 +51,7 @@ class SystemLogResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->paginated([10,20,25,50,100, 250, 500, 1000, 2000, 5000, 'all'])
+            ->paginated([10, 20, 25, 50, 100, 250, 500, 1000, 2000, 5000, 'all'])
             ->poll(30)
             ->defaultSort('created_at', 'desc')
             ->columns([
@@ -65,7 +64,7 @@ class SystemLogResource extends Resource
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('status')
                     ->searchable()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'success' => 'success',
                         'error' => 'danger',
                         default => 'gray',
@@ -88,7 +87,6 @@ class SystemLogResource extends Resource
                 Tables\Columns\TextColumn::make('command')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true)
-
                     ->limit(50),
             ])
             ->filters([

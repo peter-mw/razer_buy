@@ -206,6 +206,7 @@ class FetchAccountCodesJob implements ShouldQueue
                                     'transaction_id' => $transaction_id
                                 ]);
                             }
+
                             continue;
                         }
 

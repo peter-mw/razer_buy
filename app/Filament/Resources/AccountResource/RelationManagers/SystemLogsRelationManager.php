@@ -14,8 +14,6 @@ class SystemLogsRelationManager extends RelationManager
 
     public function table(Table $table): Table
     {
-
-
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id')
@@ -23,7 +21,8 @@ class SystemLogsRelationManager extends RelationManager
                     ->sortable(),
                 Tables\Columns\TextColumn::make('source')
                     ->searchable()
-                    ->sortable(), Tables\Columns\TextColumn::make('command')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('command')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('params')
@@ -33,9 +32,17 @@ class SystemLogsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('response')
                     ->searchable()
                     ->sortable()
-                    ->wrap(), Tables\Columns\TextColumn::make('status')
-
                     ->wrap(),
+                Tables\Columns\TextColumn::make('status')
+                    ->badge()
+                    ->color(fn(string $state): string => match ($state) {
+                        'success' => 'success',
+                        'error' => 'danger',
+                        'info' => 'info',
+                        default => 'warning',
+                    })
+                    ->searchable()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable(),
