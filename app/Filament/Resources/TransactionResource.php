@@ -20,6 +20,8 @@ class TransactionResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-currency-dollar';
     protected static ?int $navigationSort = 20;
 
+    protected static bool $shouldRegisterNavigation = false;
+
     public static function form(Form $form): Form
     {
         return $form
@@ -62,7 +64,6 @@ class TransactionResource extends Resource
         return $table
             ->defaultSort('created_at', 'desc')
             ->paginated([10, 25, 50, 100, 250, 1000, 'all'])
-
             ->columns([
                 Tables\Columns\TextColumn::make('account.name')
                     ->sortable()

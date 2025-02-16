@@ -44,10 +44,10 @@ class FetchAccountCodesJob implements ShouldQueue
 
         // Fetch all codes for the account
         try {
-            //    $codes = $service->fetchAllCodes();
+            $codes = $service->fetchAllCodes();
 
             //@ todo remove this
-            $codes = $service->fetchAllCodesCached();
+            //  $codes = $service->fetchAllCodesCached();
             $foundCodes = [];
             $processedCodes = [];
             if (!empty($codes)) {
@@ -161,7 +161,6 @@ class FetchAccountCodesJob implements ShouldQueue
                 // Only process codes if we found new ones
                 if ($hasNewCodes) {
 
-
                     // Group codes by product
                     $codesByProduct = collect($processedCodes)->groupBy('Product');
 
@@ -197,6 +196,7 @@ class FetchAccountCodesJob implements ShouldQueue
                         $productCodes = $productCodes->toArray();
                         $quantityProcessed = count($productCodes);
                         // Process codes for this product
+
                         foreach ($productCodes as $codeItem => $codeDataItem) {
 
                             $quantityProcessed--;
@@ -213,8 +213,6 @@ class FetchAccountCodesJob implements ShouldQueue
                 }
 
 
-                // Update account balance after processing
-                $this->updateAccountBalance($account, $service);
             }
         } catch (\Exception $e) {
 
