@@ -91,6 +91,34 @@ class RazerService
         }
     }
 
+    public function getAllAccountDetails()
+    {
+        $topups = $this->fetchTopUps();
+        $ballance = $this->getAccountBallance();
+        //  $topups = $razerService->fetchAllCodes();
+        $codes = $this->fetchAllCodes();
+        $accountID = $this->account->id;
+        $codesSum = collect($codes)->sum('Amount');
+        $topupsSum = collect($topups)->sum('amount');
+
+        $trancasctionsLocal = \App\Models\Transaction::where('account_id', $this->account->id)->get();
+        $trancasctionsLocalSum = collect($trancasctionsLocal)->sum('amount');
+
+        //
+        $info = [
+            'account_id' => $accountID,
+            'ballance' => $ballance,
+            'codes' => $codes,
+            'topups' => $topups,
+            'transactions_local_count' => count($trancasctionsLocal),
+            'transactions_local_sum' => $trancasctionsLocalSum,
+            'codes_sum' => $codesSum,
+            'topups_sum' => $topupsSum,
+        ];
+
+        return $info;
+    }
+
     public function getTransactionDetails($transactionID)
     {
         $workdir = $this->getWorkdir();
@@ -264,7 +292,7 @@ class RazerService
     public function fetchTopUpsCached(): array
     {
 
-        $cache = Cache::remember('razer_topups_cache_1' . $this->account->id, 60000, function () {
+        $cache = Cache::remember('razer_topups_cache_2' . $this->account->id, 60000, function () {
             return $this->fetchTopUps();
         });
         return $cache;
@@ -335,6 +363,12 @@ class RazerService
 
         $data_items = $this->formatOutputTopUps($output);
 
+        //filter only status = 1
+
+        $data_items = array_filter($data_items, function ($item) {
+            return $item['status'] == 1;
+        });
+
         SystemLog::create([
             'source' => 'RazerService::fetchTopUps',
             'account_id' => $account->id ?? null,
@@ -349,7 +383,7 @@ class RazerService
 
     public function fetchAllCodesCached(): array
     {
-        $cache = Cache::remember('razer_codes_' . $this->account->id, 60000, function () {
+        $cache = Cache::remember('razer_codes_212' . $this->account->id, 60000, function () {
             return $this->fetchAllCodes();
         });
         return $cache;
@@ -558,6 +592,10 @@ class RazerService
             // Extract Transaction
             if (preg_match('/Transaction:\s+(\S+)/', $line, $match)) {
                 $item['transaction'] = $match[1];
+            }
+
+            if (preg_match('/Status:\s+(\S+)/', $line, $match)) {
+                $item['status'] = $match[1];
             }
 
             // Extract Amount

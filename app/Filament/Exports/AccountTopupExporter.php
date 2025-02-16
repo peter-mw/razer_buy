@@ -18,6 +18,13 @@ class AccountTopupExporter extends Exporter
                 ->label('Account ID'),
             ExportColumn::make('account.name')
                 ->label('Account Name'),
+
+            ExportColumn::make('transaction_id')
+                ->label('Transaction Id'),
+
+            ExportColumn::make('transaction_ref')
+                ->label('Transaction Ref'),
+
             ExportColumn::make('topup_amount')
                 ->label('Topup Amount'),
             ExportColumn::make('topup_time')

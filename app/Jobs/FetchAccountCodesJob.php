@@ -44,16 +44,17 @@ class FetchAccountCodesJob implements ShouldQueue
 
         // Fetch all codes for the account
         try {
-            $codes = $service->fetchAllCodes();
+            //    $codes = $service->fetchAllCodes();
 
             //@ todo remove this
-            //   $codes = $service->fetchAllCodes();
+            $codes = $service->fetchAllCodesCached();
             $foundCodes = [];
+            $processedCodes = [];
             if (!empty($codes)) {
                 // Track if we found any new codes
                 $hasNewCodes = false;
                 $firstNewCode = null;
-                $processedCodes = [];
+
 
                 // First pass - check for new codes
                 foreach ($codes as $codeData) {
@@ -82,18 +83,38 @@ class FetchAccountCodesJob implements ShouldQueue
                 }
 
                 if ($foundCodes) {
+
                     foreach ($foundCodes as $existingCode) {
 
+                        $codeData = $existingCode->toArray();
 
                         // Check if transaction exists for this code
-                        $transaction = Transaction::where('account_id', $existingCode->account_id)
-                            ->where('product_id', $existingCode->product_id)
-                            ->where('order_id', $existingCode->order_id)
+                        /*   $transaction = Transaction::where('account_id', $existingCode->account_id)
+                               ->where('product_id', $existingCode->product_id)
+                               ->where('order_id', $existingCode->order_id)
+                               ->where('transaction_ref', $existingCode->product_name)
+                               ->where('amount', $existingCode->buy_value)
+                               ->first();*/
+
+                        $transaction = Transaction::where('transaction_id', $codeData['transaction_id'])
                             ->first();
+
+                        if ($transaction) {
+                            $transaction->update([
+                                'order_id' => $existingCode->order_id,
+                                'account_id' => $existingCode->account_id,
+                                'product_id' => $existingCode->product_id,
+                                'transaction_date' => $existingCode->buy_date,
+                                'amount' => $existingCode->buy_value,
+                            ]);
+                            $transaction->save();
+
+                        }
+
+                        //'transaction_id' => $codeData['transaction_id']
 
                         if (!$transaction) {
                             // Find matching code data from fetched codes
-                            $codeData = $existingCode->toArray();
 
 
                             /*$codeData = rray:14 [▼ // app/Jobs/FetchAccountCodesJob.php:97
@@ -122,11 +143,15 @@ class FetchAccountCodesJob implements ShouldQueue
                                     'transaction_date' => $codeData['buy_date'],
                                     'transaction_id' => $codeData['transaction_id'],
                                     'order_id' => $existingCode->order_id,
-                                    'transaction_ref' =>$codeData['product_name']
+                                    'transaction_ref' => $codeData['product_name']
                                 ];
 
-                                $transaction = Transaction::create($transactionData);
-                                $transaction->save();
+                                try {
+                                    $transaction = Transaction::create($transactionData);
+                                    $transaction->save();
+                                } catch (\Exception $e) {
+                                    // Log::error('Failed to create transaction for existing code: ' . $e->getMessage());
+                                }
                             }
                         }
                     }
@@ -161,21 +186,27 @@ class FetchAccountCodesJob implements ShouldQueue
                         $newOrder = PurchaseOrders::create([
                             'product_id' => $product->id,
                             'product_name' => $product->product_name,
-                            'account_type' => $product->account_type,
-                            'product_edition' => $product->product_edition,
+                            'account_type' => $account->account_type,
                             'buy_value' => $product->product_buy_value,
                             'product_face_value' => $product->product_face_value,
                             'quantity' => count($productCodes),
-                            'order_status' => 'completed',
+                            'order_status' => 'processing',
                             'account_id' => $account->id
                         ]);
 
                         $productCodes = $productCodes->toArray();
-
+                        $quantityProcessed = count($productCodes);
                         // Process codes for this product
                         foreach ($productCodes as $codeItem => $codeDataItem) {
-                            $this->processCode($account, $codeDataItem, $newOrder);
+
+                            $quantityProcessed--;
+                            $this->processCode($account, $codeDataItem, $newOrder, $product);
                         }
+
+                        $newOrder->update([
+                            'order_status' => 'completed',
+                            'quantity' => $quantityProcessed,
+                        ]);
                     }
 
 
@@ -193,7 +224,7 @@ class FetchAccountCodesJob implements ShouldQueue
 
     }
 
-    protected function processCode(Account $account, array $codeData, PurchaseOrders $order): void
+    protected function processCode(Account $account, array $codeData, PurchaseOrders $order, Product $product): void
     {
         // Extract data from code response
         $code = $codeData['Code'];
@@ -204,21 +235,6 @@ class FetchAccountCodesJob implements ShouldQueue
         $transaction_id = $codeData['ID'] ?? '';
         $buyDate = date('Y-m-d H:i:s', strtotime($codeData['TransactionDate']));
 
-
-        // Find matching product by name
-        $product = Product::where('product_name', 'LIKE', '%' . $productName . '%')->first();
-
-        if (!$product) {
-            $product = Product::create([
-                'product_name' => $productName,
-                'product_slug' => Str::slug($productName),
-                'account_type' => 'unknown',
-                'product_edition' => 'unknown',
-                'product_buy_value' => 0,
-                'product_face_value' => 0,
-            ]);
-            $product->save();
-        }
 
         //check if exist
         $codeExist = Code::where('code', $code)
@@ -277,8 +293,16 @@ class FetchAccountCodesJob implements ShouldQueue
                     'transaction_ref' => $code->id
                 ];
 
-                $transaction = Transaction::create($transactionData);
-                $transaction->save();
+
+                try {
+                    $transaction = Transaction::create($transactionData);
+                    $transaction->save();
+                } catch (\Exception $e) {
+
+                    Log::error('Failed to create transaction for existing code: ' . $e->getMessage());
+                }
+
+
             }
 
 

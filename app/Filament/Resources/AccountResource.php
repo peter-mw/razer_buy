@@ -21,7 +21,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Phpsa\FilamentPasswordReveal\Password;
 use App\Services\OtpService;
+
 use App\Models\AccountType;
+
 
 class AccountResource extends Resource
 {
@@ -117,14 +119,48 @@ class AccountResource extends Resource
                             $result = $razerService->validateAccount();
 
                             $status = $result['status'] === 'success';
-                            // $message = "Status: " . ($status ? 'Valid' : 'Invalid') . "\n";
-                            //$message .= "Gold Balance: " . number_format($record->ballance_gold, 2) . "\n";
-                            //    $message .= "Silver Balance: " . number_format($record->ballance_silver, 2) . "\n";
                             $message = $result['message'];
 
                             $set('validation_result', $message);
                             $set('validation_status', $result['status']);
                         })
+                        ->visible(fn($record) => $record !== null),
+
+                    Forms\Components\Actions\Action::make('get_account_details')
+                        ->label('Get Account Details')
+                        ->icon('heroicon-o-document-text')
+                        ->color('primary')
+                        ->modalHeading('Account Live Balance Details')
+                        ->modalContent(function ($record) {
+                            if (!$record) {
+                                return 'No account found';
+                            }
+
+
+                            $razerService = new \App\Services\RazerService($record);
+                            $details = $razerService->getAllAccountDetails();
+
+                            $message = "Account Details:\n\n";
+                            foreach ($details as $key => $value) {
+                                if (is_array($value)) {
+                                    $message .= "{$key}:\n";
+                                    if ($key === 'ballance') {
+                                        $message .= "  Gold: {$value['gold']}\n";
+                                        $message .= "  Silver: {$value['silver']}\n";
+                                    } else {
+                                        $message .= "  Count: " . count($value) . "\n";
+                                        $message .= "  Sum: " . (isset($details["{$key}_sum"]) ? $details["{$key}_sum"] : 'N/A') . "\n";
+                                    }
+                                } else {
+                                    $message .= "{$key}: {$value}\n";
+                                }
+                            }
+
+                            return view('filament.modals.account-details', [
+                                'details' => $message
+                            ]);
+                        })
+                        ->modalWidth('lg')
                         ->visible(fn($record) => $record !== null)
                 ]),
 

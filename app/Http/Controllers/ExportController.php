@@ -60,9 +60,14 @@ class ExportController extends Controller
 
         // Add data
         foreach ($codes as $code) {
+
+            $buyValue = $code->buy_value  * (1 - $discount / 100);
+            $buyValue = number_format($buyValue, 2, '.', '');
+
+
             $csv->insertOne([
                 $code->product?->remote_crm_product_name ?? $code->product?->product_name ?? '',
-                $code->buy_value * (1 - $discount / 100), // Apply dynamic discount
+                $buyValue,
                 'USD',
                 $code->account?->name ?? '',
 

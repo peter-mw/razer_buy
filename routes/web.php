@@ -19,21 +19,23 @@ Route::get('/aaa', function () {
     // $accountID = 20;
     // $accountID = 43;
 
-  $accountID = 11;
+  $accountID = 8;
 
     $topups = [];
     $account = \App\Models\Account::find($accountID);
 
     //  $accountID = 11;
     $razerService = new \App\Services\RazerService($account);
-   //$topups = $razerService->fetchTopUps();
+ //  $topups = $razerService->fetchTopUps();
+//dd($topups);
+   // $job = new \App\Jobs\FetchAccountCodesJob($accountID);
 
+   // $job->handle();
 
-
-    $topups = $razerService->fetchTopUpsCached();
+    $topups = $razerService->fetchTopUps();
     $ballance = $razerService->getAccountBallance();
   //  $topups = $razerService->fetchAllCodes();
-     $codes = $razerService->fetchAllCodesCached();
+     $codes = $razerService->fetchAllCodes();
 
     $codesSum = collect($codes)->sum('Amount');
     $topupsSum = collect($topups)->sum('amount');
@@ -41,9 +43,7 @@ Route::get('/aaa', function () {
     $trancasctionsLocal  = \App\Models\Transaction::where('account_id',$accountID)->get();
     $trancasctionsLocalSum = collect($trancasctionsLocal)->sum('amount');
 
-    //$job = new \App\Jobs\FetchAccountCodesJob($accountID);
-
-//   $job->handle();
+    //
     $info = [
         'account_id' => $accountID,
         'ballance' => $ballance,
