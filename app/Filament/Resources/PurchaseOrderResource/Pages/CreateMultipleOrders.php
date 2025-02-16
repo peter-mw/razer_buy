@@ -55,6 +55,93 @@ class CreateMultipleOrders extends Page
         return $form->schema([
             Section::make('Account Type')
                 ->schema([
+                    Actions::make([
+                        Actions\Action::make('createOptimalOrder')
+                            ->label('Create Optimal Order')
+                            ->icon('heroicon-m-sparkles')
+                            ->action(function (Forms\Set $set) {
+                                // Get account type products
+                                $products = Product::whereJsonContains('account_type', $this->data['account_type'] ?? null)
+                                    ->orderByDesc('product_buy_value')
+                                    ->get();
+                                
+                                if ($products->isEmpty()) {
+                                    Notification::make()
+                                        ->title('No products available for this account type')
+                                        ->danger()
+                                        ->send();
+                                    return;
+                                }
+
+                                // Set product IDs
+                                $productIds = $products->pluck('id')->toArray();
+                                $set('data.product_ids', $productIds);
+                                
+                                // Update products data
+                                $this->data['products'] = [];
+                                foreach ($products as $product) {
+                                    $this->data['products'][$product->id] = [
+                                        'id' => $product->id,
+                                        'name' => $product->product_name,
+                                        'edition' => $product->product_edition,
+                                        'buy_value' => $product->product_buy_value,
+                                        'face_value' => $product->product_face_value,
+                                    ];
+                                }
+
+                                // Get and select all active accounts with balance
+                                $accounts = Account::where('is_active', true)
+                                    ->where('account_type', $this->data['account_type'] ?? null)
+                                    ->where('ballance_gold', '>', 0)
+                                    ->get();
+
+                                if ($accounts->isEmpty()) {
+                                    Notification::make()
+                                        ->title('No accounts with balance found')
+                                        ->danger()
+                                        ->send();
+                                    return;
+                                }
+
+                                // Select all accounts and initialize quantities
+                                $this->data['selected_accounts'] = [];
+                                $this->data['quantities'] = [];
+                                
+                                foreach ($accounts as $account) {
+                                    $this->data['selected_accounts'][$account->id] = true;
+                                    $remainingBalance = $account->ballance_gold;
+                                    
+                                    // Initialize quantities to 0
+                                    if (!isset($this->data['quantities'][$account->id])) {
+                                        $this->data['quantities'][$account->id] = [];
+                                    }
+                                    foreach ($products as $product) {
+                                        $this->data['quantities'][$account->id][$product->id] = 0;
+                                    }
+                                    
+                                    // Distribute balance optimally
+                                    foreach ($products as $product) {
+                                        if ($remainingBalance >= $product->product_buy_value) {
+                                            $maxQuantity = intval($remainingBalance / $product->product_buy_value);
+                                            $this->data['quantities'][$account->id][$product->id] = $maxQuantity;
+                                            $remainingBalance -= ($maxQuantity * $product->product_buy_value);
+                                        }
+                                    }
+                                }
+
+                                // Update form state
+                                $set('data.selected_accounts', $this->data['selected_accounts']);
+                                $set('data.quantities', $this->data['quantities']);
+                                
+                                $this->refreshOrderDetails();
+
+                                Notification::make()
+                                    ->title('Orders optimized for ' . count($accounts) . ' accounts')
+                                    ->success()
+                                    ->send();
+                            })
+                            ->visible(fn() => !empty($this->data['account_type'])),
+                    ])->columnSpanFull(),
                     Select::make('data.account_type')
                         ->label('Select Account Type')
                         ->options(fn() => \App\Models\AccountType::where('is_active', true)
@@ -120,12 +207,29 @@ class CreateMultipleOrders extends Page
                                 if (isset($this->data['selected_accounts'][$account->id]) &&
                                     $this->data['selected_accounts'][$account->id] &&
                                     !empty($this->data['products'])) {
-                                    foreach ($this->data['products'] as $productId => $product) {
-                                        $maxQuantity = intval($account->ballance_gold / $product['buy_value']);
-                                        if (!isset($this->data['quantities'][$account->id])) {
-                                            $this->data['quantities'][$account->id] = [];
+                                    
+                                    // Sort products by buy value in descending order to prioritize more expensive products
+                                    $sortedProducts = collect($this->data['products'])
+                                        ->sortByDesc('buy_value')
+                                        ->all();
+
+                                    $remainingBalance = $account->ballance_gold;
+                                    if (!isset($this->data['quantities'][$account->id])) {
+                                        $this->data['quantities'][$account->id] = [];
+                                    }
+
+                                    // Initialize all quantities to 0
+                                    foreach ($sortedProducts as $productId => $product) {
+                                        $this->data['quantities'][$account->id][$productId] = 0;
+                                    }
+
+                                    // Distribute balance optimally
+                                    foreach ($sortedProducts as $productId => $product) {
+                                        if ($remainingBalance >= $product['buy_value']) {
+                                            $maxQuantity = intval($remainingBalance / $product['buy_value']);
+                                            $this->data['quantities'][$account->id][$productId] = $maxQuantity;
+                                            $remainingBalance -= ($maxQuantity * $product['buy_value']);
                                         }
-                                        $this->data['quantities'][$account->id][$productId] = $maxQuantity;
                                     }
                                 }
                             }
@@ -188,40 +292,44 @@ class CreateMultipleOrders extends Page
                 continue;
             }
 
-            $schema[] = Grid::make([
-                'default' => 1 + count($this->data['products']),
-            ])
+            $schema[] = Section::make()
                 ->schema([
-                    Checkbox::make("data.selected_accounts.{$account->id}")
-                        ->label("{$account->name} (Balance: {$account->ballance_gold} Gold)")
-                        ->live()
-                        ->afterStateUpdated(function ($state) use ($account) {
-                            if (!$state) {
-                                $this->data['quantities'][$account->id] = [];
-                            }
-                            $this->refreshOrderDetails();
-                        }),
-                    ...collect($this->data['products'])->map(function ($product, $productId) use ($account) {
-                        $maxQuantity = intval($account->ballance_gold / $product['buy_value']);
-                        return TextInput::make("data.quantities.{$account->id}.{$productId}")
-                            ->label("{$product['name']} (Max: {$maxQuantity})")
-                            ->numeric()
-                            ->default(0)
-                            ->minValue(0)
-                            ->maxValue($maxQuantity)
-                            ->visible(fn() => $this->data['selected_accounts'][$account->id] ?? false)
-                            ->required()
-                            ->live(debounce: 1500)
-                            ->beforeStateDehydrated(function ($state) {
-                                return $state ?? 0;
-                            })
-                            ->afterStateUpdated(function ($state) {
-                                $this->refreshOrderDetails();
-                            })
-                            ->reactive();
-                    })->toArray(),
+                    Grid::make(2)
+                        ->schema([
+                            Checkbox::make("data.selected_accounts.{$account->id}")
+                                ->label("{$account->name} (Balance: {$account->ballance_gold} Gold)")
+                                ->live()
+                                ->afterStateUpdated(function ($state) use ($account) {
+                                    if (!$state) {
+                                        $this->data['quantities'][$account->id] = [];
+                                    }
+                                    $this->refreshOrderDetails();
+                                })
+                                ->columnSpan(2),
+                            ...collect($this->data['products'])->map(function ($product, $productId) use ($account) {
+                                $maxQuantity = intval($account->ballance_gold / $product['buy_value']);
+                                return TextInput::make("data.quantities.{$account->id}.{$productId}")
+                                    ->label("{$product['name']} ({$product['buy_value']} Gold) (Max: {$maxQuantity})")
+                                    ->numeric()
+                                    ->default(0)
+                                    ->minValue(0)
+                                    ->maxValue($maxQuantity)
+                                    ->visible(fn() => $this->data['selected_accounts'][$account->id] ?? false)
+                                    ->required()
+                                    ->live(debounce: 1500)
+                                    ->beforeStateDehydrated(function ($state) {
+                                        return $state ?? 0;
+                                    })
+                                    ->afterStateUpdated(function ($state) {
+                                        $this->refreshOrderDetails();
+                                    })
+                                    ->reactive()
+                                    ->inlineLabel();
+                            })->toArray(),
+                        ])
                 ])
-                ->columnSpan('full');
+                ->columnSpan('full')
+                ->compact();
         }
 
         return $schema;
@@ -335,6 +443,21 @@ class CreateMultipleOrders extends Page
                         if ($quantity > $maxQuantity) {
                             Notification::make()
                                 ->title("Quantity for {$account->name} on {$product->product_name} exceeds maximum allowed ({$maxQuantity})")
+                                ->danger()
+                                ->send();
+                            return;
+                        }
+
+                        // Validate total cost doesn't exceed balance
+                        $totalCost = 0;
+                        foreach ($products as $p) {
+                            $q = $data['data']['quantities'][$accountId][$p->id] ?? 0;
+                            $totalCost += ($q * $p->product_buy_value);
+                        }
+                        
+                        if ($totalCost > $account->ballance_gold) {
+                            Notification::make()
+                                ->title("Total cost for {$account->name} ({$totalCost} Gold) exceeds available balance ({$account->ballance_gold} Gold)")
                                 ->danger()
                                 ->send();
                             return;

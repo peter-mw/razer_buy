@@ -262,8 +262,8 @@ class RazerService
         $this->getAccountBallance();
         $creds = $workdir . '/balance_credentials.txt';
 
-        if(!file_exists($creds)){
-           return [];
+        if (!is_file($creds)) {
+            return [];
         }
 
         copy($creds, $workdir . '/credentials.txt');
