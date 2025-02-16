@@ -12,6 +12,7 @@ class AccountTopup extends Model
         'account_id',
         'topup_amount',
         'topup_time',
+        'date',
         'transaction_ref',
         'transaction_id',
     ];
@@ -19,6 +20,7 @@ class AccountTopup extends Model
     protected $casts = [
         'topup_time' => 'datetime',
         'topup_amount' => 'decimal:2',
+        'date' => 'date',
     ];
 
     public function account(): BelongsTo

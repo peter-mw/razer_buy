@@ -65,6 +65,7 @@ class SyncAccountTopupsJob implements ShouldQueue
                     [
                         'topup_amount' => $topup['amount'] ?? 0,
                         'transaction_ref' => $topup['product'] ?? '',
+                        'date' => $topup['transaction_date'] ?? now(),
                         'topup_time' => $topup['transaction_date'] ?? now(),
                     ]
                 );

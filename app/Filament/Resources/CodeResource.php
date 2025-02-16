@@ -12,8 +12,6 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Filament\Tables\Actions\ExportBulkAction;
-use App\Filament\Exports\CodeExporter;
 use App\Filament\Exports\CustomRemoteCrmExporter;
 
 class CodeResource extends Resource
@@ -70,9 +68,10 @@ class CodeResource extends Resource
     {
         return $table
             ->defaultSort('created_at', 'desc')
-            ->paginated([10,20,25,50,100, 250, 500, 1000, 2000, 5000, 'all'])
+            ->paginated([10, 20, 25, 50, 100, 250, 500, 1000, 2000, 5000, 'all'])
             ->headerActions([
-                Tables\Actions\ExportAction::make()
+                Tables\Actions\Action::make('export')
+                    ->label('Export')
                     ->form([
                         Forms\Components\DatePicker::make('from_date')
                             ->label('From Date')
@@ -81,8 +80,14 @@ class CodeResource extends Resource
                             ->label('To Date')
                             ->required(),
                     ])
-                    ->exporter(CodeExporter::class)
-                ,
+                    ->action(function (array $data): void {
+                        $params = http_build_query([
+                            'from_date' => $data['from_date'],
+                            'to_date' => $data['to_date'],
+                        ]);
+                        $url = route('export.codes') . '?' . $params;
+                        redirect()->away($url);
+                    }),
                 Tables\Actions\Action::make('remoteCrmExport')
                     ->label('Remote CRM Export')
                     ->form([
@@ -248,8 +253,16 @@ class CodeResource extends Resource
                             redirect()->away($url);
                         })
                     ,
-                    ExportBulkAction::make()
-                        ->exporter(CodeExporter::class)
+                    Tables\Actions\BulkAction::make('export')
+                        ->label('Export Selected')
+                        ->action(function (array $data): void {
+                            $params = http_build_query([
+                                'from_date' => now()->subYear(),
+                                'to_date' => now(),
+                            ]);
+                            $url = route('export.codes') . '?' . $params;
+                            redirect()->away($url);
+                        })
                 ]),
             ]);
     }

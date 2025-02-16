@@ -11,6 +11,61 @@ use SplTempFileObject;
 
 class ExportController extends Controller
 {
+    public function exportCodes(Request $request)
+    {
+        $fromDate = $request->get('from_date');
+        $toDate = $request->get('to_date');
+
+        $query = Code::with(['product', 'account']);
+
+        if ($fromDate && $toDate) {
+            $query->whereBetween('buy_date', [$fromDate, $toDate]);
+        }
+
+        $codes = $query->get();
+
+        $csv = Writer::createFromFileObject(new SplTempFileObject());
+
+        // Add headers
+        $csv->insertOne([
+            'ID',
+            'Account',
+            'Order ID',
+            'Code',
+            'Serial Number',
+            'Product Name',
+            'Remote CRM Product Name',
+            'Buy Date',
+            'Buy Value',
+            'Created At',
+            'Updated At'
+        ]);
+
+        // Add data
+        foreach ($codes as $code) {
+            $csv->insertOne([
+                $code->id,
+                $code->account?->name ?? '',
+                $code->order?->id ?? '',
+                $code->code,
+                $code->serial_number,
+                $code->product?->product_name ?? '',
+                $code->product?->remote_crm_product_name ?? '',
+                $code->buy_date,
+                $code->buy_value,
+                $code->created_at,
+                $code->updated_at
+            ]);
+        }
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="codes-export-' . now() . '.csv"',
+        ];
+
+        return response($csv->getContent(), 200, $headers);
+    }
+
     public function exportRemoteCrm(Request $request)
     {
         $discount = $request->get('discount', 0);

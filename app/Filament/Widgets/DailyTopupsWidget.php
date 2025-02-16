@@ -34,7 +34,7 @@ class DailyTopupsWidget extends BaseWidget
             ->query(
                 AccountTopup::query()
                     ->select([
-                        DB::raw('DATE(topup_time) as date'),
+                        DB::raw('DATE(date) as date'),
                         DB::raw('COUNT(*) as total_topups'),
                         DB::raw('SUM(topup_amount) as total_amount'),
                         DB::raw('COUNT(DISTINCT account_id) as unique_accounts')

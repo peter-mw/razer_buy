@@ -49,6 +49,10 @@ class AccountTopupResource extends Resource
                     ->native(true)
                     ->default(fn() => Session::get('last_topup_time', now()))
                     ->required(),
+                Forms\Components\DatePicker::make('date')
+                    ->native(true)
+                    ->default(now())
+                    ->required(),
                 Forms\Components\TextInput::make('transaction_ref')
                     ->maxLength(255),
                 Forms\Components\TextInput::make('transaction_id')
@@ -93,6 +97,9 @@ class AccountTopupResource extends Resource
                         // Return success color if this is the first record for the date
                         return $record->id === $firstRecordId ? 'success' : null;
                     }),
+                Tables\Columns\TextColumn::make('date')
+                    ->date()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
