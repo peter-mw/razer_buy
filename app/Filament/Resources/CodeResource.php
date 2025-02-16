@@ -141,9 +141,12 @@ class CodeResource extends Resource
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('product_name')
+                    ->sortable()
+                    ->searchable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('product_edition')
                     ->toggleable(isToggledHiddenByDefault: true)
+                    ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('buy_date')
                     ->dateTime()

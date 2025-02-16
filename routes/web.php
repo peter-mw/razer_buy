@@ -20,6 +20,8 @@ Route::get('/aaa', function () {
     // $accountID = 43;
 
   $accountID = 8;
+  $accountID = 3;
+  $accountID = 5;
 
     $topups = [];
     $account = \App\Models\Account::find($accountID);
@@ -28,10 +30,12 @@ Route::get('/aaa', function () {
     $razerService = new \App\Services\RazerService($account);
  //  $topups = $razerService->fetchTopUps();
 //dd($topups);
-   // $job = new \App\Jobs\FetchAccountCodesJob($accountID);
+     $job = new \App\Jobs\FetchAccountCodesJob($accountID);
 
-   // $job->handle();
+    $job->handle();
 
+    dump('done');
+return 'done';
     $topups = $razerService->fetchTopUps();
     $ballance = $razerService->getAccountBallance();
   //  $topups = $razerService->fetchAllCodes();

@@ -23,6 +23,7 @@ class ExportController extends Controller
             $query->whereBetween('buy_date', [$fromDate, $toDate]);
         }
 
+        $query->orderBy('product_name', 'asc');
         $codes = $query->get();
 
 
@@ -52,16 +53,16 @@ class ExportController extends Controller
             'CVV',
 
             'Code',
-         //   'TransactionId',
-         //   'RazerProductId',
-         //   'RazerAccountId'
+            //   'TransactionId',
+            //   'RazerProductId',
+            //   'RazerAccountId'
 
         ]);
 
         // Add data
         foreach ($codes as $code) {
 
-            $buyValue = $code->buy_value  * (1 - $discount / 100);
+            $buyValue = $code->buy_value * (1 - $discount / 100);
             $buyValue = number_format($buyValue, 2, '.', '');
 
 
@@ -76,9 +77,9 @@ class ExportController extends Controller
                 '',
 
                 $code->code,
-               // $code->transaction_id,
-               // $code->product_id,
-               // $code->account_id
+                // $code->transaction_id,
+                // $code->product_id,
+                // $code->account_id
 
             ]);
         }
