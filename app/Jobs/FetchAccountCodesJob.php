@@ -195,7 +195,7 @@ class FetchAccountCodesJob implements ShouldQueue
                                     'serial_number' => $serialNumber,
                                     'product_id' => null,
                                     'product_name' => $productName,
-                                    'product_slug' => Str::slug($productName),
+                                    'product_slug' =>'unknown',
                                     'account_type' => 'unknown',
                                     'product_edition' => 'unknown',
                                     'product_buy_value' => 0,

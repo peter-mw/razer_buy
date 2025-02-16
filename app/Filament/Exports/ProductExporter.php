@@ -22,8 +22,8 @@ class ProductExporter extends Exporter
                 ->label('Product Slug'),
             ExportColumn::make('account_type')
                 ->label('Account Type'),
-            ExportColumn::make('product_edition')
-                ->label('Product Edition'),
+/*            ExportColumn::make('product_edition')
+                ->label('Product Edition'),*/
             ExportColumn::make('product_buy_value')
                 ->label('Buy Value'),
             ExportColumn::make('product_face_value')

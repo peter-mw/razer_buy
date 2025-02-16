@@ -31,8 +31,8 @@ class PurchaseOrderCodesExporter extends Exporter
                 ->label('Remote CRM Product'),
             ExportColumn::make('product_name')
                 ->label('Product Name'),
-            ExportColumn::make('product_edition')
-                ->label('Product Edition'),
+          /*  ExportColumn::make('product_edition')
+                ->label('Product Edition'),*/
             ExportColumn::make('buy_date')
                 ->label('Buy Date'),
             ExportColumn::make('buy_value')

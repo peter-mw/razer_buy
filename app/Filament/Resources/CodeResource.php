@@ -192,10 +192,12 @@ class CodeResource extends Resource
                     ->label('Product Name')
                     ->searchable()
                     ->options(fn(): array => Code::whereNotNull('product_name')->distinct()->pluck('product_name', 'product_name')->toArray()),
-                Tables\Filters\SelectFilter::make('product_edition')
+               /* Tables\Filters\SelectFilter::make('product_edition')
                     ->label('Product Edition')
                     ->searchable()
                     ->options(fn(): array => Code::whereNotNull('product_edition')->distinct()->pluck('product_edition', 'product_edition')->toArray()),
+  */
+
                 Tables\Filters\Filter::make('buy_date')
                     ->form([
                         Forms\Components\DatePicker::make('created_from'),

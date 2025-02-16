@@ -242,7 +242,7 @@ class AccountResource extends Resource
                 Tables\Actions\Action::make('sync_all')
                     ->label('Sync All Balances')
                     ->icon('heroicon-o-arrow-path')
-                    ->color('success')
+
                     ->action(function () {
                         try {
                             Artisan::call('accounts:sync-balances');
@@ -280,25 +280,7 @@ class AccountResource extends Resource
                                 ->send();
                         }
                     }),
-                Tables\Actions\Action::make('sync_all_data')
-                    ->label('Sync All Data')
-                    ->icon('heroicon-o-arrow-path')
-                    ->color('success')
-                    ->action(function () {
-                        try {
-                            dispatch(new \App\Jobs\SyncAllAccountData());
-                            Notification::make()
-                                ->success()
-                                ->title('All sync jobs dispatched successfully')
-                                ->send();
-                        } catch (\Exception $e) {
-                            Notification::make()
-                                ->danger()
-                                ->title('Failed to dispatch sync jobs')
-                                ->body($e->getMessage())
-                                ->send();
-                        }
-                    }),
+
                 Tables\Actions\Action::make('sync_all_topups')
                     ->label('Sync All Topups')
                     ->icon('heroicon-o-credit-card')
@@ -319,7 +301,28 @@ class AccountResource extends Resource
                                 ->body($e->getMessage())
                                 ->send();
                         }
-                    })
+                    }),
+
+
+                 Tables\Actions\Action::make('sync_all_data')
+                     ->label('Sync All Data')
+                     ->icon('heroicon-o-arrow-path')
+                     ->color('success')
+                     ->action(function () {
+                         try {
+                             dispatch(new \App\Jobs\SyncAllAccountData());
+                             Notification::make()
+                                 ->success()
+                                 ->title('All sync jobs dispatched successfully')
+                                 ->send();
+                         } catch (\Exception $e) {
+                             Notification::make()
+                                 ->danger()
+                                 ->title('Failed to dispatch sync jobs')
+                                 ->body($e->getMessage())
+                                 ->send();
+                         }
+                     }),
             ])
             ->columns([
                 \LaraZeus\InlineChart\Tables\Columns\InlineChart::make('activity')
@@ -456,6 +459,12 @@ class AccountResource extends Resource
                         ->pluck('name', 'code')
                         ->toArray())
                     ->label('Account Type'),
+
+                Tables\Filters\SelectFilter::make('vendor')
+                    ->options(fn() => Account::whereNotNull('vendor')
+                        ->pluck('vendor', 'vendor')
+                        ->toArray())
+                    ->label('Vendor'),
 
                 Tables\Filters\SelectFilter::make('is_active')
                     ->options([
