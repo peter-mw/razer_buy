@@ -10,31 +10,19 @@
             </tr>
         </thead>
         <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800">
-            {{-- Global Rows --}}
+            @foreach ($balances as $type => $typeBalances)
             <tr>
-                <td class="px-6 py-4 whitespace-nowrap align-middle text-gray-900 dark:text-gray-100" rowspan="2">Global</td>
+                <td class="px-6 py-4 whitespace-nowrap align-middle text-gray-900 dark:text-gray-100" rowspan="2">{{ $type }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">Active</td>
-                <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">${{ number_format($balances['global']['active']['gold'], 2) }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">${{ number_format($balances['global']['active']['silver'], 2) }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">${{ number_format($typeBalances['active']['gold'], 2) }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">${{ number_format($typeBalances['active']['silver'], 2) }}</td>
             </tr>
             <tr>
                 <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">Not Active</td>
-                <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">${{ number_format($balances['global']['inactive']['gold'], 2) }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">${{ number_format($balances['global']['inactive']['silver'], 2) }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">${{ number_format($typeBalances['inactive']['gold'], 2) }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">${{ number_format($typeBalances['inactive']['silver'], 2) }}</td>
             </tr>
-
-            {{-- USA Rows --}}
-            <tr>
-                <td class="px-6 py-4 whitespace-nowrap align-middle text-gray-900 dark:text-gray-100" rowspan="2">USA</td>
-                <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">Active</td>
-                <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">${{ number_format($balances['usa']['active']['gold'], 2) }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">${{ number_format($balances['usa']['active']['silver'], 2) }}</td>
-            </tr>
-            <tr>
-                <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">Not Active</td>
-                <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">${{ number_format($balances['usa']['inactive']['gold'], 2) }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">${{ number_format($balances['usa']['inactive']['silver'], 2) }}</td>
-            </tr>
+            @endforeach
         </tbody>
     </table>
 </div>
