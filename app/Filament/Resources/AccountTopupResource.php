@@ -36,9 +36,9 @@ class AccountTopupResource extends Resource
                     ->relationship(
                         'account',
                         'id',
-                        fn($query) => $query->select(['id', 'name'])
+                        fn($query) => $query->select(['id', 'name', 'account_type'])
                     )
-                    ->getOptionLabelFromRecordUsing(fn($record) => $record->name)
+                    ->getOptionLabelFromRecordUsing(fn($record) => "[{$record->id}] {$record->name} ({$record->account_type})")
                     ->required()
                     ->default(fn() => Session::get('last_topup_account_id')),
                 Forms\Components\TextInput::make('topup_amount')
@@ -72,7 +72,11 @@ class AccountTopupResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('topup_amount')
                     ->money('USD')
-                    ->sortable(),
+                    ->sortable()
+                    ->summarize([
+                        Tables\Columns\Summarizers\Sum::make()
+                            ->money('USD')
+                    ]),
                 Tables\Columns\TextColumn::make('topup_time')
                     ->date(format: 'Y-m-d H:i:s')
                     ->sortable(),
@@ -104,6 +108,7 @@ class AccountTopupResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+
             ->headerActions([
                 /*Tables\Actions\ImportAction::make()
                     ->importer(Imports\AccountTopupImporter::class),*/
@@ -136,8 +141,14 @@ class AccountTopupResource extends Resource
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('account')
-                    ->relationship('account', 'id')
-                    ->getOptionLabelFromRecordUsing(fn($record) => $record->name),
+                    ->searchable()
+                    ->preload()
+                    ->relationship(
+                        'account',
+                        'id',
+                        fn($query) => $query->select(['id', 'name', 'account_type'])
+                    )
+                    ->getOptionLabelFromRecordUsing(fn($record) => "[{$record->id}] {$record->name} ({$record->account_type})"),
                 Tables\Filters\SelectFilter::make('date_range')
                     ->options([
                         'today' => 'Today',
