@@ -42,6 +42,7 @@ class RescueTransactionJob implements ShouldQueue
             'account_id' => $pendingTransaction->account_id,
             'status' => 'processing',
             'command' => 'rescue_transaction',
+            'order_id' => $pendingTransaction->product_id,
             'params' => [
                 'transaction_id' => $this->transactionId,
                 'pending_transaction_id' => $pendingTransaction->id,
@@ -54,6 +55,7 @@ class RescueTransactionJob implements ShouldQueue
                 'account_id' => $pendingTransaction->account_id,
                 'status' => 'error',
                 'command' => 'rescue_transaction',
+                'order_id' => $pendingTransaction->product_id,
                 'params' => [
                     'transaction_id' => $this->transactionId,
                     'error' => 'Associated product not found',
@@ -80,6 +82,7 @@ class RescueTransactionJob implements ShouldQueue
                     'account_id' => $account->id,
                     'status' => 'error',
                     'command' => 'rescue_transaction',
+                    'order_id' => $pendingTransaction->product_id,
                     'params' => [
                         'transaction_id' => $this->transactionId,
                         'error' => 'Transaction details not found',
@@ -101,6 +104,7 @@ class RescueTransactionJob implements ShouldQueue
                     'account_id' => $account->id,
                     'status' => 'error',
                     'command' => 'rescue_transaction',
+                    'order_id' => $pendingTransaction->product_id,
                     'params' => [
                         'transaction_id' => $this->transactionId,
                         'error' => 'Transaction code not found in response',
@@ -162,6 +166,7 @@ class RescueTransactionJob implements ShouldQueue
                 'account_id' => $account->id,
                 'status' => 'success',
                 'command' => 'rescue_transaction',
+                'order_id' => $pendingTransaction->product_id,
                 'params' => [
                     'transaction_id' => $this->transactionId,
                     'amount' => $orderDetail['Amount'],
@@ -178,6 +183,7 @@ class RescueTransactionJob implements ShouldQueue
                 'account_id' => $account->id,
                 'status' => 'error',
                 'command' => 'rescue_transaction',
+                'order_id' => $pendingTransaction->product_id,
                 'params' => [
                     'transaction_id' => $this->transactionId,
                     'error' => 'Rescue attempt failed: ' . $e->getMessage(),

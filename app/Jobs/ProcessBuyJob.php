@@ -28,7 +28,6 @@ class ProcessBuyJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public function __construct(
-
         protected int $purchaseOrderId,
         protected int $quantity
     )
@@ -84,15 +83,14 @@ class ProcessBuyJob implements ShouldQueue
 
         $eligibleAccount = $accounts->first();
 
-
         $service = new \App\Services\RazerService($eligibleAccount);
         $account = $eligibleAccount;
 
         $ballance = $service->getAccountBallance();
 
         $ballanceResponse = [
-            'gold' => $ballance['gold'] ?? 0, // Replace with actual API data
-            'silver' => $ballance['silver'] ?? 0, // Replace with actual API data
+            'gold' => $ballance['gold'] ?? 0,
+            'silver' => $ballance['silver'] ?? 0,
         ];
 
         $account->update([
@@ -109,8 +107,6 @@ class ProcessBuyJob implements ShouldQueue
                 'balance_silver' => $ballanceResponse['silver'],
                 'balance_update_time' => $account->last_ballance_update_at ?? now(),
             ]);
-
-
         }
 
         if ($ballanceResponse['gold'] < $purchaseOrder->buy_value) {
@@ -126,13 +122,10 @@ class ProcessBuyJob implements ShouldQueue
             ]);
         }
 
-
         $remainingQuantity = $purchaseOrder->quantity;
-
 
         $ordersCompleted = [];
         $buyProductsResults = $service->buyProduct($purchaseOrder, $remainingQuantity);
-
 
         if (isset($buyProductsResults['orders'])) {
             $ordersCompleted = array_merge($ordersCompleted, $buyProductsResults['orders']);
@@ -161,11 +154,9 @@ class ProcessBuyJob implements ShouldQueue
         }
 
         foreach ($ordersCompleted as $orderTransactionId) {
-
             sleep(2);
             try {
                 $orderDetails = $service->getTransactionDetails($orderTransactionId);
-
             } catch (\Exception $e) {
                 $purchaseOrder->update([
                     'order_status' => 'failed_get_transaction_details',
@@ -184,7 +175,6 @@ class ProcessBuyJob implements ShouldQueue
                 ]);
 
                 sleep(3);
-                //  Log::error('Error while getTransactionDetails: ' . $orderTransactionId);
                 try {
                     $orderDetails = $service->getTransactionDetails($orderTransactionId);
                 } catch (\Exception $e) {
@@ -203,34 +193,18 @@ class ProcessBuyJob implements ShouldQueue
                     'error_message' => 'Failed to retrieve transaction details: ' . $e->getMessage(),
                     'transaction_date' => now(),
                 ]);
-
             }
 
             if (empty($orderDetails)) {
-
                 $purchaseOrder->update([
                     'order_status' => 'failed'
                 ]);
-
-
-                //Log::error('Error while getTransactionDetails: ' . $orderTransactionId);
                 continue;
             }
 
-
             $orderDetail = array_pop($orderDetails);
 
-
-            /*array:6 [▼ // app\Jobs\ProcessBuyJob.php:120
-              "Product" => "Yalla Ludo - USD 5 Diamonds"
-              "Code" => "PPHN51L35GRR"
-              "SN" => "M01911015173920860221514035972"
-              "Amount" => "5.190000"
-              "Timestamp" => "2026-02-11"
-              "TransactionDate" => "2025-02-11 12:25:56.2533503"
-            ]*/
             if (!isset($orderDetail['Code'])) {
-
                 continue;
             }
 
@@ -239,60 +213,39 @@ class ProcessBuyJob implements ShouldQueue
                 'serial_number' => $orderDetail['SN'],
                 'amount' => $orderDetail['Amount'],
                 'buy_date' => date('Y-m-d H:i:s', strtotime($orderDetail['TransactionDate'])),
-                'transaction_id' => $orderDetail['SN'] // Using SN as transaction ID since it's unique
+                'transaction_id' => $orderDetail['SN'],
+                'product_name' => $orderDetail['Product'] ?? null
             ];
             $ready[] = $item;
-
         }
-
-
-        //dd($ready);
-
-        /*
-
-
-
-
-          foreach ($buyProductsResults as $buyProducts) {
-                if (!isset($buyProducts['Code'])) {
-                    continue;
-                }
-                $ready[] = [
-                    'code' => $buyProducts['Code'],
-                    'serial_number' => $buyProducts['SN'],
-                    'amount' => $buyProducts['Amount'],
-                    'buy_date' => date('Y-m-d H:i:s', strtotime($buyProducts['TransactionDate'])),
-                    'transaction_id' => $buyProducts['SN'] // Using SN as transaction ID since it's unique
-                ];
-            }
-*/
-
 
         $totalAmount = 0;
 
         Log::info('Ready: ' . json_encode($ready));
         Log::info('Purchase Order: ' . json_encode($purchaseOrder));
 
+        // Get the product for region-specific slug lookup
+        $product = Product::find($purchaseOrder->product_id);
+        $accountType = $account->account_type;
+        
+        // Get region-specific product name if available
+        $productName = $product->product_name;
+        if ($accountType) {
+            if (!empty($product->product_slugs)) {
+                $slugs = collect($product->product_slugs);
+                $regionSlug = $slugs->firstWhere('account_type', $accountType);
+                if ($regionSlug && isset($regionSlug['slug'])) {
+                    $productName = $regionSlug['slug'];
+                }
+            } else {
+                $productName = $product->product_slug ?? $product->product_name;
+            }
+        }
 
-        /*$ready = array:1 [▼ // app\Jobs\ProcessBuyJob.php:248
-  0 => array:5 [▼
-    "code" => "RIYXDMMPDK3XWJCNY3"
-    "serial_number" => "ROX010-310125--05548"
-    "amount" => "10.080000"
-    "buy_date" => "2025-02-11 20:02:29"
-    "transaction_id" => "ROX010-310125--05548"
-  ]
-]*/
         // Create transaction and code for each item
         foreach ($ready as $item) {
-            // Create transaction
-
-
-            //check if exists
-
             $transaction = Transaction::where('transaction_id', $item['transaction_id'])->first();
             if (!$transaction) {
-
                 $transaction = Transaction::create([
                     'account_id' => $account->id,
                     'amount' => $item['amount'],
@@ -308,13 +261,13 @@ class ProcessBuyJob implements ShouldQueue
                 ->where('serial_number', $item['serial_number'])
                 ->first();
             if (!$code) {
-                // Create code
+                // Create code using region-specific product name
                 $code = Code::create([
                     'account_id' => $account->id,
                     'code' => $item['code'],
                     'serial_number' => $item['serial_number'],
                     'product_id' => $purchaseOrder->product_id,
-                    'product_name' => $purchaseOrder->product_name,
+                    'product_name' => $productName,
                     'product_edition' => $purchaseOrder->product_edition,
                     'buy_date' => $item['buy_date'],
                     'buy_value' => $item['amount'],
@@ -324,7 +277,6 @@ class ProcessBuyJob implements ShouldQueue
             }
             $totalAmount += $item['amount'];
         }
-
 
         if ($ready) {
             // Update account balance with total amount
@@ -366,11 +318,7 @@ class ProcessBuyJob implements ShouldQueue
             ]);
         }
 
-
         // Send database notification
         $purchaseOrder->notify(new PurchaseOrderCompleted($purchaseOrder));
-
-
     }
-
 }

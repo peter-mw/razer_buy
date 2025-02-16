@@ -36,6 +36,7 @@ class RedeemSilverToGoldJob implements ShouldQueue
             'account_id' => $account->id,
             'status' => 'processing',
             'command' => 'redeem_silver',
+            'order_id' => $this->productId,
             'params' => [
                 'account_id' => $account->id,
                 'product_id' => $this->productId,
@@ -51,6 +52,7 @@ class RedeemSilverToGoldJob implements ShouldQueue
                 'account_id' => $account->id,
                 'status' => 'error',
                 'command' => 'redeem_silver',
+                'order_id' => $this->productId,
                 'params' => [
                     'account_id' => $account->id,
                     'silver_balance' => $account->ballance_silver,
@@ -70,6 +72,7 @@ class RedeemSilverToGoldJob implements ShouldQueue
             'account_id' => $account->id,
             'status' => 'success',
             'command' => 'redeem_silver',
+            'order_id' => $this->productId,
             'params' => [
                 'account_id' => $account->id,
                 'silver_redeemed' => $goldToAdd * 1000,

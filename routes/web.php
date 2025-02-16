@@ -22,12 +22,18 @@ Route::get('/aaa', function () {
   $accountID = 8;
   $accountID = 3;
   $accountID = 5;
+  $accountID = 36;
 
     $topups = [];
     $account = \App\Models\Account::find($accountID);
 
     //  $accountID = 11;
     $razerService = new \App\Services\RazerService($account);
+
+    $codes = $razerService->fetchAllCodes();
+    $detail = $razerService->getAllAccountDetails();
+    dd($detail,$codes);
+
  //  $topups = $razerService->fetchTopUps();
 //dd($topups);
      $job = new \App\Jobs\FetchAccountCodesJob($accountID);

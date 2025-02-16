@@ -189,14 +189,36 @@ class FetchAccountCodesJob implements ShouldQueue
                                 $transaction_id = $codeData['ID'] ?? '';
                                 $buyDate = date('Y-m-d H:i:s', strtotime($codeData['TransactionDate']));
 
+                                // Get account type from the account
+                                $accountType = $account->account_type;
+                                
+                                // Try to find a product with matching name
+                                $matchingProduct = Product::where('product_name', $productName)
+                                    ->orWhereJsonContains('product_slugs', ['account_type' => $accountType])
+                                    ->first();
+                                
+                                // Get the appropriate slug
+                                $productSlug = 'unknown';
+                                if ($matchingProduct) {
+                                    if (!empty($matchingProduct->product_slugs)) {
+                                        $slugs = collect($matchingProduct->product_slugs);
+                                        $regionSlug = $slugs->firstWhere('account_type', $accountType);
+                                        if ($regionSlug && isset($regionSlug['slug'])) {
+                                            $productSlug = $regionSlug['slug'];
+                                        }
+                                    } else {
+                                        $productSlug = $matchingProduct->product_slug ?? 'unknown';
+                                    }
+                                }
+
                                 CodesWithMissingProduct::create([
                                     'account_id' => $account->id,
                                     'code' => $code,
                                     'serial_number' => $serialNumber,
                                     'product_id' => null,
                                     'product_name' => $productName,
-                                    'product_slug' =>'unknown',
-                                    'account_type' => 'unknown',
+                                    'product_slug' => $productSlug,
+                                    'account_type' => $accountType,
                                     'product_edition' => 'unknown',
                                     'product_buy_value' => 0,
                                     'product_face_value' => 0,

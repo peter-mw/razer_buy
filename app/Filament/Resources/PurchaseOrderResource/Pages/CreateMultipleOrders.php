@@ -91,8 +91,11 @@ class CreateMultipleOrders extends Page
 
                                 // Get and select all active accounts with balance
                                 $accounts = Account::where('is_active', true)
-                                    ->where('account_type', $this->data['account_type'] ?? null)
+                                    ->when($this->data['account_type'], function ($query, $accountType) {
+                                        return $query->where('account_type', $accountType);
+                                    })
                                     ->where('ballance_gold', '>', 0)
+                                    ->orderByDesc('ballance_gold')
                                     ->get();
 
                                 if ($accounts->isEmpty()) {
@@ -199,8 +202,10 @@ class CreateMultipleOrders extends Page
                         ->visible(fn() => collect($this->data['selected_accounts'] ?? [])->contains(true))
                         ->action(function () {
                             $accounts = Account::where('is_active', true)
-                                ->where('account_type', $this->data['account_type'] ?? null)
-                                ->where('is_active', true)
+                                ->when($this->data['account_type'], function ($query, $accountType) {
+                                    return $query->where('account_type', $accountType);
+                                })
+                                ->orderByDesc('ballance_gold')
                                 ->get();
 
                             foreach ($accounts as $account) {
@@ -266,8 +271,10 @@ class CreateMultipleOrders extends Page
     protected function getAccountsWithQuantityInputs(): array
     {
         $accounts = Account::where('is_active', true)
-            ->where('account_type', $this->data['account_type'] ?? null)
-            ->where('is_active', true)
+            ->when($this->data['account_type'], function ($query, $accountType) {
+                return $query->where('account_type', $accountType);
+            })
+            ->orderByDesc('ballance_gold')
             ->get();
 
         if ($accounts->isEmpty() || empty($this->data['products'])) {
@@ -502,15 +509,19 @@ class CreateMultipleOrders extends Page
                     $quantity = $quantities[$accountId][$product->id] ?? 0;
 
                     if ($quantity > 0) {
-                        // Get the account type specific slug if it exists
+                        // Get region-specific product name if available
                         $productName = $product->product_name;
                         $accountType = $data['data']['account_type'];
                         
-                        if ($accountType && isset($product->product_slugs)) {
-                            $slugs = collect($product->product_slugs);
-                            $regionSlug = $slugs->firstWhere('account_type', $accountType);
-                            if ($regionSlug && isset($regionSlug['slug'])) {
-                                $productName = $regionSlug['slug'];
+                        if ($accountType) {
+                            if (!empty($product->product_slugs)) {
+                                $slugs = collect($product->product_slugs);
+                                $regionSlug = $slugs->firstWhere('account_type', $accountType);
+                                if ($regionSlug && isset($regionSlug['slug'])) {
+                                    $productName = $regionSlug['slug'];
+                                }
+                            } else {
+                                $productName = $product->product_slug ?? $product->product_name;
                             }
                         }
 
