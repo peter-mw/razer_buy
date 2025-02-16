@@ -33,10 +33,10 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
-           ->databaseNotifications(isLazy: true)
-            ->databaseNotificationsPolling(60)
+            ->databaseNotifications(isLazy: true)
+            ->databaseNotificationsPolling(180)
             ->plugins([
-                 FilamentJobsMonitorPlugin::make()
+                FilamentJobsMonitorPlugin::make()
                     ->enableNavigation(),
             ])
             ->colors([
@@ -47,14 +47,14 @@ class AdminPanelProvider extends PanelProvider
             ->pages([
                 Pages\Dashboard::class,
             ])
-          //  ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
+            //  ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
-              Widgets\AccountWidget::class,
+                Widgets\AccountWidget::class,
 
-              AccountBalancesWidget::class,
-              DailyTopupsWidget::class,
+                AccountBalancesWidget::class,
+                DailyTopupsWidget::class,
 
-         //       Widgets\FilamentInfoWidget::class,
+                //       Widgets\FilamentInfoWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,

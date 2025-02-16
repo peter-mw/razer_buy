@@ -378,7 +378,14 @@ class RazerService
 
         $data_items = $this->formatOutput($output);
 
+
+
+
+
         $return = $data_items;
+
+
+
         SystemLog::create([
             'source' => 'RazerService::fetchAllCodes',
             'command' => $cmd,
@@ -395,6 +402,10 @@ class RazerService
         $isValid = true;
 
         $checkBalance = $this->getAccountBallance();
+        //$topups = $this->fetchTopUps();
+        //$codes = $this->fetchAllCodes();
+
+
 
         if ($checkBalance['gold'] == 0 && $checkBalance['silver'] == 0) {
             $isValid = false;
@@ -448,7 +459,7 @@ class RazerService
                 'response' => ['error' => 'Command execution failed'],
                 'status' => 'error'
             ]);
-            throw new \RuntimeException("Command execution failed");
+            return ['gold' => 0, 'silver' => 0];
         }
 
         file_put_contents($workdir . '/balance_log.txt', $output);

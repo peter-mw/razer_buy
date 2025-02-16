@@ -22,7 +22,7 @@ class TransactionsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->paginated(false)
+            ->paginated([100, 250, 500, 1000, 2000, 5000, 'all'])
             ->columns([
                 TextColumn::make('transaction_id')
                     ->searchable()
