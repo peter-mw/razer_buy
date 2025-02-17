@@ -47,6 +47,7 @@ class CreateProduct extends CreateRecord
                         ->live()
                         ->afterStateUpdated(fn($state, $set) => $set('game_id', null)),
                     Select::make('game_id')
+
                         ->afterStateUpdated(function ($get, $set) {
 
                             $gameId = $get('game_id');
@@ -63,11 +64,20 @@ class CreateProduct extends CreateRecord
                                 return [];
                             }
 
-                            return Game::query()
+                            $vals =  Game::query()
                                 ->where('region_id', $get('region_id'))
                                 ->whereNotNull('vanity_name')
                                 ->pluck('vanity_name', 'id')
                                 ->toArray();
+
+                            //addp rice
+
+                            foreach ($vals as $key => $val) {
+                                $game = Game::find($key);
+                                $vals[$key] = $val . ' - gold:' .  $game->unit_gold . ' id:' . $game->product_id;
+                            }
+
+                            return $vals;
                         })
                         ->live()
                 ])
