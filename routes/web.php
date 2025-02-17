@@ -8,8 +8,6 @@ Route::get('/', function () {
 });
 
 
-
-
 Route::get('/aaa', function () {
     $accountID = 8;
     $accountID = 57;
@@ -19,38 +17,39 @@ Route::get('/aaa', function () {
     // $accountID = 20;
     // $accountID = 43;
 
-  $accountID = 8;
-  $accountID = 3;
-  $accountID = 5;
-  $accountID = 36;
+    $accountID = 8;
+    $accountID = 3;
+    $accountID = 5;
+    $accountID = 36;
+    $accountID = 3;
 
     $topups = [];
     $account = \App\Models\Account::find($accountID);
 
     //  $accountID = 11;
     $razerService = new \App\Services\RazerService($account);
-    $topups = $razerService->getAccountBallance();
-    //$codes = $razerService->fetchAllCodes();
-   // $detail = $razerService->getAllAccountDetails();
-    dd($topups);
+    //  $topups = $razerService->getAccountBallance();
+   // $codes = $razerService->fetchAllCodes();
+    // $detail = $razerService->getAllAccountDetails();
 
- //  $topups = $razerService->fetchTopUps();
+//dd($codes);
+    //  $topups = $razerService->fetchTopUps();
 //dd($topups);
-     $job = new \App\Jobs\FetchAccountCodesJob($accountID);
-
-    $job->handle();
-
+    $job = new \App\Jobs\FetchAccountCodesJob($accountID);
+dispatch_sync($job);
+    //$job->handle();
+   // dd($codes);
     dump('done');
-return 'done';
+    return 'done';
     $topups = $razerService->fetchTopUps();
     $ballance = $razerService->getAccountBallance();
-  //  $topups = $razerService->fetchAllCodes();
-     $codes = $razerService->fetchAllCodes();
+    //  $topups = $razerService->fetchAllCodes();
+    $codes = $razerService->fetchAllCodes();
 
     $codesSum = collect($codes)->sum('Amount');
     $topupsSum = collect($topups)->sum('amount');
 
-    $trancasctionsLocal  = \App\Models\Transaction::where('account_id',$accountID)->get();
+    $trancasctionsLocal = \App\Models\Transaction::where('account_id', $accountID)->get();
     $trancasctionsLocalSum = collect($trancasctionsLocal)->sum('amount');
 
     //
@@ -72,6 +71,8 @@ return 'done';
 
 
 Route::middleware(['auth'])->group(function () {
+
     Route::get('/export/remote-crm', [ExportController::class, 'exportRemoteCrm'])->name('export.remote-crm');
-Route::get('/export/codes', [ExportController::class, 'exportCodes'])->name('export.codes');
+    Route::get('/export/codes', [ExportController::class, 'exportCodes'])->name('export.codes');
+
 });

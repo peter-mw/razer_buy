@@ -61,7 +61,8 @@ class SystemLogResource extends Resource
                 Tables\Columns\TextColumn::make('order_id')
                     ->searchable()
                     ->sortable()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true)
+                     ,
                 Tables\Columns\TextColumn::make('status')
                     ->searchable()
                     ->color(fn(string $state): string => match ($state) {

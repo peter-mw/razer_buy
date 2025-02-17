@@ -69,7 +69,7 @@ class ProcessBuyJob implements ShouldQueue
                 ->where('accounts.limit_amount_per_day', '>', 0)
                 ->where('accounts.account_type', $purchaseOrder->account_type)
                 ->where('accounts.is_active', true)
-                ->where('account_types.region_id', function($query) use ($purchaseOrder) {
+                ->where('account_types.region_id', function ($query) use ($purchaseOrder) {
                     $query->select('region_id')
                         ->from('account_types')
                         ->where('code', $purchaseOrder->account_type)
@@ -227,7 +227,7 @@ class ProcessBuyJob implements ShouldQueue
         // Get the product for region-specific slug lookup
         $product = Product::find($purchaseOrder->product_id);
         $accountType = $account->account_type;
-        
+
         // Get region-specific product name if available
         $productName = $product->product_name;
         if ($accountType) {

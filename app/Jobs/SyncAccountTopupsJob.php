@@ -28,10 +28,10 @@ class SyncAccountTopupsJob implements ShouldQueue
         $this->accountId = $accountId;
     }
 
-    public function middleware()
+/*    public function middleware()
     {
         return [(new WithoutOverlapping('SyncAccountTopupsJob' . $this->accountId))->dontRelease()];
-    }
+    }*/
 
     public function handle(): void
     {

@@ -10,10 +10,10 @@ return new class extends Migration
     {
         Schema::create('system_logs', function (Blueprint $table) {
             $table->id();
-            $table->string('source');
-            $table->json('params');
+            $table->string('source',500)->nullable();
+            $table->json('params')->nullable();
             $table->json('response')->nullable();
-            $table->string('status');
+            $table->string('status',500)->nullable();
 
             // Indexes
             $table->index('source');

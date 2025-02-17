@@ -603,6 +603,8 @@ class AccountResource extends Resource
                         ->label('Sync Codes')
                         ->icon('heroicon-o-document-duplicate')
                         ->action(function ($records): void {
+
+
                             try {
                                 foreach ($records as $record) {
                                     dispatch(new \App\Jobs\FetchAccountCodesJob($record->id));

@@ -25,10 +25,11 @@ class RescueTransactionJob implements ShouldQueue
     )
     {
     }
-    public function middleware()
+ /*   public function middleware()
     {
         return [(new WithoutOverlapping('RescueTransactionJob'.$this->transactionId))->dontRelease()];
     }
+  */
     public function handle(): void
     {
         // Find the pending transaction with its relationships

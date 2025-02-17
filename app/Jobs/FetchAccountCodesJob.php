@@ -32,205 +32,222 @@ class FetchAccountCodesJob implements ShouldQueue
     {
     }
 
-    public function middleware()
-    {
-        return [(new WithoutOverlapping('FetchAccountCodesJob' . $this->accountId))->dontRelease()];
-    }
+    /*  public function middleware()
+      {
+          return [(new WithoutOverlapping('FetchAccountCodesJob1' . $this->accountId))->releaseAfter(60)];
+      }*/
 
     public function handle(): void
     {
+
+        $log = SystemLog::create([
+            'source' => 'FetchAccountCodesJob::handle',
+            'account_id' => $this->accountId,
+            'status' => 'processing'
+
+        ]);
+        $log->save();
+
+
         $account = Account::findOrFail($this->accountId);
         $service = new RazerService($account);
 
 
         // Fetch all codes for the account
-        try {
-            $codes = $service->fetchAllCodes();
 
-            //@ todo remove this
-            //  $codes = $service->fetchAllCodesCached();
-            $foundCodes = [];
-            $processedCodes = [];
-            if (!empty($codes)) {
-                // Track if we found any new codes
-                $hasNewCodes = false;
-                $firstNewCode = null;
+        // $codes = $service->fetchAllCodes();
+
+        //@ todo remove this
+        $codes = $service->fetchAllCodesCached();
 
 
-                // First pass - check for new codes
-                foreach ($codes as $codeData) {
-                    if (!isset($codeData['Code']) || !isset($codeData['SN'])) {
-                        continue;
+        $foundCodes = [];
+        $processedCodes = [];
+        if (!empty($codes)) {
+            // Track if we found any new codes
+            $hasNewCodes = false;
+            $firstNewCode = null;
+
+
+            // First pass - check for new codes
+            foreach ($codes as $codeData) {
+                if (!isset($codeData['Code']) || !isset($codeData['SN'])) {
+                    continue;
+                }
+
+
+                $code = $codeData['Code'];
+                $serialNumber = $codeData['SN'];
+
+                // Check if code already exists
+                $existingCode = Code::where('code', $code)
+                    ->where('serial_number', $serialNumber)
+                    ->first();
+
+                if (!$existingCode) {
+                    $hasNewCodes = true;
+                    if (!$firstNewCode) {
+                        $firstNewCode = $codeData;
                     }
+                    $processedCodes[] = $codeData;
+                } else {
+                    $foundCodes[] = $existingCode;
+                }
+            }
 
+            if ($foundCodes) {
 
-                    $code = $codeData['Code'];
-                    $serialNumber = $codeData['SN'];
+                foreach ($foundCodes as $existingCode) {
 
-                    // Check if code already exists
-                    $existingCode = Code::where('code', $code)
-                        ->where('serial_number', $serialNumber)
+                    $codeData = $existingCode->toArray();
+
+                    // Check if transaction exists for this code
+                    /*   $transaction = Transaction::where('account_id', $existingCode->account_id)
+                           ->where('product_id', $existingCode->product_id)
+                           ->where('order_id', $existingCode->order_id)
+                           ->where('transaction_ref', $existingCode->product_name)
+                           ->where('amount', $existingCode->buy_value)
+                           ->first();*/
+
+                    $transaction = Transaction::where('transaction_id', $codeData['transaction_id'])
                         ->first();
 
-                    if (!$existingCode) {
-                        $hasNewCodes = true;
-                        if (!$firstNewCode) {
-                            $firstNewCode = $codeData;
-                        }
-                        $processedCodes[] = $codeData;
-                    } else {
-                        $foundCodes[] = $existingCode;
+                    if ($transaction) {
+                        $transaction->update([
+                            'order_id' => $existingCode->order_id,
+                            'account_id' => $existingCode->account_id,
+                            'product_id' => $existingCode->product_id,
+                            'transaction_date' => $existingCode->buy_date,
+                            'amount' => $existingCode->buy_value,
+                        ]);
+                        $transaction->save();
+
                     }
-                }
 
-                if ($foundCodes) {
+                    //'transaction_id' => $codeData['transaction_id']
 
-                    foreach ($foundCodes as $existingCode) {
-
-                        $codeData = $existingCode->toArray();
-
-                        // Check if transaction exists for this code
-                        /*   $transaction = Transaction::where('account_id', $existingCode->account_id)
-                               ->where('product_id', $existingCode->product_id)
-                               ->where('order_id', $existingCode->order_id)
-                               ->where('transaction_ref', $existingCode->product_name)
-                               ->where('amount', $existingCode->buy_value)
-                               ->first();*/
-
-                        $transaction = Transaction::where('transaction_id', $codeData['transaction_id'])
-                            ->first();
-
-                        if ($transaction) {
-                            $transaction->update([
-                                'order_id' => $existingCode->order_id,
-                                'account_id' => $existingCode->account_id,
-                                'product_id' => $existingCode->product_id,
-                                'transaction_date' => $existingCode->buy_date,
-                                'amount' => $existingCode->buy_value,
-                            ]);
-                            $transaction->save();
-
-                        }
-
-                        //'transaction_id' => $codeData['transaction_id']
-
-                        if (!$transaction) {
-                            // Find matching code data from fetched codes
+                    if (!$transaction) {
+                        // Find matching code data from fetched codes
 
 
-                            /*$codeData = rray:14 [▼ // app/Jobs/FetchAccountCodesJob.php:97
-  "id" => 1875
-  "account_id" => 11
-  "order_id" => 137
-  "product_id" => 14486
-  "code" => "MGG1NJ65K4JN"
-  "serial_number" => "M001111051739107801907314011609"
-  "product_name" => "Yalla Ludo - USD 2 Diamonds"
-  "product_edition" => null
-  "buy_date" => "2025-02-10T07:48:06.000000Z"
-  "buy_value" => "2.07"
-  "created_at" => "2025-02-15T12:37:01.000000Z"
-  "updated_at" => "2025-02-15T12:37:01.000000Z"
-  "transaction_ref" => null
-  "transaction_id" => "122GOWX6B249861538E13"
+                        /*$codeData = rray:14 [▼ // app/Jobs/FetchAccountCodesJob.php:97
+"id" => 1875
+"account_id" => 11
+"order_id" => 137
+"product_id" => 14486
+"code" => "MGG1NJ65K4JN"
+"serial_number" => "M001111051739107801907314011609"
+"product_name" => "Yalla Ludo - USD 2 Diamonds"
+"product_edition" => null
+"buy_date" => "2025-02-10T07:48:06.000000Z"
+"buy_value" => "2.07"
+"created_at" => "2025-02-15T12:37:01.000000Z"
+"updated_at" => "2025-02-15T12:37:01.000000Z"
+"transaction_ref" => null
+"transaction_id" => "122GOWX6B249861538E13"
 ]*/
 
-                            if ($codeData) {
-                                // Create transaction for existing code
-                                $transactionData = [
-                                    'account_id' => $existingCode->account_id,
-                                    'amount' => $codeData['buy_value'],
-                                    'product_id' => $existingCode->product_id,
-                                    'transaction_date' => $codeData['buy_date'],
-                                    'transaction_id' => $codeData['transaction_id'],
-                                    'order_id' => $existingCode->order_id,
-                                    'transaction_ref' => $codeData['product_name']
-                                ];
+                        if ($codeData) {
+                            // Create transaction for existing code
+                            $transactionData = [
+                                'account_id' => $existingCode->account_id,
+                                'amount' => $codeData['buy_value'],
+                                'product_id' => $existingCode->product_id,
+                                'transaction_date' => $codeData['buy_date'],
+                                'transaction_id' => $codeData['transaction_id'],
+                                'order_id' => $existingCode->order_id,
+                                'transaction_ref' => $codeData['product_name']
+                            ];
 
-                                try {
-                                    $transaction = Transaction::create($transactionData);
-                                    $transaction->save();
-                                } catch (\Exception $e) {
-                                    // Log::error('Failed to create transaction for existing code: ' . $e->getMessage());
-                                }
+                            try {
+                                $transaction = Transaction::create($transactionData);
+                                $transaction->save();
+                            } catch (\Exception $e) {
+                                Log::error('Failed to create transaction for existing code: ' . $e->getMessage());
                             }
                         }
                     }
                 }
+            }
 
 
-                // Only process codes if we found new ones
-                if ($hasNewCodes) {
+            // Only process codes if we found new ones
+            if ($hasNewCodes) {
+                $log->update([
+                    'status' => 'has_new_codes'
+                ]);
 
-                    // Group codes by product
-                    $codesByProduct = collect($processedCodes)->groupBy('Product');
+                // Group codes by product
+                $codesByProduct = collect($processedCodes)->groupBy('Product');
 
-                    // Process each product group
-                    foreach ($codesByProduct as $productName => $productCodes) {
-                        // Find or create product
-                        $product = Product::where('product_name', $productName)->first();
+                // Process each product group
+                foreach ($codesByProduct as $productName => $productCodes) {
+                    // Find or create product
+                    $product = Product::where('product_name', $productName)->first();
 
-                        if (!$product) {
-                            // Create entry in codes with missing products table
-                            foreach ($productCodes as $codeData) {
-                                $checkIfCodesWithMissingProductExist = CodesWithMissingProduct::where('code', $codeData['Code'])
-                                    ->where('serial_number', $codeData['SN'])
-                                    ->first();
-
-                                if ($checkIfCodesWithMissingProductExist) {
-                                    continue;
-                                }
+                    if (!$product) {
+                        // Create entry in codes with missing products table
+                        foreach ($productCodes as $codeData) {
 
 
-                                $code = $codeData['Code'];
-                                $serialNumber = $codeData['SN'];
-                                $amount = floatval($codeData['Amount']);
-                                $amount = number_format($amount, 2, '.', '');
-                                $transaction_id = $codeData['ID'] ?? '';
-                                $buyDate = date('Y-m-d H:i:s', strtotime($codeData['TransactionDate']));
+                            $checkIfCodesWithMissingProductExist = CodesWithMissingProduct::where('code', $codeData['Code'])
+                                ->where('serial_number', $codeData['SN'])
+                                ->first();
 
-                                // Get account type from the account
-                                $accountType = $account->account_type;
-                                
-                                // Try to find a product with matching name
-                                $matchingProduct = Product::where('product_name', $productName)
-                                    ->orWhereJsonContains('product_slugs', ['account_type' => $accountType])
-                                    ->first();
-                                
-                                // Get the appropriate slug
-                                $productSlug = 'unknown';
-                                if ($matchingProduct) {
-                                    if (!empty($matchingProduct->product_slugs)) {
-                                        $slugs = collect($matchingProduct->product_slugs);
-                                        $regionSlug = $slugs->firstWhere('account_type', $accountType);
-                                        if ($regionSlug && isset($regionSlug['slug'])) {
-                                            $productSlug = $regionSlug['slug'];
-                                        }
-                                    } else {
-                                        $productSlug = $matchingProduct->product_slug ?? 'unknown';
-                                    }
-                                }
-
-                                CodesWithMissingProduct::create([
-                                    'account_id' => $account->id,
-                                    'code' => $code,
-                                    'serial_number' => $serialNumber,
-                                    'product_id' => null,
-                                    'product_name' => $productName,
-                                    'product_slug' => $productSlug,
-                                    'account_type' => $accountType,
-                                    'product_edition' => 'unknown',
-                                    'product_buy_value' => 0,
-                                    'product_face_value' => 0,
-                                    'buy_date' => $buyDate,
-                                    'buy_value' => $amount,
-                                    'transaction_ref' => null,
-                                    'transaction_id' => $transaction_id
-                                ]);
+                            if ($checkIfCodesWithMissingProductExist) {
+                                continue;
                             }
 
-                            continue;
+
+                            $code = $codeData['Code'];
+                            $serialNumber = $codeData['SN'];
+                            $amount = floatval($codeData['Amount']);
+                            $amount = number_format($amount, 2, '.', '');
+                            $transaction_id = $codeData['ID'] ?? '';
+                            $buyDate = date('Y-m-d H:i:s', strtotime($codeData['TransactionDate']));
+
+                            // Get account type from the account
+                            $accountType = $account->account_type;
+
+                            // Try to find a product with matching name
+                            $matchingProduct = Product::where('product_name', $productName)
+                                ->orWhereJsonContains('product_slugs', ['account_type' => $accountType])
+                                ->first();
+                            // Get the appropriate slug
+                            $productSlug = 'unknown';
+                            if ($matchingProduct) {
+                                if (!empty($matchingProduct->product_slugs)) {
+                                    $slugs = collect($matchingProduct->product_slugs);
+                                    $regionSlug = $slugs->firstWhere('account_type', $accountType);
+                                    if ($regionSlug && isset($regionSlug['slug'])) {
+                                        $productSlug = $regionSlug['slug'];
+                                    }
+                                } else {
+                                    $productSlug = $matchingProduct->product_slug ?? 'unknown';
+                                }
+                            }
+
+                            CodesWithMissingProduct::create([
+                                'account_id' => $account->id,
+                                'code' => $code,
+                                'serial_number' => $serialNumber,
+                                'product_id' => null,
+                                'product_name' => $productName,
+                                'product_slug' => $productSlug,
+                                'account_type' => $accountType,
+                                'product_edition' => 'unknown',
+                                'product_buy_value' => $amount,
+                                'product_face_value' => $amount,
+                                'buy_date' => $buyDate,
+                                'buy_value' => $amount,
+                                'transaction_ref' => null,
+                                'transaction_id' => $transaction_id
+                            ]);
                         }
+
+
+                    } else {
+
 
                         // Create order for this product group
                         $newOrder = PurchaseOrders::create([
@@ -248,27 +265,40 @@ class FetchAccountCodesJob implements ShouldQueue
                         $quantityProcessed = count($productCodes);
                         // Process codes for this product
 
+                        $log->update([
+                            'status' => 'processing_codes'
+                        ]);
+
+                        Log::info('Processing codes for product: ' . $productName . ' - ' . $product->id);
+
                         foreach ($productCodes as $codeItem => $codeDataItem) {
 
                             $quantityProcessed--;
                             $this->processCode($account, $codeDataItem, $newOrder, $product);
                         }
-
+                        $log->update([
+                            'status' => 'processing_codes_completed'
+                        ]);
                         $newOrder->update([
                             'order_status' => 'completed',
                             'quantity' => $quantityProcessed,
                         ]);
                     }
 
-
                 }
 
 
             }
-        } catch (\Exception $e) {
 
-            return;
+
         }
+        $log->update([
+            'status' => 'success',
+            'params' => [
+                'account_id' => $account->id,
+                'codes' => $codes,
+            ],
+        ]);
 
 
     }
@@ -316,9 +346,12 @@ class FetchAccountCodesJob implements ShouldQueue
                 'order_id' => $order->id
             ];
 
-            $code = Code::create($data);
-
-            $code->save();
+            try {
+                $code = Code::create($data);
+                $code->save();
+            } catch (\Exception $e) {
+                Log::error('Failed to create code: ' . $e->getMessage());
+            }
 
 
             $transaction = Transaction::where('transaction_id', $transaction_id)->first();
@@ -328,6 +361,7 @@ class FetchAccountCodesJob implements ShouldQueue
 
                 $transaction->update([
                     'order_id' => $order->id,
+                    'account_id' => $account->id,
                 ]);
 
             } else {
@@ -344,8 +378,7 @@ class FetchAccountCodesJob implements ShouldQueue
 
 
                 try {
-                    $transaction = Transaction::create($transactionData);
-                    $transaction->save();
+                    $transaction = Transaction::insert($transactionData);
                 } catch (\Exception $e) {
 
                     Log::error('Failed to create transaction for existing code: ' . $e->getMessage());

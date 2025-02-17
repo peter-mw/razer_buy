@@ -22,10 +22,10 @@ class SyncAccountBalancesJob implements ShouldQueue
     {
     }
 
-    public function middleware()
+/*    public function middleware()
     {
         return [(new WithoutOverlapping('SyncAccountBalancesJob' . $this->accountId))->dontRelease()];
-    }
+    }*/
 
     public function handle(): void
     {

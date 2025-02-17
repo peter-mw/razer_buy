@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('account_id')->constrained()->cascadeOnDelete();
             $table->foreignId('order_id')->nullable()->constrained('purchase_orders')->nullOnDelete();
-            $table->foreignId('product_id')->constrained('products')->cascadeOnDelete(); // Fixed reference
+            $table->foreignId('product_id')->nullable()->constrained('products')->cascadeOnDelete(); // Fixed reference
             $table->string('code', 500)->nullable();
             $table->string('serial_number', 500)->nullable();
             $table->string('product_name', 500)->nullable();
