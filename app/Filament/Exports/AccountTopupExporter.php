@@ -30,8 +30,8 @@ class AccountTopupExporter extends Exporter
             ExportColumn::make('topup_time')
                 ->label('Topup Time'),
 
-          /*  ExportColumn::make('date')
-                ->label('Date'),*/
+            ExportColumn::make('date')
+                ->label('Date'),
             ExportColumn::make('created_at')
                 ->label('Created At'),
             ExportColumn::make('updated_at')

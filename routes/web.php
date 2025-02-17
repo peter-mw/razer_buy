@@ -26,6 +26,7 @@ Route::get('/aaa',
         $accountID = 26;
         $accountID = 25;
         $accountID = 15;
+       // $accountID = 16;
 
         $topups = [];
         $account = \App\Models\Account::find($accountID);
@@ -79,5 +80,6 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/export/remote-crm', [ExportController::class, 'exportRemoteCrm'])->name('export.remote-crm');
     Route::get('/export/codes', [ExportController::class, 'exportCodes'])->name('export.codes');
+    Route::get('/export/account-topups', [ExportController::class, 'exportAccountTopups'])->name('export.account-topups');
 
 });

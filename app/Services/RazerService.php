@@ -677,7 +677,7 @@ Silver Balance: 1500000, Next Expiring Bonus Silver: 15245, Next Expiring Bonus 
 
         foreach ($lines as $line) {
             $line = str_replace(["+0000 +0000"], '', $line);
-            $data = explode(',', $line);
+            $data = explode(', ', $line);
 
             $data = array_map('trim', $data);
             $return = [];

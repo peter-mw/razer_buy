@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Code;
+use App\Models\AccountTopup;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
@@ -61,6 +62,61 @@ class ExportController extends Controller
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="codes-export-' . now() . '.csv"',
+        ];
+
+        return response($csv->getContent(), 200, $headers);
+    }
+
+    public function exportAccountTopups(Request $request)
+    {
+        $fromDate = $request->get('from_date');
+        $toDate = $request->get('to_date');
+
+        $query = AccountTopup::with(['account']);
+
+        if ($fromDate && $toDate) {
+            $query->whereBetween('date', [$fromDate, $toDate]);
+        }
+
+        if ($request->has('account_id')) {
+            $query->where('account_id', $request->get('account_id'));
+        }
+
+        $topups = $query->get();
+
+        $csv = Writer::createFromFileObject(new SplTempFileObject());
+
+        // Add headers
+        $csv->insertOne([
+            'Account ID',
+            'Account Name',
+            'Transaction ID',
+            'Transaction Ref',
+            'Topup Amount',
+            'Topup Time',
+            'Date',
+            'Created At',
+            'Updated At'
+        ]);
+
+        // Add data
+        foreach ($topups as $topup) {
+            $csv->insertOne([
+                $topup->account?->id ?? '',
+                $topup->account?->name ?? '',
+                $topup->transaction_id,
+                $topup->transaction_ref,
+                $topup->topup_amount,
+                $topup->topup_time,
+                $topup->date,
+                $topup->created_at,
+                $topup->updated_at
+            ]);
+        }
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="account-topups-export-' . now() . '.csv"',
         ];
 
         return response($csv->getContent(), 200, $headers);

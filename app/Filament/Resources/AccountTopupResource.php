@@ -119,8 +119,46 @@ class AccountTopupResource extends Resource
             ->headerActions([
                 /*Tables\Actions\ImportAction::make()
                     ->importer(Imports\AccountTopupImporter::class),*/
-                Tables\Actions\ExportAction::make()
-                    ->exporter(Exports\AccountTopupExporter::class),
+
+
+
+                
+                Tables\Actions\Action::make('custom_export')
+                    ->label('Export')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->form([
+                        Forms\Components\DatePicker::make('from_date')
+                            ->label('From Date')
+                            ->required(),
+                        Forms\Components\DatePicker::make('to_date')
+                            ->label('To Date')
+                            ->required(),
+                        Forms\Components\Select::make('account_id')
+                            ->label('Account')
+                            ->options(function(): array {
+                                return \App\Models\Account::query()
+                                    ->select(['id', 'name', 'account_type'])
+                                    ->withSum('accountTopups', 'topup_amount')
+                                    ->get()
+                                    ->mapWithKeys(function ($account) {
+                                        return [
+                                            $account->id => "[{$account->id}] {$account->name} ({$account->account_type}) - Total Topup: $" .
+                                                number_format($account->account_topups_sum_topup_amount ?? 0, 2)
+                                        ];
+                                    })
+                                    ->toArray();
+                            })
+                            ->searchable(),
+                    ])
+                    ->action(function (array $data): void {
+                        $params = http_build_query([
+                            'from_date' => $data['from_date'],
+                            'to_date' => $data['to_date'],
+                            'account_id' => $data['account_id'],
+                        ]);
+                        $url = route('export.account-topups') . '?' . $params;
+                        redirect()->away($url);
+                    }),
 
                 Tables\Actions\Action::make('sync_all_topups')
                     ->label('Sync All Topups')
@@ -154,8 +192,9 @@ class AccountTopupResource extends Resource
                         'account',
                         'id',
                         fn($query) => $query->select(['id', 'name', 'account_type'])
+                            ->withSum('accountTopups', 'topup_amount')
                     )
-                    ->getOptionLabelFromRecordUsing(fn($record) => "[{$record->id}] {$record->name} ({$record->account_type})"),
+                    ->getOptionLabelFromRecordUsing(fn($record) => "[{$record->id}] {$record->name} ({$record->account_type}) - Total Topup: $" . number_format($record->account_topups_sum_topup_amount ?? 0, 2)),
                 Tables\Filters\SelectFilter::make('date_range')
                     ->options([
                         'today' => 'Today',
@@ -205,8 +244,7 @@ class AccountTopupResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\ExportBulkAction::make()
-                        ->exporter(Exports\AccountTopupExporter::class),
+
                     Tables\Actions\BulkAction::make('sync_topups')
                         ->label('Sync Topups')
                         ->icon('heroicon-o-credit-card')
