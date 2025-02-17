@@ -8,68 +8,71 @@ Route::get('/', function () {
 });
 
 
-Route::get('/aaa', function () {
-    $accountID = 8;
-    $accountID = 57;
-    $accountID = 11;
-    $accountID = 5;
-    // $accountID = 23;
-    // $accountID = 20;
-    // $accountID = 43;
+Route::get('/aaa',
+    function () {
+        $accountID = 8;
+        $accountID = 57;
+        $accountID = 11;
+        $accountID = 5;
+        // $accountID = 23;
+        // $accountID = 20;
+        // $accountID = 43;
 
-    $accountID = 8;
-    $accountID = 3;
-    $accountID = 5;
-    $accountID = 36;
-    $accountID = 3;
-    $accountID = 23;
+        $accountID = 8;
+        $accountID = 3;
+        $accountID = 5;
+        $accountID = 36;
+        $accountID = 3;
+        $accountID = 26;
+        $accountID = 25;
+        $accountID = 15;
 
-    $topups = [];
-    $account = \App\Models\Account::find($accountID);
+        $topups = [];
+        $account = \App\Models\Account::find($accountID);
 
-    //  $accountID = 11;
-    $razerService = new \App\Services\RazerService($account);
-    //  $topups = $razerService->getAccountBallance();
-   // $codes = $razerService->fetchAllCodes();
-    // $detail = $razerService->getAllAccountDetails();
+        //  $accountID = 11;
+        $razerService = new \App\Services\RazerService($account);
+        //  $topups = $razerService->getAccountBallance();
+        // $codes = $razerService->fetchAllCodes();
+        // $detail = $razerService->getAllAccountDetails();
 
 //dd($codes);
-    //  $topups = $razerService->fetchTopUps();
+        //  $topups = $razerService->fetchTopUps();
 //dd($topups);
-   // $job = new \App\Jobs\FetchAccountCodesJob($accountID);
-//dispatch_sync($job);
-    //$job->handle();
-   // dd($codes);
- //   dump('done');
- //   return 'done';
-    $topups = $razerService->fetchTopUps();
-    $ballance = $razerService->getAccountBallance();
-    //  $topups = $razerService->fetchAllCodes();
-    $codes = $razerService->fetchAllCodes();
+        $job = new \App\Jobs\FetchAccountCodesJob($accountID);
+        dispatch_sync($job);
+        //$job->handle();
+        // dd($codes);
+         dump('done');
+         return 'done';
+        $topups = $razerService->fetchTopUps();
+        $ballance = $razerService->getAccountBallance();
+        //  $topups = $razerService->fetchAllCodes();
+        $codes = $razerService->fetchAllCodes();
 
-    $codesSum = collect($codes)->sum('Amount');
-    $topupsSum = collect($topups)->sum('amount');
+        $codesSum = collect($codes)->sum('Amount');
+        $topupsSum = collect($topups)->sum('amount');
 
-    $trancasctionsLocal = \App\Models\Transaction::where('account_id', $accountID)->get();
-    $trancasctionsLocalSum = collect($trancasctionsLocal)->sum('amount');
+        $trancasctionsLocal = \App\Models\Transaction::where('account_id', $accountID)->get();
+        $trancasctionsLocalSum = collect($trancasctionsLocal)->sum('amount');
 
-    //
-    $info = [
-        'account_id' => $accountID,
-        'ballance' => $ballance,
-        'codes' => $codes,
-        'topups' => $topups,
-        'trancasctionsLocal' => $trancasctionsLocal,
-        'trancasctionsLocalSum' => $trancasctionsLocalSum,
-        'codesSum' => $codesSum,
-        'topupsSum' => $topupsSum,
-        'diff' => $codesSum - $topupsSum,
-    ];
+        //
+        $info = [
+            'account_id' => $accountID,
+            'ballance' => $ballance,
+            'codes' => $codes,
+            'topups' => $topups,
+            'trancasctionsLocal' => $trancasctionsLocal,
+            'trancasctionsLocalSum' => $trancasctionsLocalSum,
+            'codesSum' => $codesSum,
+            'topupsSum' => $topupsSum,
+            'diff' => $codesSum - $topupsSum,
+        ];
 
-    dd($info);
-    dump($topups);
+        dd($info);
+        dump($topups);
 
-});
+    });
 
 
 Route::middleware(['auth'])->group(function () {

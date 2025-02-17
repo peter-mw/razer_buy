@@ -33,9 +33,15 @@ class ProductResource extends Resource
                 Forms\Components\TextInput::make('product_name')
                     ->required()
                     ->maxLength(255),
+
+                Forms\Components\TextInput::make('remote_crm_product_name')
+                    ->maxLength(255),
+
                 Forms\Components\TextInput::make('product_slug')
                     ->required()
                     ->maxLength(255),
+
+
                 Forms\Components\Repeater::make('product_slugs')
                     ->schema([
                         Forms\Components\Select::make('account_type')
@@ -78,7 +84,7 @@ class ProductResource extends Resource
 
                 Forms\Components\Hidden::make('product_edition')
                     ->label('Product Edition (same as product name if not applicable)')
-                    ,
+                ,
                 Forms\Components\TextInput::make('product_buy_value')
                     ->required()
                     ->numeric()
@@ -89,15 +95,14 @@ class ProductResource extends Resource
                     ->numeric()
                     ->prefix('$')
                     ->step('0.01'),
-                Forms\Components\TextInput::make('remote_crm_product_name')
-                    ->maxLength(255),
+
             ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
-            ->paginated([10,20,25,50,100, 250, 500, 1000, 2000, 5000, 'all'])
+            ->paginated([10, 20, 25, 50, 100, 250, 500, 1000, 2000, 5000, 'all'])
             ->defaultSort('id', 'desc')
             ->actionsPosition(Tables\Enums\ActionsPosition::BeforeColumns)
             ->headerActions([

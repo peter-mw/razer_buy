@@ -387,7 +387,7 @@ class RazerService
 
     public function fetchAllCodesCached(): array
     {
-        $cache = Cache::remember('razer_codes_212131' . $this->account->id, 60000, function () {
+        $cache = Cache::remember('razer_codes_2121311' . $this->account->id, 60000, function () {
             return $this->fetchAllCodes();
         });
         return $cache;

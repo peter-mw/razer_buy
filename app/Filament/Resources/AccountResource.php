@@ -521,7 +521,7 @@ class AccountResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
                 Tables\Columns\TextColumn::make('limit_amount_per_day')
-                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->toggleable()
                     ->money()
                     ->default(100000)
                     ->sortable(),
