@@ -44,6 +44,7 @@ class AccountResource extends Resource
                     ->unique(ignoreRecord: true),
 
 
+
                 Forms\Components\TextInput::make('email')
                     ->email()
                     //  ->live(debounce: 1500)
@@ -103,83 +104,12 @@ class AccountResource extends Resource
                     })
                 ,
 
-                Forms\Components\Actions::make([
-                    Forms\Components\Actions\Action::make('validate_account')
-                        ->label('Validate Account')
-                        ->icon('heroicon-o-check-circle')
-                        ->color('success')
-                        ->action(function ($record, Forms\Set $set) {
-                            if (!$record) {
-                                $set('validation_result', 'No account found');
-                                $set('validation_status', 'error');
-                                return;
-                            }
+                Forms\Components\TextInput::make('client_id_login')
+                    ->required()
 
-                            $razerService = new \App\Services\RazerService($record);
-                            $result = $razerService->validateAccount();
-
-                            $message = $result['message'] ?? 'Account validation failed';
-
-                            // Extract region ID and limit from the message
-                            if (isset($result['region_id'])) {
-                                $accountyTypeValue = AccountType::where('region_id', $result['region_id'])->value('code');
-                                $set('account_type',$accountyTypeValue);
-                            }
-
-                            if (isset($result['limit'])) {
-                                $set('limit_amount_per_day', $result['limit']);
-                            }
-
-                            $set('validation_result', $message);
-                        })
-                        ->visible(fn($record) => $record !== null),
-
-                    Forms\Components\Actions\Action::make('get_account_details')
-                        ->label('Get Account Details')
-                        ->icon('heroicon-o-document-text')
-                        ->color('primary')
-                        ->modalHeading('Account Live Balance Details')
-                        ->modalContent(function ($record) {
-                            if (!$record) {
-                                return 'No account found';
-                            }
+                    ->maxLength(255),
 
 
-                            $razerService = new \App\Services\RazerService($record);
-                            $details = $razerService->getAllAccountDetails();
-
-                            $message = "Account Details:\n\n";
-                            foreach ($details as $key => $value) {
-                                if (is_array($value)) {
-                                    $message .= "{$key}:\n";
-                                    if ($key === 'ballance') {
-                                        $message .= "  Gold: {$value['gold']}\n";
-                                        $message .= "  Silver: {$value['silver']}\n";
-                                    } else {
-                                        $message .= "  Count: " . count($value) . "\n";
-                                        $message .= "  Sum: " . (isset($details["{$key}_sum"]) ? $details["{$key}_sum"] : 'N/A') . "\n";
-                                    }
-                                } else {
-                                    $message .= "{$key}: {$value}\n";
-                                }
-                            }
-
-                            return view('filament.modals.account-details', [
-                                'details' => $message
-                            ]);
-                        })
-                        ->modalWidth('lg')
-                        ->visible(fn($record) => $record !== null)
-                ]),
-
-                Forms\Components\Placeholder::make('validation_result')
-                    ->content(fn($state) => $state)
-                    ->columnSpanFull()
-                    ->hidden(fn($state) => empty($state))
-                    ->extraAttributes(fn($state, $get) => [
-                        'class' => 'whitespace-pre-line p-4 rounded-lg ' .
-                            ($get('validation_status') === 'success' ? 'bg-success-500/10 text-success-700' : 'bg-danger-500/10 text-danger-700')
-                    ]),
 
 
                 Forms\Components\TextInput::make('vendor')
@@ -192,9 +122,6 @@ class AccountResource extends Resource
                     ->numeric()
                     ->maxLength(255),
 
-                Forms\Components\TextInput::make('client_id_login')
-                    ->required()
-                    ->maxLength(255),
 
                 Forms\Components\TextInput::make('ballance_gold')
                     ->numeric()
@@ -320,6 +247,122 @@ class AccountResource extends Resource
                         })
                         ->visible(fn($record) => $record !== null),
                 ])->columnSpanFull(),
+
+
+
+
+
+
+
+
+                Forms\Components\Section::make('Validate')
+                    ->description('Validate account details')
+                    ->schema([
+                        Forms\Components\Actions::make([
+                            Forms\Components\Actions\Action::make('validate_account')
+                                ->label('Validate Account')
+                                ->icon('heroicon-o-check-circle')
+                                ->color('success')
+                                ->action(function ($record, Forms\Set $set) {
+                                    if (!$record) {
+                                        $set('validation_result', 'No account found');
+                                        $set('validation_status', 'error');
+                                        return;
+                                    }
+
+                                    // Save the record before validation
+                                    $record->save();
+                                    $record->refresh();
+
+                                    $razerService = new \App\Services\RazerService($record);
+                                    $result = $razerService->validateAccount();
+
+                                    $message = $result['message'] ?? 'Account validation failed';
+
+                                    // Extract region ID and limit from the message
+                                    if (isset($result['region_id'])) {
+                                        $accountyTypeValue = AccountType::where('region_id', $result['region_id'])->value('code');
+                                        $set('account_type', $accountyTypeValue);
+                                        $record->account_type = $accountyTypeValue;
+                                    }
+
+                                    if (isset($result['limit'])) {
+                                        $set('limit_amount_per_day', $result['limit']);
+                                        $record->limit_amount_per_day = $result['limit'];
+                                    }
+
+                                    // Save the updated record
+                                    $record->save();
+
+                                    // Refresh form data
+                                    $record->refresh();
+
+                                    // Update validation status and result
+                                    $set('validation_status', isset($result['success']) && $result['success'] ? 'success' : 'error');
+                                    $set('validation_result', $message);
+
+                                    // Notify user of the update
+                                    Notification::make()
+                                        ->title('Account Updated')
+                                        ->success()
+                                        ->send();
+                                })
+                                ->visible(fn($record) => $record !== null),
+
+                            Forms\Components\Actions\Action::make('get_account_details')
+                                ->label('Get Account Details')
+                                ->icon('heroicon-o-document-text')
+                                ->color('primary')
+                                ->modalHeading('Account Live Balance Details')
+                                ->modalContent(function ($record) {
+                                    if (!$record) {
+                                        return 'No account found';
+                                    }
+
+
+                                    $razerService = new \App\Services\RazerService($record);
+                                    $details = $razerService->getAllAccountDetails();
+
+                                    $message = "Account Details:\n\n";
+                                    foreach ($details as $key => $value) {
+                                        if (is_array($value)) {
+                                            $message .= "{$key}:\n";
+                                            if ($key === 'ballance') {
+                                                $message .= "  Gold: {$value['gold']}\n";
+                                                $message .= "  Silver: {$value['silver']}\n";
+                                            } else {
+                                                $message .= "  Count: " . count($value) . "\n";
+                                                $message .= "  Sum: " . (isset($details["{$key}_sum"]) ? $details["{$key}_sum"] : 'N/A') . "\n";
+                                            }
+                                        } else {
+                                            $message .= "{$key}: {$value}\n";
+                                        }
+                                    }
+
+                                    return view('filament.modals.account-details', [
+                                        'details' => $message
+                                    ]);
+                                })
+                                ->modalWidth('lg')
+                                ->visible(fn($record) => $record !== null)
+                        ]),
+
+                        Forms\Components\Placeholder::make('validation_result')
+                            ->content(fn($state) => $state)
+                            ->columnSpanFull()
+                            ->hidden(fn($state) => empty($state))
+                            ->extraAttributes(fn($state, $get) => [
+                                'class' => 'whitespace-pre-line p-4 rounded-lg ' .
+                                    ($get('validation_status') === 'success' ? 'bg-success-500/10 text-success-700' : 'bg-danger-500/10 text-danger-700')
+                            ]),
+
+                    ]),
+
+
+
+
+
+
             ]);
     }
 

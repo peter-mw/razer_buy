@@ -485,7 +485,7 @@ class RazerService
         $tier = $checkBalance['tier'] ?? 0;
 
         if ($topups == null) {
-            $isValid = false;
+            // $isValid = false;
         }
 
         $topupsCount = count($topups);
