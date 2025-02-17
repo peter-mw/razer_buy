@@ -91,6 +91,11 @@ class CodesWithMissingProductResource extends Resource
                 Tables\Columns\TextColumn::make('id')
                     ->sortable()
                     ->searchable(),
+
+
+                Tables\Columns\TextColumn::make('account_id')
+                    ->sortable()
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('account.name')
                     ->sortable()
                     ->searchable(),

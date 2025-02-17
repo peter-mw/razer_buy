@@ -161,11 +161,22 @@ class PurchaseOrderResource extends Resource
                                 $accountType = $get('account_type');
                                 $productName = $product->product_name;
                                 
-                                if ($accountType && isset($product->product_slugs)) {
-                                    $slugs = collect($product->product_slugs);
-                                    $regionSlug = $slugs->firstWhere('account_type', $accountType);
-                                    if ($regionSlug && isset($regionSlug['slug'])) {
-                                        $productName = $regionSlug['slug'];
+                                if ($accountType) {
+                                    // First try to get region-specific name
+                                    if (isset($product->product_names)) {
+                                        $names = collect($product->product_names);
+                                        $regionName = $names->firstWhere('account_type', $accountType);
+                                        if ($regionName && isset($regionName['name'])) {
+                                            $productName = $regionName['name'];
+                                        }
+                                    }
+                                    // Fallback to region-specific slug if name not found
+                                    elseif (isset($product->product_slugs)) {
+                                        $slugs = collect($product->product_slugs);
+                                        $regionSlug = $slugs->firstWhere('account_type', $accountType);
+                                        if ($regionSlug && isset($regionSlug['slug'])) {
+                                            $productName = $regionSlug['slug'];
+                                        }
                                     }
                                 }
                                 

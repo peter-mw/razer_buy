@@ -51,6 +51,21 @@ class ProductResource extends Resource
                     ])
                     ->columns(2)
                     ->label('Region-specific Slugs'),
+                Forms\Components\Repeater::make('product_names')
+                    ->schema([
+                        Forms\Components\Select::make('account_type')
+                            ->required()
+                            ->options(fn(): array => \App\Models\AccountType::query()
+                                ->where('is_active', true)
+                                ->pluck('name', 'code')
+                                ->toArray()
+                            ),
+                        Forms\Components\TextInput::make('name')
+                            ->required()
+                            ->maxLength(255),
+                    ])
+                    ->columns(2)
+                    ->label('Region-specific Names'),
                 Forms\Components\CheckboxList::make('account_type')
                     ->required()
                     ->options(fn(): array => \App\Models\AccountType::query()

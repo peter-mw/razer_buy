@@ -24,7 +24,7 @@ return new class extends Migration
             $table->string('last_ballance_update_status', 500)->nullable();
             $table->string('service_code', 500)->nullable();
             $table->string('client_id_login', 500)->nullable();
-            $table->boolean('is_active')->default(true);
+            $table->boolean('is_active')->default(true)->nullable();
 
             // Indexes
             $table->index('name');

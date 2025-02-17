@@ -55,10 +55,10 @@ class FetchAccountCodesJob implements ShouldQueue
 
         // Fetch all codes for the account
 
-         $codes = $service->fetchAllCodes();
+        // $codes = $service->fetchAllCodes();
 
         //@ todo remove this
-       // $codes = $service->fetchAllCodesCached();
+        $codes = $service->fetchAllCodesCached();
 
 
         $foundCodes = [];
@@ -95,6 +95,8 @@ class FetchAccountCodesJob implements ShouldQueue
                 }
             }
 
+
+
             if ($foundCodes) {
 
                 foreach ($foundCodes as $existingCode) {
@@ -109,6 +111,10 @@ class FetchAccountCodesJob implements ShouldQueue
                            ->where('amount', $existingCode->buy_value)
                            ->first();*/
 
+
+
+
+
                     $transaction = Transaction::where('transaction_id', $codeData['transaction_id'])
                         ->first();
 
@@ -120,7 +126,7 @@ class FetchAccountCodesJob implements ShouldQueue
                             'transaction_date' => $existingCode->buy_date,
                             'amount' => $existingCode->buy_value,
                         ]);
-                        $transaction->save();
+
 
                     }
 
@@ -160,8 +166,8 @@ class FetchAccountCodesJob implements ShouldQueue
                             ];
 
                             try {
-                                $transaction = Transaction::create($transactionData);
-                                $transaction->save();
+                                $transaction = Transaction::insert($transactionData);
+
                             } catch (\Exception $e) {
                                 Log::error('Failed to create transaction for existing code: ' . $e->getMessage());
                             }
@@ -183,8 +189,10 @@ class FetchAccountCodesJob implements ShouldQueue
                 // Process each product group
                 foreach ($codesByProduct as $productName => $productCodes) {
                     // Find or create product
-                    $product = Product::where('product_name', $productName)->first();
-
+                    $product = Product::where('product_name', $productName)
+                        ->orWhereJsonContains('product_names', ['name' => $productName])
+                        ->first();
+                  //  dd($foundCodes, $processedCodes,$product);
                     if (!$product) {
                         // Create entry in codes with missing products table
                         foreach ($productCodes as $codeData) {
@@ -212,11 +220,22 @@ class FetchAccountCodesJob implements ShouldQueue
                             // Try to find a product with matching name
                             $matchingProduct = Product::where('product_name', $productName)
                                 ->orWhereJsonContains('product_slugs', ['account_type' => $accountType])
+                                ->orWhereJsonContains('product_names', ['account_type' => $accountType])
                                 ->first();
-                            // Get the appropriate slug
+
+                            // Get the appropriate name or slug
                             $productSlug = 'unknown';
                             if ($matchingProduct) {
-                                if (!empty($matchingProduct->product_slugs)) {
+                                // First try to get region-specific name
+                                if (!empty($matchingProduct->product_names)) {
+                                    $names = collect($matchingProduct->product_names);
+                                    $regionName = $names->firstWhere('account_type', $accountType);
+                                    if ($regionName && isset($regionName['name'])) {
+                                        $productSlug = $regionName['name'];
+                                    }
+                                }
+                                // Fallback to region-specific slug
+                                elseif (!empty($matchingProduct->product_slugs)) {
                                     $slugs = collect($matchingProduct->product_slugs);
                                     $regionSlug = $slugs->firstWhere('account_type', $accountType);
                                     if ($regionSlug && isset($regionSlug['slug'])) {
@@ -249,11 +268,34 @@ class FetchAccountCodesJob implements ShouldQueue
                     } else {
 
 
+                        // Get region-specific product name if available
+                        $productName = $product->product_name;
+                        $accountType = $account->account_type;
+                        
+                        if ($accountType) {
+                            // First try to get region-specific name
+                            if (!empty($product->product_names)) {
+                                $names = collect($product->product_names);
+                                $regionName = $names->firstWhere('account_type', $accountType);
+                                if ($regionName && isset($regionName['name'])) {
+                                    $productName = $regionName['name'];
+                                }
+                            }
+                            // Fallback to region-specific slug
+                            elseif (!empty($product->product_slugs)) {
+                                $slugs = collect($product->product_slugs);
+                                $regionSlug = $slugs->firstWhere('account_type', $accountType);
+                                if ($regionSlug && isset($regionSlug['slug'])) {
+                                    $productName = $regionSlug['slug'];
+                                }
+                            }
+                        }
+
                         // Create order for this product group
                         $newOrder = PurchaseOrders::create([
                             'product_id' => $product->id,
-                            'product_name' => $product->product_name,
-                            'account_type' => $account->account_type,
+                            'product_name' => $productName,
+                            'account_type' => $accountType,
                             'buy_value' => $product->product_buy_value,
                             'product_face_value' => $product->product_face_value,
                             'quantity' => count($productCodes),
@@ -284,7 +326,7 @@ class FetchAccountCodesJob implements ShouldQueue
                             'quantity' => $quantityProcessed,
                         ]);
                     }
-
+dd(112121);
                 }
 
 

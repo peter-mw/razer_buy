@@ -10,6 +10,7 @@ class Product extends Model
     protected $casts = [
         'account_type' => 'array',
         'product_slugs' => 'array',
+        'product_names' => 'array',
     ];
     
     protected $fillable = [
@@ -17,6 +18,7 @@ class Product extends Model
         'product_name',
         'product_slug',
         'product_slugs',
+        'product_names',
         'account_type',
         'product_edition',
         'product_buy_value',

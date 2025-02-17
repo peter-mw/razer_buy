@@ -514,7 +514,16 @@ class CreateMultipleOrders extends Page
                         $accountType = $data['data']['account_type'];
                         
                         if ($accountType) {
-                            if (!empty($product->product_slugs)) {
+                            // First try to get region-specific name
+                            if (!empty($product->product_names)) {
+                                $names = collect($product->product_names);
+                                $regionName = $names->firstWhere('account_type', $accountType);
+                                if ($regionName && isset($regionName['name'])) {
+                                    $productName = $regionName['name'];
+                                }
+                            }
+                            // Fallback to region-specific slug if name not found
+                            elseif (!empty($product->product_slugs)) {
                                 $slugs = collect($product->product_slugs);
                                 $regionSlug = $slugs->firstWhere('account_type', $accountType);
                                 if ($regionSlug && isset($regionSlug['slug'])) {

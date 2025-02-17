@@ -318,7 +318,5 @@ class ProcessBuyJob implements ShouldQueue
             ]);
         }
 
-        // Send database notification
-        $purchaseOrder->notify(new PurchaseOrderCompleted($purchaseOrder));
     }
 }
