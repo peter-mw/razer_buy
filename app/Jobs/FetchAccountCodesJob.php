@@ -55,7 +55,7 @@ class FetchAccountCodesJob implements ShouldQueue
 
         // Fetch all codes for the account
 
-          $codes = $service->fetchAllCodes();
+         $codes = $service->fetchAllCodes();
 
         //@ todo remove this
       //  $codes = $service->fetchAllCodesCached();
@@ -190,11 +190,12 @@ class FetchAccountCodesJob implements ShouldQueue
 
                     if (!$product) {
 
-                        $productsAll = Product::all();
+                        $productsAll = Product::whereNotNull('product_names')->get();
 
                         if ($productsAll) {
                             foreach ($productsAll as $productAll) {
                                 $productNames = $productAll->product_names;
+
                                 if ($productNames) {
                                     foreach ($productNames as $productNames) {
                                         if ($productNames['name'] == $productName) {
@@ -205,6 +206,8 @@ class FetchAccountCodesJob implements ShouldQueue
                             }
                         }
                     }
+
+               //    dump($product, $productName, $productCodes);
 
                     if (!$product) {
                         // Create entry in codes with missing products table
@@ -334,8 +337,7 @@ class FetchAccountCodesJob implements ShouldQueue
                             'quantity' => $quantityProcessed,
                         ]);
                     }
-                    dd(112121);
-                }
+                 }
 
 
             }
@@ -369,6 +371,12 @@ class FetchAccountCodesJob implements ShouldQueue
         $codeExist = Code::where('code', $code)
             ->where('serial_number', $serialNumber)
             ->first();
+
+        //delete from CodesWithMissingProduct
+        CodesWithMissingProduct::where('code', $code)
+            ->where('serial_number', $serialNumber)
+            ->delete();
+
 
 
         if ($codeExist) {
