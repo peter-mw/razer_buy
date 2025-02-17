@@ -333,7 +333,7 @@ class RazerService
             $cmd = sprintf(
                 'cd %s && %s -email=%s -password=%s -clientIDlogin=%s -serviceCode=%s 2>&1',
                 normalize_path($workdir, true),
-                './' . $this->topUpsBin,
+                normalize_path($workdir . $this->topUpsBin, false),
                 escapeshellarg($account->email),
                 escapeshellarg($account->password),
                 escapeshellarg($account->client_id_login),
@@ -467,7 +467,7 @@ class RazerService
             return [];
         }
 
-        copy($creds, $workdir . '/credentials.txt');
+        @copy($creds, $workdir . '/credentials.txt');
 
         $checkBalance = $this->getAccountBallance();
         $topups = $this->fetchTopUps();
@@ -500,15 +500,14 @@ class RazerService
                 'region_id' => $regionId,
                 'limit' => $limit,
                 'tier' => $tier,
-                'message' => 'Account is valid, balance: ' . $checkBalance['gold'] . ' gold, ' . $checkBalance['silver'] . ' silver, ' . $topupsCount . ' topups' . ' region_id: ' . $regionId . ' limit: ' . $limit . ' tier: ' . $tier
+                'message' => 'Account is valid, balance: ' . $checkBalance['gold'] . ' gold, ' . $checkBalance['silver'] . ' silver, ' . $topupsCount . ' topups' . ' region_id: ' . $regionId . ' limit: ' . $limit . ' tier: ' . $tier . ' region_id: ' . $regionId . ' limit: ' . $limit . ' tier: ' . $tier
             ];
         } else {
             return [
                 'status' => 'error',
-                'message' => 'Account is invalid, balance: ' . $checkBalance['gold'] . ' gold, ' . $checkBalance['silver'] . ' silver, ' . $topupsCount . ' topups'
+                'message' => 'Account is invalid, balance: ' . $checkBalance['gold'] . ' gold, ' . $checkBalance['silver'] . ' silver, ' . $topupsCount . ' topups' . ' region_id: ' . $regionId . ' limit: ' . $limit . ' tier: ' . $tier . ' region_id: ' . $regionId . ' limit: ' . $limit . ' tier: ' . $tier
             ];
         }
-
 
     }
 

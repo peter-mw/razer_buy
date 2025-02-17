@@ -63,6 +63,11 @@ class AccountReconciliationResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->toggleable(),
+                Tables\Columns\BooleanColumn::make('status')
+                    ->label('Status')
+
+                    ->getStateUsing(fn ($record): bool => $record->balance_difference == 0 ? true : false)
+                    ->color(fn ($record): string => $record->balance_difference == 0 ? 'success' : 'danger'),
                 Tables\Columns\TextColumn::make('name')
                     ->label('Name')
                     ->sortable()
@@ -84,6 +89,7 @@ class AccountReconciliationResource extends Resource
                     ->money('USD')
                     ->sortable()
                     ->color(fn($state): string => $state < -0.1 ? 'danger' : 'success'),
+
                 Tables\Columns\TextColumn::make('codes_count')
                     ->label('Total Codes')
                     ->counts('codes')

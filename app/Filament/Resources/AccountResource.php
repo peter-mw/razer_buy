@@ -236,6 +236,90 @@ class AccountResource extends Resource
 
                 Forms\Components\Textarea::make('notes')
                     ->columnSpanFull(),
+
+                Forms\Components\Actions::make([
+                    Forms\Components\Actions\Action::make('sync_codes')
+                        ->label('Sync Codes')
+                        ->icon('heroicon-o-document-duplicate')
+                        ->action(function ($record) {
+                            try {
+                                dispatch(new \App\Jobs\FetchAccountCodesJob($record->id));
+                                Notification::make()
+                                    ->success()
+                                    ->title('Code sync job dispatched')
+                                    ->send();
+                            } catch (\Exception $e) {
+                                Notification::make()
+                                    ->danger()
+                                    ->title('Failed to dispatch code sync job')
+                                    ->body($e->getMessage())
+                                    ->send();
+                            }
+                        })
+                        ->visible(fn($record) => $record !== null),
+
+                    Forms\Components\Actions\Action::make('sync_all_data')
+                        ->label('Sync All Data')
+                        ->icon('heroicon-o-arrow-path')
+                        ->color('success')
+                        ->action(function ($record) {
+                            try {
+                                dispatch(new \App\Jobs\SyncAllAccountData($record->id));
+                                Notification::make()
+                                    ->success()
+                                    ->title('All sync jobs dispatched')
+                                    ->send();
+                            } catch (\Exception $e) {
+                                Notification::make()
+                                    ->danger()
+                                    ->title('Failed to dispatch sync jobs')
+                                    ->body($e->getMessage())
+                                    ->send();
+                            }
+                        })
+                        ->visible(fn($record) => $record !== null),
+
+                    Forms\Components\Actions\Action::make('sync_topups')
+                        ->label('Sync Topups')
+                        ->icon('heroicon-o-credit-card')
+                        ->action(function ($record) {
+                            try {
+                                dispatch(new \App\Jobs\SyncAccountTopupsJob($record->id));
+                                Notification::make()
+                                    ->success()
+                                    ->title('Topup sync job dispatched')
+                                    ->send();
+                            } catch (\Exception $e) {
+                                Notification::make()
+                                    ->danger()
+
+                                    ->title('Failed to dispatch topup sync job')
+                                    ->body($e->getMessage())
+                                    ->send();
+                            }
+                        })
+                        ->visible(fn($record) => $record !== null),
+
+                    Forms\Components\Actions\Action::make('sync_balance')
+                        ->label('Sync Balance')
+                        ->icon('heroicon-o-arrow-path')
+                        ->action(function ($record) {
+                            try {
+                                dispatch(new \App\Jobs\SyncAccountBalancesJob($record->id));
+                                Notification::make()
+                                    ->success()
+                                    ->title('Balance sync job dispatched')
+                                    ->send();
+                            } catch (\Exception $e) {
+                                Notification::make()
+                                    ->danger()
+                                    ->title('Failed to dispatch balance sync job')
+                                    ->body($e->getMessage())
+                                    ->send();
+                            }
+                        })
+                        ->visible(fn($record) => $record !== null),
+                ])->columnSpanFull(),
             ]);
     }
 

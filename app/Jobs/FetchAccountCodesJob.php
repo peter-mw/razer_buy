@@ -55,10 +55,10 @@ class FetchAccountCodesJob implements ShouldQueue
 
         // Fetch all codes for the account
 
-        // $codes = $service->fetchAllCodes();
+         $codes = $service->fetchAllCodes();
 
         //@ todo remove this
-        $codes = $service->fetchAllCodesCached();
+       // $codes = $service->fetchAllCodesCached();
 
 
         $foundCodes = [];
