@@ -75,9 +75,11 @@ class CodeResource extends Resource
                     ->form([
                         Forms\Components\DatePicker::make('from_date')
                             ->label('From Date')
+                            ->default(now()->subYear())
                             ->required(),
                         Forms\Components\DatePicker::make('to_date')
                             ->label('To Date')
+                            ->default(now()->addDay())
                             ->required(),
                     ])
                     ->action(function (array $data): void {
@@ -96,7 +98,8 @@ class CodeResource extends Resource
                             ->default(now()->subDays(30)),
                         Forms\Components\DatePicker::make('to_date')
                             ->label('To Date')
-                            ->default(now()),
+                            ->default(now()->addDay())
+                        ,
                         Forms\Components\Select::make('account_id')
                             ->label('Account')
                             ->options(fn(): array => \App\Models\Account::pluck('name', 'id')->toArray())
@@ -227,7 +230,7 @@ class CodeResource extends Resource
                                 ->default(now()->subDays(30)),
                             Forms\Components\DatePicker::make('to_date')
                                 ->label('To Date')
-                                ->default(now()),
+                                ->default(now()->addDay()),
                             Forms\Components\Select::make('account_id')
                                 ->label('Account')
                                 ->options(fn(): array => \App\Models\Account::pluck('name', 'id')->toArray())
@@ -260,7 +263,7 @@ class CodeResource extends Resource
                         ->action(function (array $data): void {
                             $params = http_build_query([
                                 'from_date' => now()->subYear(),
-                                'to_date' => now(),
+                                'to_date' => now()->addDay(),
                             ]);
                             $url = route('export.codes') . '?' . $params;
                             redirect()->away($url);
