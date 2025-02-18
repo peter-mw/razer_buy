@@ -26,7 +26,8 @@ Route::get('/aaa',
         $accountID = 26;
         $accountID = 25;
         $accountID = 15;
-       // $accountID = 16;
+        $accountID = 26;
+        // $accountID = 16;
 
         $topups = [];
         $account = \App\Models\Account::find($accountID);
@@ -35,6 +36,7 @@ Route::get('/aaa',
         $razerService = new \App\Services\RazerService($account);
         //  $topups = $razerService->getAccountBallance();
         // $codes = $razerService->fetchAllCodes();
+        // dd($codes);
         // $detail = $razerService->getAllAccountDetails();
 
 //dd($codes);
@@ -44,8 +46,8 @@ Route::get('/aaa',
         dispatch_sync($job);
         //$job->handle();
         // dd($codes);
-         dump('done');
-         return 'done';
+        dump('done');
+        return 'done';
         $topups = $razerService->fetchTopUps();
         $ballance = $razerService->getAccountBallance();
         //  $topups = $razerService->fetchAllCodes();
