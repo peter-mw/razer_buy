@@ -86,7 +86,7 @@ class AccountTopupResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('topup_time')
                     ->label('Topup Date')
-                    ->date('Y-m-d')
+                    ->date('Y-m-d H:i:s')
                     ->sortable()
                     ->color(function ($record) {
                         // Get the first record ID for this date

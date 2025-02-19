@@ -512,6 +512,8 @@ class AccountResource extends Resource
                     ->label('Vendor')
                     ->sortable(),
 
+                
+
 
                 Tables\Columns\TextColumn::make('ballance_gold')
                     ->money()
@@ -764,6 +766,26 @@ class AccountResource extends Resource
                                 Notification::make()
                                     ->danger()
                                     ->title('Failed to dispatch topup sync jobs')
+                                    ->body($e->getMessage())
+                                    ->send();
+                            }
+                        }),
+                    Tables\Actions\BulkAction::make('sync_balances')
+                        ->label('Sync Balances')
+                        ->icon('heroicon-o-arrow-path')
+                        ->action(function ($records): void {
+                            try {
+                                foreach ($records as $record) {
+                                    dispatch(new \App\Jobs\SyncAccountBalancesJob($record->id));
+                                }
+                                Notification::make()
+                                    ->success()
+                                    ->title('Balance sync jobs dispatched for selected accounts')
+                                    ->send();
+                            } catch (\Exception $e) {
+                                Notification::make()
+                                    ->danger()
+                                    ->title('Failed to dispatch balance sync jobs')
                                     ->body($e->getMessage())
                                     ->send();
                             }
