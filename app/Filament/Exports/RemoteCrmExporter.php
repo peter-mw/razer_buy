@@ -33,6 +33,10 @@ class RemoteCrmExporter extends Exporter
             ExportColumn::make('account.name')
                 ->label('Source')
                 ->state(fn($record) => $record->account?->name ?? ''),
+            ExportColumn::make('account.vendor')
+                ->label('Vendor')
+                ->state(fn($record) => $record->account?->vendor ?? ''),
+
             ExportColumn::make('serial_number')
                 ->label('Serial'),
             ExportColumn::make('number')

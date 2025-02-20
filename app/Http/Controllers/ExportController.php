@@ -90,6 +90,7 @@ class ExportController extends Controller
         $csv->insertOne([
             'Account ID',
             'Account Name',
+            'Vendor',
             'Transaction ID',
             'Transaction Ref',
             'Topup Amount',
@@ -104,6 +105,7 @@ class ExportController extends Controller
             $csv->insertOne([
                 $topup->account?->id ?? '',
                 $topup->account?->name ?? '',
+                $topup->account?->vendor ?? '',
                 $topup->transaction_id,
                 $topup->transaction_ref,
                 $topup->topup_amount,

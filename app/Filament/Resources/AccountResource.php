@@ -512,7 +512,7 @@ class AccountResource extends Resource
                     ->label('Vendor')
                     ->sortable(),
 
-                
+
 
 
                 Tables\Columns\TextColumn::make('ballance_gold')

@@ -74,6 +74,11 @@ class AccountTopupResource extends Resource
                     ->label('Account')
                     ->sortable()
                     ->searchable(),
+
+                Tables\Columns\TextColumn::make('account.vendor')
+                    ->label('Vendor')
+                    ->sortable()
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('topup_amount')
                     ->money('USD')
                     ->sortable()
@@ -133,6 +138,25 @@ class AccountTopupResource extends Resource
                         Forms\Components\DatePicker::make('to_date')
                             ->label('To Date')
                             ->required(),
+
+                        Forms\Components\Select::make('vendor')
+                            ->label('Vendor')
+                            ->options(function(): array {
+                                return \App\Models\Account::query()
+                                    ->select(['vendor'])
+                                    ->whereNotNull('vendor')
+                                    ->distinct()
+                                    ->get()
+                                    ->pluck('vendor', 'vendor')
+                                    ->toArray();
+                            })
+
+                            ->searchable()
+                          ,
+
+
+
+
                         Forms\Components\Select::make('account_id')
                             ->label('Account')
                             ->options(function(): array {
@@ -185,6 +209,29 @@ class AccountTopupResource extends Resource
                     }),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('vendor')
+                    ->label('Vendor')
+                    ->options(function(): array {
+                        return \App\Models\Account::query()
+                            ->select(['vendor'])
+                            ->whereNotNull('vendor')
+                            ->distinct()
+                            ->get()
+                            ->pluck('vendor', 'vendor')
+                            ->toArray();
+                    })
+                    ->searchable()
+
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query->when(
+                            $data['value'],
+                            fn (Builder $query, string $value): Builder => $query->whereHas(
+                                'account',
+                                fn (Builder $query): Builder => $query->where('vendor', $value)
+                            )
+                        );
+                    }),
+
                 Tables\Filters\SelectFilter::make('account')
                     ->searchable()
                     ->preload()
