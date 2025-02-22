@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Account;
 use App\Models\Code;
 use App\Models\AccountTopup;
 use Illuminate\Http\Request;
@@ -127,6 +128,57 @@ class ExportController extends Controller
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="account-topups-export-' . now() . '.csv"',
+        ];
+
+        return response($csv->getContent(), 200, $headers);
+    }
+
+    public function exportAccountReconciliation(Request $request)
+    {
+        $query = Account::query();
+
+        if ($request->has('ids')) {
+            $ids = explode(',', $request->get('ids'));
+            $query->whereIn('id', $ids);
+        } elseif ($request->has('vendor')) {
+            $query->where('vendor', $request->get('vendor'));
+        }
+
+        $accounts = $query->get();
+
+        $csv = Writer::createFromFileObject(new SplTempFileObject());
+
+        // Add headers
+        $csv->insertOne([
+            'ID',
+            'Provider',
+            'Name',
+            'Gold Balance',
+            'Topup Balance',
+            'Transaction Balance',
+            'Balance Difference',
+            'Total Codes',
+            'Total Transactions'
+        ]);
+
+        // Add data
+        foreach ($accounts as $account) {
+            $csv->insertOne([
+                $account->id,
+                $account->vendor,
+                $account->name,
+                $account->ballance_gold,
+                $account->topup_balance,
+                $account->transaction_balance,
+                $account->balance_difference,
+                $account->codes()->count(),
+                $account->transactions()->count()
+            ]);
+        }
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="account-reconciliation-' . now() . '.csv"',
         ];
 
         return response($csv->getContent(), 200, $headers);

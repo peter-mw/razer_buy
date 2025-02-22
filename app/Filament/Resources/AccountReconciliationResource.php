@@ -30,8 +30,11 @@ class AccountReconciliationResource extends Resource
 
             ->paginated([10,20,25,50,100, 250, 500, 1000, 2000, 5000, 'all'])
             ->headerActions([
-                Tables\Actions\ExportAction::make()
-                    ->exporter(AccountReconciliationExporter::class),
+                Tables\Actions\Action::make('export')
+                    ->label('Export')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->url(fn () => route('export.account-reconciliation'))
+                    ->openUrlInNewTab(),
                 Tables\Actions\Action::make('sync_all_topups')
                     ->label('Sync All Topups')
                     ->icon('heroicon-o-credit-card')
@@ -107,8 +110,13 @@ class AccountReconciliationResource extends Resource
                 //
             ])
             ->bulkActions([
-                Tables\Actions\ExportBulkAction::make()
-                    ->exporter(AccountReconciliationExporter::class),
+                Tables\Actions\BulkAction::make('export_selected')
+                    ->label('Export Selected')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->action(function ($records) {
+                        $ids = $records->pluck('id')->toArray();
+                        return redirect()->route('export.account-reconciliation', ['ids' => implode(',', $ids)]);
+                    }),
                 Tables\Actions\BulkAction::make('reconcile')
                     ->label('Reconcile')
                     ->icon('heroicon-o-scale')

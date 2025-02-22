@@ -83,5 +83,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/export/remote-crm', [ExportController::class, 'exportRemoteCrm'])->name('export.remote-crm');
     Route::get('/export/codes', [ExportController::class, 'exportCodes'])->name('export.codes');
     Route::get('/export/account-topups', [ExportController::class, 'exportAccountTopups'])->name('export.account-topups');
+    Route::get('/export/account-reconciliation', [ExportController::class, 'exportAccountReconciliation'])->name('export.account-reconciliation');
 
 });
