@@ -20,6 +20,8 @@ class AccountReconciliationExporter extends Exporter
         return [
             ExportColumn::make('id')
                 ->label('ID'),
+            ExportColumn::make('vendor')
+                ->label('Provider'),
             ExportColumn::make('name')
                 ->label('Name'),
             ExportColumn::make('ballance_gold')

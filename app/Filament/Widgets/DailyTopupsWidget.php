@@ -16,6 +16,7 @@ class DailyTopupsWidget extends BaseWidget
 
     protected function getTableFiltersFormWidth(): string
     {
+
         return '4xl';
     }
 
@@ -45,6 +46,7 @@ class DailyTopupsWidget extends BaseWidget
             ->columns([
                 Tables\Columns\TextColumn::make('date')
                     ->label('Date')
+
                     ->date()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('total_topups')
@@ -57,6 +59,19 @@ class DailyTopupsWidget extends BaseWidget
                 Tables\Columns\TextColumn::make('unique_accounts')
                     ->label('Unique Accounts')
                     ->sortable(),
+                Tables\Columns\ViewColumn::make('date')
+                    ->label('Details')
+                    ->view('filament.widgets.topup-sumapy-for-the-day')
+
+
+
+                  /*  ->viewData(fn ($record) => [
+                        'date' => \Carbon\Carbon::parse($record->date),
+                        'total_topups' => $record->total_topups,
+                        'total_amount' => $record->total_amount,
+                        'unique_accounts' => $record->unique_accounts,
+                    ])*/
+                    ,
             ]);
     }
 }
