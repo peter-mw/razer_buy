@@ -60,10 +60,11 @@ class AccountTopupResource extends Resource
             ]);
     }
 
+
     public static function table(Table $table): Table
     {
         return $table
-            ->paginated([10,20,25,50,100, 250, 500, 1000, 2000, 5000, 'all'])
+            ->paginated([10, 20, 25, 50, 100, 250, 500, 1000, 2000, 5000, 'all'])
             ->defaultSort('topup_time', 'desc')
             ->columns([
                 Tables\Columns\TextColumn::make('account.id')
@@ -120,12 +121,9 @@ class AccountTopupResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
-
             ->headerActions([
                 /*Tables\Actions\ImportAction::make()
                     ->importer(Imports\AccountTopupImporter::class),*/
-
-
 
 
                 Tables\Actions\Action::make('custom_export')
@@ -134,14 +132,16 @@ class AccountTopupResource extends Resource
                     ->form([
                         Forms\Components\DatePicker::make('from_date')
                             ->label('From Date')
+                            ->default(now()->subDay())
                             ->required(),
                         Forms\Components\DatePicker::make('to_date')
                             ->label('To Date')
+                            ->default(now())
                             ->required(),
 
                         Forms\Components\Select::make('vendor')
                             ->label('Vendor')
-                            ->options(function(): array {
+                            ->options(function (): array {
                                 return \App\Models\Account::query()
                                     ->select(['vendor'])
                                     ->whereNotNull('vendor')
@@ -150,16 +150,13 @@ class AccountTopupResource extends Resource
                                     ->pluck('vendor', 'vendor')
                                     ->toArray();
                             })
-
                             ->searchable()
-                          ,
-
-
+                        ,
 
 
                         Forms\Components\Select::make('account_id')
                             ->label('Account')
-                            ->options(function(): array {
+                            ->options(function (): array {
                                 return \App\Models\Account::query()
                                     ->select(['id', 'name', 'account_type'])
                                     ->withSum('accountTopups', 'topup_amount')
@@ -179,6 +176,7 @@ class AccountTopupResource extends Resource
                             'from_date' => $data['from_date'],
                             'to_date' => $data['to_date'],
                             'account_id' => $data['account_id'],
+                            'vendor' => $data['vendor'] ?? null,
                         ]);
                         $url = route('export.account-topups') . '?' . $params;
                         redirect()->away($url);
@@ -211,7 +209,7 @@ class AccountTopupResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('vendor')
                     ->label('Vendor')
-                    ->options(function(): array {
+                    ->options(function (): array {
                         return \App\Models\Account::query()
                             ->select(['vendor'])
                             ->whereNotNull('vendor')
@@ -221,13 +219,12 @@ class AccountTopupResource extends Resource
                             ->toArray();
                     })
                     ->searchable()
-
                     ->query(function (Builder $query, array $data): Builder {
                         return $query->when(
                             $data['value'],
-                            fn (Builder $query, string $value): Builder => $query->whereHas(
+                            fn(Builder $query, string $value): Builder => $query->whereHas(
                                 'account',
-                                fn (Builder $query): Builder => $query->where('vendor', $value)
+                                fn(Builder $query): Builder => $query->where('vendor', $value)
                             )
                         );
                     }),

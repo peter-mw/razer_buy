@@ -75,11 +75,19 @@ class ExportController extends Controller
         $query = AccountTopup::with(['account']);
 
         if ($fromDate && $toDate) {
-            $query->whereBetween('date', [$fromDate, $toDate]);
+            //$query->whereBetween('date', [$fromDate, $toDate]);
+            $query->whereDate('date', '>=', $fromDate);
+            $query->whereDate('date', '<=', $toDate);
         }
 
         if ($request->has('account_id')) {
             $query->where('account_id', $request->get('account_id'));
+        }
+
+        if ($request->has('vendor')) {
+            $query->whereHas('account', function ($query) use ($request) {
+                $query->where('vendor', $request->get('vendor'));
+            });
         }
 
         $topups = $query->get();
