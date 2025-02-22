@@ -24,6 +24,7 @@ use App\Services\OtpService;
 
 use App\Models\AccountType;
 
+use Filament\Resources\Components\Tab;
 
 class AccountResource extends Resource
 {
@@ -31,6 +32,8 @@ class AccountResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-user';
     protected static ?int $navigationSort = 1;
+
+
 
     public static function form(Form $form): Form
     {
