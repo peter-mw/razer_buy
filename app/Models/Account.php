@@ -65,6 +65,18 @@ class Account extends Model
             ->sum('amount'); // Assuming 'amount' is the field for purchase value
     }
 
+    public function remainingBallance24Hours()
+    {
+        $transaction = $this->transactions()
+            ->where('created_at', '>=', now()->subHours(24))
+            ->sum('amount'); // Assuming 'amount' is the field for purchase value
+
+        $gold = $this->ballance_gold;
+        $limit = $this->limit_amount_per_day;
+        $remaining = $limit - $gold;
+        return $remaining;
+    }
+
     public function codes(): HasMany
     {
         return $this->hasMany(Code::class);

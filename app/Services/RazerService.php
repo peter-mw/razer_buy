@@ -16,6 +16,7 @@ class RazerService
     private string $fetchCodesBin;
     private string $razerGBin;
     private string $topUpsBin;
+    private string $accountReloaderBin;
 
     public function __construct(Account $account)
     {
@@ -62,6 +63,7 @@ class RazerService
         $this->fetchCodesBin = 'razer-fetchcodes' . $ext;
         $this->razerGBin = 'razerG' . $ext;
         $this->topUpsBin = 'razer-topups' . $ext;
+        $this->accountReloaderBin = 'razer-account-reloader' . $ext;
 
         $files = [
             $this->checkBalanceBin,
@@ -69,6 +71,7 @@ class RazerService
             $this->fetchCodesBin,
             $this->razerGBin,
             $this->topUpsBin,
+            $this->accountReloaderBin,
         ];
 
         foreach ($files as $file) {
@@ -257,6 +260,7 @@ class RazerService
                 'response' => ['error' => 'Error unmarshalling response: invalid character'],
                 'status' => 'error'
             ]);
+
 
         }
 
@@ -666,6 +670,70 @@ Silver Balance: 1500000, Next Expiring Bonus Silver: 15245, Next Expiring Bonus 
         }
 
         return $result;
+    }
+
+    public function reloadAccount(string $code): array
+    {
+        $workdir = $this->getWorkdir();
+        $account = $this->account;
+
+        $params = [
+            'email' => $account->email,
+            'password' => $account->password,
+            'clientIDlogin' => $account->client_id_login,
+            'serviceCode' => $account->service_code,
+            'code' => $code,
+        ];
+
+        // Get region_id from account type
+        $region_id = \App\Models\AccountType::where('code', $account->account_type)
+            ->value('region_id') ?? 2; // Default to 2 if not found
+
+        $cmd = sprintf(
+            '"%s" -email=%s -password=%s -clientIDlogin=%s -serviceCode=%s -regionId=%s -code=%s 2>&1',
+            normalize_path($workdir . '/' . $this->accountReloaderBin, false),
+            escapeshellarg($account->email),
+            escapeshellarg($account->password),
+            escapeshellarg($account->client_id_login),
+            escapeshellarg($account->service_code),
+            escapeshellarg($region_id),
+            escapeshellarg($code)
+        );
+
+        file_put_contents($workdir . '/reload_cmd.txt', $cmd);
+        chdir($workdir);
+
+        $output = shell_exec($cmd);
+
+        if ($output === null) {
+            SystemLog::create([
+                'source' => 'RazerService::reloadAccount',
+                'account_id' => $account->id ?? null,
+                'command' => $cmd,
+                'params' => $params,
+                'response' => ['error' => 'Command execution failed'],
+                'status' => 'error'
+            ]);
+            return ['status' => 'error', 'message' => 'Command execution failed'];
+        }
+
+        file_put_contents($workdir . '/reload_log.txt', $output);
+
+        $format = $this->formatOutput($output);
+
+        SystemLog::create([
+            'source' => 'RazerService::reloadAccount',
+            'account_id' => $account->id ?? null,
+            'command' => $cmd,
+            'params' => $params,
+            'response' => $format,
+            'status' => 'success'
+        ]);
+
+        return [
+            'status' => 'success',
+            'data' => $format
+        ];
     }
 
     public function formatOutput($output)
