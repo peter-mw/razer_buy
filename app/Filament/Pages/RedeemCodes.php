@@ -66,8 +66,13 @@ class RedeemCodes extends Page
             $result = $razerService->reloadAccount($data['code']);
 
             if ($result['status'] === 'success') {
+                //paymentAmount
+                $amount = $result['data']['paymentAmount'] ?? 0;
+
+
                 Notification::make()
                     ->title('Code redeemed successfully')
+                    ->body('Amount: $' . number_format($amount, 2))
                     ->success()
                     ->send();
 

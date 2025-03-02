@@ -623,6 +623,54 @@ Silver Balance: 1500000, Next Expiring Bonus Silver: 15245, Next Expiring Bonus 
         return $return_lines;
     }
 
+    public function formatOutputTopReload($output)
+    {
+        // Extract JSON from the log output
+        if (preg_match('/Response: ({.+})/s', $output, $matches)) {
+            $jsonStr = $matches[1];
+            $data = json_decode($jsonStr, true);
+
+            if ($data) {
+                /*2025/03/02 13:31:57 Response: {"id":103107844,"transactionNumber":"012GQ37NGZLV22DCD21D4","goldTransactionTypeId":1,"walletId":12103331,"regionId":12,"description":"Razer Gold PIN","transactionStatusId":1,"paymentStatusId":1,"paymentChannelId":51,"currencyCode":"USD","gold":5,"premiumGold":5,"bonusGold":0,"bonusExpirationPeriod":0,"ipAddress":"5.181.81.5","countryCode":"BG","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36","token":"81e2bbd212ee47e6956487431c93079fb232c253","transactionSourceId":0,"otpTypeId":null,"otpDateTime":null,"otpMobileNumber":null,"transactionDateTime":"2025-03-02T13:31:56.6777774+00:00","redirectUrl":null,"returnUrl":null,"paymentAmount":5,"paymentMethod":"Razer Gold PIN","surcharge":null,"promotions":[]}
+*/
+                return [
+                    [
+                        'id' => $data['id'] ?? null,
+                        'transactionNumber' => $data['transactionNumber'] ?? null,
+                        'goldTransactionTypeId' => $data['goldTransactionTypeId'] ?? null,
+                        'walletId' => $data['walletId'] ?? null,
+                        'regionId' => $data['regionId'] ?? null,
+                        'description' => $data['description'] ?? null,
+                        'transactionStatusId' => $data['transactionStatusId'] ?? null,
+                        'paymentStatusId' => $data['paymentStatusId'] ?? null,
+                        'paymentChannelId' => $data['paymentChannelId'] ?? null,
+                        'currencyCode' => $data['currencyCode'] ?? null,
+                        'gold' => $data['gold'] ?? null,
+                        'premiumGold' => $data['premiumGold'] ?? null,
+                        'bonusGold' => $data['bonusGold'] ?? null,
+                        'bonusExpirationPeriod' => $data['bonusExpirationPeriod'] ?? null,
+                        'ipAddress' => $data['ipAddress'] ?? null,
+                        'countryCode' => $data['countryCode'] ?? null,
+                        'userAgent' => $data['userAgent'] ?? null,
+                        'token' => $data['token'] ?? null,
+                        'transactionSourceId' => $data['transactionSourceId'] ?? null,
+                        'otpTypeId' => $data['otpTypeId'] ?? null,
+                        'otpDateTime' => $data['otpDateTime'] ?? null,
+                        'otpMobileNumber' => $data['otpMobileNumber'] ?? null,
+                        'transactionDateTime' => $data['transactionDateTime'] ?? null,
+                        'redirectUrl' => $data['redirectUrl'] ?? null,
+                        'returnUrl' => $data['returnUrl'] ?? null,
+                        'paymentAmount' => $data['paymentAmount'] ?? null,
+                        'paymentMethod' => $data['paymentMethod'] ?? null,
+                        'surcharge' => $data['surcharge'] ?? null,
+                    ]
+                ];
+            }
+        }
+
+        return [];
+    }
+
     public function formatOutputTopUps($output)
     {
         $lines = explode("\n", $output);
@@ -719,19 +767,19 @@ Silver Balance: 1500000, Next Expiring Bonus Silver: 15245, Next Expiring Bonus 
 
         file_put_contents($workdir . '/reload_log.txt', $output);
 
-        $format = $this->formatOutput($output);
-
+        $format = $this->formatOutputTopReload($output);
+        $error = $format && !empty($format['transactionNumber']) ? false : true;
         SystemLog::create([
             'source' => 'RazerService::reloadAccount',
             'account_id' => $account->id ?? null,
             'command' => $cmd,
             'params' => $params,
             'response' => $format,
-            'status' => 'success'
+            'status' => $error ? 'error' : 'success'
         ]);
 
         return [
-            'status' => 'success',
+            'status' => $error ? 'error' : 'success',
             'data' => $format
         ];
     }
